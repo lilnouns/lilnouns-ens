@@ -34,6 +34,7 @@
     "@openzeppelin/foundry-upgrades": "0.4.0",
     "@openzeppelin/hardhat-upgrades": "3.9.0",
     "@openzeppelin/upgrades-core": "1.44.0",
+    "@ensdomains/ens-contracts": "1.4.0",
     "ds-test": "dapphub/ds-test",
     "forge-std": "foundry-rs/forge-std",
     "solidity-stringutils": "Arachnid/solidity-stringutils"
