@@ -1,6 +1,6 @@
 {
-  "name": "vite-dapp-template",
-  "version": "1.0.0-alpha.5",
+  "name": "lilnouns-ens",
+  "version": "1.0.0-alpha.0",
   "private": true,
   "description": "A template for create dApps using Vite",
   "keywords": [],
