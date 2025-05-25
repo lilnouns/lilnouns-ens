@@ -1,0 +1,53 @@
+# =====================================================================
+# 🔄 GIT FLOW WORKFLOW
+# =====================================================================
+name: 🔄 Git Flow
+
+# ---------------------------------------------------------------------
+# 📋 WORKFLOW TRIGGERS
+# ---------------------------------------------------------------------
+on:
+  push:
+    branches:
+      - 'feature/*'  # 🌟 Trigger for pushes to feature branches
+      - 'bugfix/*'   # 🐛 Trigger for pushes to bugfix branches
+      - 'release/*'  # 📦 Trigger for pushes to release branches
+      - 'hotfix/*'   # 🔥 Trigger for pushes to hotfix branches
+
+# ---------------------------------------------------------------------
+# 💼 JOBS
+# ---------------------------------------------------------------------
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    name: 📝 Create Pull Request
+    permissions: write-all
+    timeout-minutes: 5
+
+    steps:
+      # 📥 CHECKOUT CODE
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4.2.2
+
+      # 🔀 EXECUTE GIT FLOW
+      - name: 🔀 Execute Git Flow Action
+        uses: nekofar/git-flow-action@develop
+        with:
+          # 🔑 Authentication token
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # 🎯 TARGET BRANCHES
+          # Main production branch
+          master-branch: 'master'
+          # Development branch
+          develop-branch: 'develop'
+          
+          # 🏷️ BRANCH PREFIXES
+          # New features
+          feature-prefix: 'feature/'
+          # Bug fixes
+          bugfix-prefix: 'bugfix/'
+          # Version releases
+          release-prefix: 'release/'
+          # Critical fixes
+          hotfix-prefix: 'hotfix/'

@@ -1,0 +1,59 @@
+# =====================================================================
+# 🚀 DEPLOY WEB APPLICATION WORKFLOW
+# =====================================================================
+name: 🚀 Deploy Web Application
+
+# ---------------------------------------------------------------------
+# 📋 WORKFLOW TRIGGERS
+# ---------------------------------------------------------------------
+on:
+  workflow_dispatch: # 👆 Allow manual triggering
+  release:
+    types: [published] # 📦 Run when a new release is published
+
+# ---------------------------------------------------------------------
+# 💼 JOBS
+# ---------------------------------------------------------------------
+jobs:
+  deploy:
+    name: 🔄 Deploy Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # ⏱️ Set a timeout to prevent long-running jobs
+
+    steps:
+      # 📥 CHECKOUT
+      - name: 📥 Checkout repository code
+        uses: actions/checkout@v4.2.2
+
+      # 🛠️ SETUP ENVIRONMENT
+      - name: 🔧 Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1.4.0
+        with:
+          version: nightly
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          run_install: false
+
+      - name: 🟢 Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+          node-version-file: "package.json"
+
+      # 📚 DEPENDENCIES
+      - name: 📚 Install dependencies
+        run: pnpm install
+
+      # 🏗️ BUILD
+      - name: 🏗️ Build the apps and packages
+        run: pnpm run build
+
+      # 🧪 TEST
+      - name: 🧪 Execute tests
+        run: pnpm run test
+
+      # 🚀 DEPLOY
+      - name: 🚀 Deploy to pinme
+        run: cd ./apps/web/ && pnpm pinme upload dist

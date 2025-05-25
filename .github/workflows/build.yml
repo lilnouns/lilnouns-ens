@@ -1,0 +1,163 @@
+# =====================================================================
+# 🏗️ BUILD PIPELINE WORKFLOW
+# =====================================================================
+name: 🏗️ Build Pipeline
+
+# ---------------------------------------------------------------------
+# 📋 WORKFLOW TRIGGERS
+# ---------------------------------------------------------------------
+on:
+  push: # 📤 When we push changes
+    branches: # 🌿 Only for these branches
+      - master
+      - develop
+      - bugfix/*
+      - hotfix/*
+      - release/*
+    paths-ignore: # 🚫 Ignoring markdown file changes
+      - "**/*.md"
+  pull_request: # 🔄 Also on pull request events
+  workflow_dispatch: # 👆 Manual trigger from Actions tab
+
+# ---------------------------------------------------------------------
+# 🌍 ENVIRONMENT VARIABLES
+# ---------------------------------------------------------------------
+env:
+  FOUNDRY_PROFILE: ci
+
+# ---------------------------------------------------------------------
+# 💼 JOBS
+# ---------------------------------------------------------------------
+jobs:
+  # ✅ INITIAL CHECK JOB
+  # -------------------------------------------------------------
+  check:
+    name: ✅ State Verifier
+    runs-on: ubuntu-latest
+    outputs:
+      skip_ci: ${{ steps.check_initial_commit.outputs.skip_ci }}
+    steps:
+      - name: 📥 Checking out repository code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+
+      - name: 🔍 Check Initial Commit
+        id: check_initial_commit
+        run: |
+          # Use a git command to count the number of revisions
+          # If the count is 1, then this is the initial commit
+          if [ "$(git rev-list --count HEAD)" -eq 1 ]; then
+            echo "This is the initial commit."
+            # Set the environment variable "skip_ci" to true, signifying CI should not run for the initial commit
+            echo "skip_ci=true" >> $GITHUB_OUTPUT
+          else
+            # If the count is not 1, this is not the initial commit
+            # Set the environment variable "skip_ci" to false, signifying CI should run
+            echo "skip_ci=false" >> $GITHUB_OUTPUT
+          fi
+
+  # 🏗️ BUILD AND TEST JOB
+  # -------------------------------------------------------------
+  build:
+    name: 🏗️ Build & Test
+    if: needs.check.outputs.skip_ci != 'true'
+    runs-on: ubuntu-latest
+    needs: [check]
+    timeout-minutes: 20
+
+    steps:
+      - name: 🔐 Force HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: 📥 Checking out repository code
+        uses: actions/checkout@v4.2.2
+
+      # 🛠️ SETUP ENVIRONMENT
+      - name: 🔧 Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1.4.0
+        with:
+          version: nightly
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          run_install: false
+
+      - name: 🟢 Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+          node-version-file: 'package.json'
+
+      # 📚 DEPENDENCIES
+      - name: 📚 Install dependencies
+        run: pnpm install
+
+      # 🏗️ BUILD
+      - name: 🏗️ Build the apps and packages
+        run: pnpm run build
+
+      # 🧪 TEST
+      - name: 🧪 Execute tests
+        run: pnpm run test
+
+  # 📦 RELEASE JOB
+  # -------------------------------------------------------------
+  release:
+    name: 📦 Create Release
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: ${{ github.ref_name == 'master' }}
+    permissions:
+      contents: write
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+
+      - name: 📝 Generate changelog
+        uses: orhun/git-cliff-action@v4.4.2
+        id: git-cliff
+        with:
+          config: cliff.toml # Configuration file for git-cliff
+          args: -vv --latest --strip all # Verbose output, latest changes, strip unnecessary details
+        env:
+          OUTPUT: CHANGES.md # Output file for the changelog
+
+      - name: 🏷️ Set release info
+        id: release
+        shell: bash
+        run: |
+          version=$(jq -r '.version' package.json)
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+          # Read contents of changelog into variable 'changelog_content'
+          changelog=$(cat ${{ steps.git-cliff.outputs.changelog }})
+          # Remove first two lines from 'changelog'
+          changelog="$(printf "$changelog" | tail -n +3)"
+          # Save the value of 'changelog' back into the GitHub environment output
+          {
+              echo "notes<<EOF"
+              echo "$changelog"
+              echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: 🚀 Create the release
+        uses: nekofar/create-github-release@v1.0.14
+        with:
+          tag: v${{ steps.release.outputs.version }}
+          title: v${{ steps.release.outputs.version }}
+          notes: ${{ steps.release.outputs.notes }}
+          draft: true # Release will be created as a draft
+          prerelease: ${{ contains(steps.release.outputs.version, '-rc') || contains(steps.release.outputs.version, '-beta') || contains(steps.release.outputs.version, '-alpha') }}
+
+# ---------------------------------------------------------------------
+# 🔄 CONCURRENCY CONTROL
+# ---------------------------------------------------------------------
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true # Cancels previous runs for same group-key
