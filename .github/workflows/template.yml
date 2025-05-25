@@ -25,22 +25,29 @@ jobs:
 
     steps:
       # 📥 CHECKOUT
-      - name: 📥 Checkout code
+      - name: 📥 Checkout repository code
         uses: actions/checkout@v4.2.2
 
       # 🛠️ SETUP ENVIRONMENT
-      - name: 🟢 Set up Node.js environment
-        uses: actions/setup-node@v4.4.0
-
       - name: 🔧 Install Foundry
         uses: foundry-rs/foundry-toolchain@v1.4.0
         with:
           version: nightly
 
-      - name: 📦 Install pnpm package manager
+      - name: 📦 Install pnpm
         uses: pnpm/action-setup@v4.1.0
         with:
           run_install: false
+
+      - name: 🟢 Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+          node-version-file: "package.json"
+
+      # 📚 DEPENDENCIES
+      - name: 📚 Install dependencies
+        run: pnpm install
 
       # 🧹 CLEANUP
       - name: 🧹 Clean up the repository
