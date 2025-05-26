@@ -2,7 +2,7 @@
 pragma solidity ^0.8.29;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
@@ -12,7 +12,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IEnsMapper } from "./interfaces/IEnsMapper.sol";
 import { IEnsMapperV2 } from "./interfaces/IEnsMapperV2.sol";
 
-contract EnsMapperV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, IEnsMapperV2 {
+contract EnsMapperV2 is Initializable, Ownable2StepUpgradeable, UUPSUpgradeable, IEnsMapperV2 {
   ENS public ens;
   INameWrapper public nameWrapper;
   IERC721 public nft;
@@ -31,6 +31,7 @@ contract EnsMapperV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, IEns
   }
 
   function initialize(
+    address initialOwner,
     address ensAddress,
     address nameWrapperAddress,
     address nftAddress,
@@ -38,7 +39,7 @@ contract EnsMapperV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, IEns
     string memory label,
     bytes32 parentNode
   ) external initializer {
-    __Ownable_init();
+    __Ownable_init(initialOwner);
     __UUPSUpgradeable_init();
 
     ens = ENS(ensAddress);
