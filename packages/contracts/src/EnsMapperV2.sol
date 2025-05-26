@@ -20,6 +20,9 @@ contract EnsMapperV2 is
   ReentrancyGuardUpgradeable,
   IEnsMapperV2
 {
+  // Custom error for unexpected node returned from nameWrapper
+  error UnexpectedNodeReturned();
+
   ENS public ens;
   INameWrapper public nameWrapper;
   IERC721 public nft;
@@ -81,8 +84,11 @@ contract EnsMapperV2 is
     nodeToTokenId[node] = tokenId;
     nodeToLabel[node] = label;
 
-    // Make external call after state update
-    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
+    // Make external call after state update and capture the return value
+    bytes32 createdNode = nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
+
+    // Verify the returned node matches our calculated node
+    if (createdNode != node) revert UnexpectedNodeReturned();
 
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
@@ -111,8 +117,11 @@ contract EnsMapperV2 is
     nodeToTokenId[newNode] = tokenId;
     nodeToLabel[newNode] = label;
 
-    // Make external call after state update
-    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
+    // Make external call after state update and store the return value
+    bytes32 createdNode = nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
+
+    // Verify the returned node matches our expected node
+    if (createdNode != newNode) revert UnexpectedNodeReturned();
 
     emit SubdomainMigrated(msg.sender, tokenId, label);
     emit RegisterSubdomain(msg.sender, tokenId, label);
