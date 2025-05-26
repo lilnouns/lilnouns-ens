@@ -46,21 +46,26 @@ contract EnsMapperV2 is
     address nameWrapperAddress,
     address nftAddress,
     address oldMapperAddress,
-    string memory label,
+    string calldata label,
     bytes32 parentNode
   ) external initializer {
+    // Validate inputs before state changes to save gas on revert
+    if (
+      initialOwner == address(0) ||
+      ensAddress == address(0) ||
+      nameWrapperAddress == address(0) ||
+      nftAddress == address(0) ||
+      oldMapperAddress == address(0)
+    ) revert ZeroAddressNotAllowed();
+    if (bytes(label).length == 0) revert EmptyLabelNotAllowed();
+    if (parentNode == bytes32(0)) revert ZeroParentNodeNotAllowed();
+
+    // Initialize OpenZeppelin upgradeable contracts
     __Ownable_init(initialOwner);
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
 
-    if (initialOwner == address(0)) revert ZeroAddressNotAllowed();
-    if (ensAddress == address(0)) revert ZeroAddressNotAllowed();
-    if (nameWrapperAddress == address(0)) revert ZeroAddressNotAllowed();
-    if (nftAddress == address(0)) revert ZeroAddressNotAllowed();
-    if (oldMapperAddress == address(0)) revert ZeroAddressNotAllowed();
-    if (bytes(label).length == 0) revert EmptyLabelNotAllowed();
-    if (parentNode == bytes32(0)) revert ZeroParentNodeNotAllowed();
-
+    // Set state variables
     ens = ENS(ensAddress);
     nameWrapper = INameWrapper(nameWrapperAddress);
     nft = IERC721(nftAddress);
@@ -70,13 +75,16 @@ contract EnsMapperV2 is
   }
 
   function registerWrappedSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
-    if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
+    // Validate input parameters first
     if (bytes(label).length == 0) revert InvalidLabel();
+    if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
+    if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyRegistered();
 
+    // Calculate hashes
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(domainHash, labelHash));
 
-    if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyRegistered();
+    // Check for existing ENS record
     if (ens.owner(node) != address(0)) revert RecordExists();
 
     // Update state before external call
@@ -84,45 +92,45 @@ contract EnsMapperV2 is
     nodeToTokenId[node] = tokenId;
     nodeToLabel[node] = label;
 
-    // Make external call after state update and capture the return value
+    // Make external call after state update and verify return value
     bytes32 createdNode = nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
-
-    // Verify the returned node matches our calculated node
     if (createdNode != node) revert UnexpectedNodeReturned();
 
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
 
   function claimAndWrapLegacySubdomain(uint256 tokenId) external nonReentrant {
+    // Check ownership first
     if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
+    if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyMigrated();
 
+    // Get legacy data
     bytes32 oldNode = old.tokenHashmap(tokenId);
     if (oldNode == bytes32(0)) revert NoOldNode();
 
     string memory label = old.hashToDomainMap(oldNode);
     if (bytes(label).length == 0) revert InvalidLabel();
 
+    // Calculate new node
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 newNode = keccak256(abi.encodePacked(domainHash, labelHash));
 
-    if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyMigrated();
-
+    // Check if domain is reclaimable
     address currentEnsOwner = ens.owner(newNode);
     if (currentEnsOwner != address(0) && currentEnsOwner != msg.sender) {
       revert SubdomainNotReclaimable();
     }
 
-    // Update state before external call
+    // Update state in a single code block
     tokenIdToNode[tokenId] = newNode;
     nodeToTokenId[newNode] = tokenId;
     nodeToLabel[newNode] = label;
 
-    // Make external call after state update and store the return value
+    // Make external call and verify return value
     bytes32 createdNode = nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
-
-    // Verify the returned node matches our expected node
     if (createdNode != newNode) revert UnexpectedNodeReturned();
 
+    // Emit events
     emit SubdomainMigrated(msg.sender, tokenId, label);
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
@@ -130,18 +138,29 @@ contract EnsMapperV2 is
   function getTokenDomain(uint256 tokenId) external view returns (string memory) {
     bytes32 node = tokenIdToNode[tokenId];
     if (node == bytes32(0)) revert NotRegistered();
-    return string(abi.encodePacked(nodeToLabel[node], ".", domainLabel, ".eth"));
+
+    string memory label = nodeToLabel[node];
+    return string(abi.encodePacked(label, ".", domainLabel, ".eth"));
   }
 
   function getTokensDomains(uint256[] calldata tokenIds) external view returns (string[] memory domains) {
     uint256 len = tokenIds.length;
     domains = new string[](len);
-    for (uint256 i = 0; i < len; ++i) {
+
+    // Cache the domain suffix to avoid repeated string operations
+    string memory suffix = string(abi.encodePacked(".", domainLabel, ".eth"));
+
+    for (uint256 i = 0; i < len; ) {
       bytes32 node = tokenIdToNode[tokenIds[i]];
       if (node == bytes32(0)) {
         domains[i] = ""; // Empty string for unregistered tokens
       } else {
-        domains[i] = string(abi.encodePacked(nodeToLabel[node], ".", domainLabel, ".eth"));
+        domains[i] = string(abi.encodePacked(nodeToLabel[node], suffix));
+      }
+
+      // Use unchecked to save gas on increment as it cannot overflow
+      unchecked {
+        ++i;
       }
     }
   }
