@@ -4,6 +4,7 @@ pragma solidity ^0.8.29;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
 import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
@@ -12,7 +13,13 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IEnsMapper } from "./interfaces/IEnsMapper.sol";
 import { IEnsMapperV2 } from "./interfaces/IEnsMapperV2.sol";
 
-contract EnsMapperV2 is Initializable, Ownable2StepUpgradeable, UUPSUpgradeable, IEnsMapperV2 {
+contract EnsMapperV2 is
+  Initializable,
+  Ownable2StepUpgradeable,
+  UUPSUpgradeable,
+  ReentrancyGuardUpgradeable,
+  IEnsMapperV2
+{
   ENS public ens;
   INameWrapper public nameWrapper;
   IERC721 public nft;
@@ -50,7 +57,7 @@ contract EnsMapperV2 is Initializable, Ownable2StepUpgradeable, UUPSUpgradeable,
     domainHash = parentNode;
   }
 
-  function registerWrappedSubdomain(string calldata label, uint256 tokenId) external {
+  function registerWrappedSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
 
     bytes32 labelHash = keccak256(abi.encodePacked(label));
@@ -68,7 +75,7 @@ contract EnsMapperV2 is Initializable, Ownable2StepUpgradeable, UUPSUpgradeable,
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
 
-  function claimAndWrapLegacySubdomain(uint256 tokenId) external {
+  function claimAndWrapLegacySubdomain(uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
 
     bytes32 oldNode = old.tokenHashmap(tokenId);
@@ -83,7 +90,9 @@ contract EnsMapperV2 is Initializable, Ownable2StepUpgradeable, UUPSUpgradeable,
     if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyMigrated();
 
     address currentEnsOwner = ens.owner(newNode);
-    if (currentEnsOwner != address(0) && currentEnsOwner != msg.sender) revert SubdomainNotReclaimable();
+    if (currentEnsOwner != address(0) && currentEnsOwner != msg.sender) {
+      revert SubdomainNotReclaimable();
+    }
 
     nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
 
