@@ -13,6 +13,10 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IEnsMapper } from "./interfaces/IEnsMapper.sol";
 import { IEnsMapperV2 } from "./interfaces/IEnsMapperV2.sol";
 
+/// @title ENS Mapper V2
+/// @notice Maps NFT token IDs to ENS subdomains and vice versa
+/// @dev Implements IEnsMapperV2 interface and provides functionality for managing ENS subdomains
+///      Uses ENS NameWrapper for subdomain management and supports migration from legacy ENS Mapper
 contract EnsMapperV2 is
   Initializable,
   Ownable2StepUpgradeable,
@@ -20,26 +24,48 @@ contract EnsMapperV2 is
   ReentrancyGuardUpgradeable,
   IEnsMapperV2
 {
-  // Custom error for unexpected node returned from nameWrapper
-  error UnexpectedNodeReturned();
-
+  /// @notice ENS registry contract
   ENS public ens;
+
+  /// @notice ENS NameWrapper contract
   INameWrapper public nameWrapper;
+
+  /// @notice NFT contract whose tokens are mapped to domains
   IERC721 public nft;
+
+  /// @notice Legacy ENS Mapper contract
   IEnsMapper public old;
 
+  /// @notice Base domain label (e.g., "lilnouns")
   string public domainLabel;
+
+  /// @notice Namehash of the parent domain
   bytes32 public domainHash;
 
+  /// @notice Mapping from ENS node to token ID
   mapping(bytes32 => uint256) public nodeToTokenId;
+
+  /// @notice Mapping from token ID to ENS node
   mapping(uint256 => bytes32) public tokenIdToNode;
+
+  /// @notice Mapping from ENS node to label
   mapping(bytes32 => string) public nodeToLabel;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
+  /// @notice Constructor that disables initializers to prevent implementation contract initialization
   constructor() {
     _disableInitializers();
   }
 
+  /// @notice Initializes the contract with required parameters
+  /// @dev This function replaces the constructor for upgradeable contracts
+  /// @param initialOwner Address of the initial owner of the contract
+  /// @param ensAddress Address of the ENS registry contract
+  /// @param nameWrapperAddress Address of the ENS NameWrapper contract
+  /// @param nftAddress Address of the NFT contract
+  /// @param oldMapperAddress Address of the legacy ENS Mapper contract
+  /// @param label Base domain label (e.g., "lilnouns")
+  /// @param parentNode Namehash of the parent domain
   function initialize(
     address initialOwner,
     address ensAddress,
@@ -74,6 +100,10 @@ contract EnsMapperV2 is
     domainHash = parentNode;
   }
 
+  /// @notice Registers a new wrapped subdomain for a token
+  /// @dev Associates a token ID with an ENS subdomain and wraps it using ENS NameWrapper
+  /// @param label The subdomain label to register
+  /// @param tokenId The token ID to associate with the subdomain
   function registerWrappedSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
     // Validate input parameters first
     if (bytes(label).length == 0) revert InvalidLabel();
@@ -99,6 +129,9 @@ contract EnsMapperV2 is
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
 
+  /// @notice Claims and wraps a legacy subdomain for a token
+  /// @dev Migrates a subdomain from the legacy ENS Mapper to this contract
+  /// @param tokenId The token ID associated with the legacy subdomain
   function claimAndWrapLegacySubdomain(uint256 tokenId) external nonReentrant {
     // Check ownership first
     if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
@@ -135,6 +168,10 @@ contract EnsMapperV2 is
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
 
+  /// @notice Gets the full domain name for a token
+  /// @dev Constructs the full domain name from the subdomain label, domain label, and ".eth"
+  /// @param tokenId The token ID to get the domain for
+  /// @return The full domain name (e.g., "subdomain.lilnouns.eth")
   function getTokenDomain(uint256 tokenId) external view returns (string memory) {
     bytes32 node = tokenIdToNode[tokenId];
     if (node == bytes32(0)) revert NotRegistered();
@@ -143,6 +180,10 @@ contract EnsMapperV2 is
     return string(abi.encodePacked(label, ".", domainLabel, ".eth"));
   }
 
+  /// @notice Gets the full domain names for multiple tokens
+  /// @dev Batch version of getTokenDomain to reduce gas costs for multiple lookups
+  /// @param tokenIds Array of token IDs to get domains for
+  /// @return domains Array of domain names corresponding to the token IDs
   function getTokensDomains(uint256[] calldata tokenIds) external view returns (string[] memory domains) {
     uint256 len = tokenIds.length;
     domains = new string[](len);
@@ -165,5 +206,8 @@ contract EnsMapperV2 is
     }
   }
 
+  /// @notice Authorizes an upgrade to a new implementation
+  /// @dev Required by UUPSUpgradeable contract
+  /// @param newImplementation Address of the new implementation contract
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
