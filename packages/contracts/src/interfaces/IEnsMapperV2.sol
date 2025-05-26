@@ -24,4 +24,7 @@ interface IEnsMapperV2 {
   error AlreadyMigrated();
   error SubdomainNotReclaimable();
   error NotRegistered();
+  error ZeroAddressNotAllowed();
+  error EmptyLabelNotAllowed();
+  error ZeroParentNodeNotAllowed();
 }
