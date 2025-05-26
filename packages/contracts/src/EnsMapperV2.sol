@@ -48,6 +48,15 @@ contract EnsMapperV2 is
   ) external initializer {
     __Ownable_init(initialOwner);
     __UUPSUpgradeable_init();
+    __ReentrancyGuard_init();
+
+    if (initialOwner == address(0)) revert ZeroAddressNotAllowed();
+    if (ensAddress == address(0)) revert ZeroAddressNotAllowed();
+    if (nameWrapperAddress == address(0)) revert ZeroAddressNotAllowed();
+    if (nftAddress == address(0)) revert ZeroAddressNotAllowed();
+    if (oldMapperAddress == address(0)) revert ZeroAddressNotAllowed();
+    if (bytes(label).length == 0) revert EmptyLabelNotAllowed();
+    if (parentNode == bytes32(0)) revert ZeroParentNodeNotAllowed();
 
     ens = ENS(ensAddress);
     nameWrapper = INameWrapper(nameWrapperAddress);
@@ -59,6 +68,7 @@ contract EnsMapperV2 is
 
   function registerWrappedSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
+    if (bytes(label).length == 0) revert InvalidLabel();
 
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(domainHash, labelHash));
@@ -66,11 +76,13 @@ contract EnsMapperV2 is
     if (tokenIdToNode[tokenId] != bytes32(0)) revert AlreadyRegistered();
     if (ens.owner(node) != address(0)) revert RecordExists();
 
-    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
-
+    // Update state before external call
     tokenIdToNode[tokenId] = node;
     nodeToTokenId[node] = tokenId;
     nodeToLabel[node] = label;
+
+    // Make external call after state update
+    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
 
     emit RegisterSubdomain(msg.sender, tokenId, label);
   }
@@ -94,11 +106,13 @@ contract EnsMapperV2 is
       revert SubdomainNotReclaimable();
     }
 
-    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
-
+    // Update state before external call
     tokenIdToNode[tokenId] = newNode;
     nodeToTokenId[newNode] = tokenId;
     nodeToLabel[newNode] = label;
+
+    // Make external call after state update
+    nameWrapper.setSubnodeOwner(domainHash, label, msg.sender, 0, type(uint64).max);
 
     emit SubdomainMigrated(msg.sender, tokenId, label);
     emit RegisterSubdomain(msg.sender, tokenId, label);
@@ -115,7 +129,11 @@ contract EnsMapperV2 is
     domains = new string[](len);
     for (uint256 i = 0; i < len; ++i) {
       bytes32 node = tokenIdToNode[tokenIds[i]];
-      domains[i] = string(abi.encodePacked(nodeToLabel[node], ".", domainLabel, ".eth"));
+      if (node == bytes32(0)) {
+        domains[i] = ""; // Empty string for unregistered tokens
+      } else {
+        domains[i] = string(abi.encodePacked(nodeToLabel[node], ".", domainLabel, ".eth"));
+      }
     }
   }
 
