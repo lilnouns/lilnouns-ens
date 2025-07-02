@@ -1,6 +1,6 @@
 {
   "name": "lilnouns-ens",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "private": true,
   "description": "A template for create dApps using Vite",
   "keywords": [],
@@ -16,12 +16,14 @@
   },
   "resolutions": {
     "base-x": ">=3.0.11",
+    "brace-expansion": ">=2.0.2",
     "cookie": ">=0.7.0",
     "debug": ">=3.2.7",
     "elliptic": ">=6.6.1",
     "eth-gas-reporter": ">=0.2.26",
     "flat": ">=5.0.1",
     "minimatch": ">=3.0.5",
+    "pbkdf2": ">=3.1.3",
     "request": ">=2.88.2",
     "tough-cookie": ">=4.1.3",
     "word-wrap": ">=1.2.4",
