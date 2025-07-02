@@ -1,3 +1,7 @@
+@ensdomains/ens-contracts/=node_modules/@ensdomains/ens-contracts/contracts/
+@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+@openzeppelin/foundry-upgrades/=node_modules/@openzeppelin/foundry-upgrades/src/
 forge-std/=node_modules/forge-std/src/
 ds-test/=node_modules/ds-test/src/
 solidity-stringutils/=node_modules/solidity-stringutils/
