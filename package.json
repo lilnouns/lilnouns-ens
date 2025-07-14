@@ -1,6 +1,6 @@
 {
   "name": "lilnouns-ens",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "private": true,
   "description": "A template for create dApps using Vite",
   "keywords": [],
@@ -32,12 +32,12 @@
   "devDependencies": {
     "husky": "9.1.7",
     "lint-staged": "16.1.2",
-    "prettier": "3.5.3",
+    "prettier": "3.6.2",
     "prettier-plugin-packagejson": "2.5.18",
     "prettier-plugin-solidity": "2.0.0",
     "prettier-plugin-toml": "2.0.6",
-    "prettier-plugin-tailwindcss": "0.6.11",
-    "turbo": "2.5.3"
+    "prettier-plugin-tailwindcss": "0.6.14",
+    "turbo": "2.5.4"
   },
   "packageManager": "pnpm@10.10.0",
   "engines": {
