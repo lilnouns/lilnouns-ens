@@ -53,7 +53,7 @@
     "@types/node": "24.0.13",
     "chai": "5.2.1",
     "ethers": "6.15.0",
-    "hardhat": "2.25.0",
+    "hardhat": "2.26.1",
     "solhint": "6.0.0",
     "ts-node": "10.9.2",
     "typechain": "8.3.2",
