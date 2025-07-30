@@ -1,3 +1,12 @@
+saveExact: true
+engineStrict: true
+enablePrePostScripts: true
+
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - core-js-pure
+  - unrs-resolver
