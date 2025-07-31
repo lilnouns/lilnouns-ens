@@ -61,7 +61,7 @@ commit_parsers = [
   { message = "^style", group = "Styling" },
   { message = "^test", group = "<!-- 03 -->Testing" },
   { message = "^chore\\(release\\): prepare for", skip = true },
-  { message = "^chore\\(deps(?:-dev)?\\)", skip = true },
+  { message = "^chore|^ci|^revert\\(deps(?:-dev)?\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
   { message = "^ci\\(deps\\)", skip = true },
