@@ -1,5 +1,4 @@
 {
-  "name": "vite-dapp-template",
   "private": true,
   "description": "A template for create smart contracts using Foundry and Hardhat.",
   "keywords": [],
