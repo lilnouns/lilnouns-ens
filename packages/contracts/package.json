@@ -1,4 +1,5 @@
 {
+  "name": "@repo/contracts",
   "private": true,
   "description": "A template for create smart contracts using Foundry and Hardhat.",
   "keywords": [],
