@@ -1,14 +1,15 @@
-saveExact: true
-engineStrict: true
-enablePrePostScripts: true
-
 packages:
   - apps/*
   - packages/*
-
+enablePrePostScripts: true
+engineStrict: true
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
+  - bufferutil
   - core-js-pure
+  - esbuild
+  - keccak
+  - secp256k1
   - unrs-resolver
-
-nodeLinker: hoisted
+  - utf-8-validate
+saveExact: true
