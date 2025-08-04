@@ -3,7 +3,6 @@ packages:
   - packages/*
 enablePrePostScripts: true
 engineStrict: true
-nodeLinker: hoisted
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - bufferutil
