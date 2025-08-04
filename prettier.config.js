@@ -1,0 +1,21 @@
+export default {
+  plugins: [
+    "prettier-plugin-solidity",
+    "prettier-plugin-packagejson",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-toml",
+  ],
+  overrides: [
+    {
+      files: "*.sol",
+      options: {
+        parser: "slang",
+        printWidth: 120,
+        tabWidth: 2,
+        useTabs: false,
+        singleQuote: false,
+        bracketSpacing: true,
+      },
+    },
+  ],
+};
