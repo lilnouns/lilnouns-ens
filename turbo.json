@@ -16,7 +16,7 @@
     "VERCEL",
     "GITHUB_ACTIONS"
   ],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": [
@@ -37,8 +37,7 @@
         "artifacts/**",
         "cache/**",
         "typechain-types/**"
-      ],
-      "outputMode": "hash-only"
+      ]
     },
     "build:forge": {
       "inputs": [
@@ -52,8 +51,7 @@
       "outputs": [
         "out/**",
         "cache/**"
-      ],
-      "outputMode": "hash-only"
+      ]
     },
     "build:hardhat": {
       "inputs": [
@@ -67,8 +65,7 @@
         "artifacts/**",
         "cache/**",
         "typechain-types/**"
-      ],
-      "outputMode": "hash-only"
+      ]
     },
     "lint": {
       "dependsOn": ["^build"],
@@ -78,8 +75,7 @@
         ".solhint.json",
         "prettier.config.js"
       ],
-      "outputs": [],
-      "outputMode": "new-only"
+      "outputs": []
     },
     "lint:solhint": {
       "inputs": [
@@ -88,8 +84,7 @@
         "script/**/*.sol",
         ".solhint.json"
       ],
-      "outputs": [],
-      "outputMode": "new-only"
+      "outputs": []
     },
     "lint:eslint": {
       "inputs": [
@@ -98,8 +93,7 @@
         "scripts/**/*.{ts,tsx,js,jsx}",
         ".eslintrc*"
       ],
-      "outputs": [],
-      "outputMode": "new-only"
+      "outputs": []
     },
     "test": {
       "dependsOn": ["build"],
@@ -111,8 +105,7 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "test:forge": {
       "dependsOn": ["build:forge"],
@@ -126,8 +119,7 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "test:hardhat": {
       "dependsOn": ["build:hardhat"],
@@ -141,8 +133,7 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "coverage": {
       "dependsOn": ["test"],
@@ -154,8 +145,7 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "coverage:forge": {
       "dependsOn": ["build:forge"],
@@ -169,8 +159,7 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "coverage:hardhat": {
       "dependsOn": ["build:hardhat"],
@@ -184,24 +173,21 @@
       "outputs": [
         "coverage/**",
         "lcov.info"
-      ],
-      "outputMode": "full"
+      ]
     },
     "format": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "prettier.config.js"
       ],
-      "outputs": [],
-      "outputMode": "new-only"
+      "outputs": []
     },
     "format:check": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "prettier.config.js"
       ],
-      "outputs": [],
-      "outputMode": "new-only"
+      "outputs": []
     },
     "clean": {
       "inputs": [],
