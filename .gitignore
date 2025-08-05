@@ -131,3 +131,5 @@ dist
 # Turborepo task cache
 .turbo
 
+# AI guides and docs
+/docs/tasks.md
