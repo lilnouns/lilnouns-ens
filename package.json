@@ -2,17 +2,21 @@
   "name": "lilnouns-ens",
   "version": "1.0.0-alpha.9",
   "private": true,
-  "description": "A template for create dApps using Vite",
+  "description": "LilNouns ENS domain mapping service with upgradeable smart contracts",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "Milad Nekofar <milad@nekofar.com>",
   "scripts": {
     "build": "turbo run build",
+    "build:contracts": "turbo run build --filter=@lilnouns-ens/contracts",
+    "coverage": "turbo run coverage",
+    "coverage:contracts": "turbo run coverage --filter=@lilnouns-ens/contracts",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md,sol}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,sol}\"",
     "lint": "turbo run lint",
-    "prepare": "husky",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "analyze:sizes": "bash scripts/analyze-sizes.sh"
   },
   "resolutions": {
     "base-x": ">=3.0.11",

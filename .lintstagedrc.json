@@ -1,6 +1,35 @@
 {
   "*.sol": [
     "forge fmt",
-    "prettier --write"
+    "prettier --write",
+    "cd packages/contracts && pnpm lint:solhint",
+    "git add"
+  ],
+  "*.{ts,tsx}": [
+    "prettier --write",
+    "eslint --fix --max-warnings=0",
+    "bash -c 'cd packages/contracts && npx tsc --noEmit --skipLibCheck'",
+    "git add"
+  ],
+  "*.{js,jsx}": [
+    "prettier --write",
+    "eslint --fix --max-warnings=0",
+    "git add"
+  ],
+  "*.{json,md,yml,yaml}": [
+    "prettier --write",
+    "git add"
+  ],
+  "*.toml": [
+    "prettier --write",
+    "git add"
+  ],
+  "packages/contracts/src/**/*.sol": [
+    "cd packages/contracts && forge build --sizes",
+    "cd packages/contracts && command -v slither >/dev/null 2>&1 && slither . --exclude-dependencies || echo 'Slither not available, skipping security analysis'"
+  ],
+  "packages/contracts/test/**/*.{sol,ts}": [
+    "cd packages/contracts && pnpm test:forge",
+    "cd packages/contracts && pnpm test:hardhat"
   ]
 }

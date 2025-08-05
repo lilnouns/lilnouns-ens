@@ -10,7 +10,6 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
 import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
 
 /**
@@ -88,9 +87,6 @@ contract LilNounsEnsMapperV2 is
 
   /* ───────────── constants ───────────── */
 
-  /// @notice The main ENS registry contract on Ethereum mainnet
-  ENS internal constant ENS_REG = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
-
   /// @notice The LilNouns NFT contract address
   IERC721 internal constant NFT = IERC721(0x4b10701Bfd7BFEdc47d50562b76b436fbB5BdB3B);
 
@@ -152,6 +148,56 @@ contract LilNounsEnsMapperV2 is
    */
   event RegisterSubdomain(address indexed registrar, uint256 indexed tokenId, string indexed label);
 
+  /**
+   * @notice Emitted when a text record is updated for an ENS node
+   * @param node The ENS node hash that was updated
+   * @param key The text record key that was updated
+   * @param value The new value for the text record
+   * @param updatedBy The address that performed the update
+   */
+  event TextChanged(bytes32 indexed node, string indexed key, string value, address indexed updatedBy);
+
+  /**
+   * @notice Emitted when legacy domain data is imported from V1 mapper
+   * @param tokenId The token ID that was imported
+   * @param node The ENS node hash for the imported domain
+   * @param label The domain label that was imported
+   * @param importedBy The address that performed the import
+   */
+  event LegacyImported(uint256 indexed tokenId, bytes32 indexed node, string label, address indexed importedBy);
+
+  /**
+   * @notice Emitted when multiple address records are updated in batch
+   * @param tokenIds Array of token IDs that were updated
+   * @param updatedBy The address that performed the batch update
+   * @param count The number of addresses updated
+   */
+  event BatchAddressesUpdated(uint256[] tokenIds, address indexed updatedBy, uint256 count);
+
+  /**
+   * @notice Emitted when the contract is paused
+   * @param account The address that paused the contract
+   */
+  event ContractPaused(address indexed account);
+
+  /**
+   * @notice Emitted when the contract is unpaused
+   * @param account The address that unpaused the contract
+   */
+  event ContractUnpaused(address indexed account);
+
+  /**
+   * @notice Emitted when the contract is upgraded to a new implementation
+   * @param previousImplementation The address of the previous implementation
+   * @param newImplementation The address of the new implementation
+   * @param upgradedBy The address that performed the upgrade
+   */
+  event ContractUpgraded(
+    address indexed previousImplementation,
+    address indexed newImplementation,
+    address indexed upgradedBy
+  );
+
   /* ───────────── modifiers ───────────── */
 
   /**
@@ -177,12 +223,12 @@ contract LilNounsEnsMapperV2 is
 
   /**
    * @notice Initializes the contract with the legacy mapper address
-   * @param _legacy Address of the legacy LilNounsEnsMapperV1 contract
+   * @param legacyAddress Address of the legacy LilNounsEnsMapperV1 contract
    * @dev This function can only be called once during deployment
    *      Initializes all parent contracts in the correct inheritance order
    * @custom:initializer
    */
-  function initialize(address _legacy) external initializer {
+  function initialize(address legacyAddress) external initializer {
     // Initialize parent contracts in inheritance order
     __Pausable_init();
     __Ownable_init(msg.sender);
@@ -190,8 +236,8 @@ contract LilNounsEnsMapperV2 is
     __UUPSUpgradeable_init();
     // Note: ERC1155HolderUpgradeable doesn't have an initializer
 
-    if (_legacy == address(0)) revert InvalidLegacyAddress();
-    legacy = ILilNounsEnsMapperV1(_legacy);
+    if (legacyAddress == address(0)) revert InvalidLegacyAddress();
+    legacy = ILilNounsEnsMapperV1(legacyAddress);
   }
 
   /**
@@ -200,9 +246,22 @@ contract LilNounsEnsMapperV2 is
    * @dev Only the contract owner can authorize upgrades
    *      This function is intentionally minimal as per OpenZeppelin UUPS pattern
    */
+  // solhint-disable-next-line no-empty-blocks
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
     // Only owner can authorize upgrades - no additional logic needed
     // This function is intentionally empty as per OpenZeppelin UUPS pattern
+  }
+
+  /**
+   * @notice Overrides the upgrade function to emit ContractUpgraded event
+   * @param newImplementation The address of the new implementation
+   * @param data The initialization data for the upgrade
+   * @dev Emits ContractUpgraded event with previous and new implementation addresses
+   */
+  function _upgradeToAndCall(address newImplementation, bytes memory data) internal override {
+    address previousImplementation = _getImplementation();
+    super._upgradeToAndCall(newImplementation, data);
+    emit ContractUpgraded(previousImplementation, newImplementation, msg.sender);
   }
 
   /* ───────────── pause functionality ───────────── */
@@ -214,6 +273,7 @@ contract LilNounsEnsMapperV2 is
    */
   function pause() external onlyOwner {
     _pause();
+    emit ContractPaused(msg.sender);
   }
 
   /**
@@ -222,6 +282,7 @@ contract LilNounsEnsMapperV2 is
    */
   function unpause() external onlyOwner {
     _unpause();
+    emit ContractUnpaused(msg.sender);
   }
 
   /* ───────────── ERC‑165 support ───────────── */
@@ -374,9 +435,11 @@ contract LilNounsEnsMapperV2 is
    * @return out Array of full domain names corresponding to the input token IDs
    * @dev Batch version of getTokenDomain for gas efficiency
    *      Will revert if any token ID is not registered
+   *      WARNING: Contains external calls inside loop - consider gas limits for large arrays
    */
   function getTokensDomains(uint256[] calldata ids) external view returns (string[] memory out) {
     uint256 len = ids.length;
+    if (len > 100) revert EmptyArray(); // Reuse existing error for simplicity, prevents DoS
     out = new string[](len);
     for (uint256 i; i < len; ) {
       out[i] = getTokenDomain(ids[i]);
@@ -418,6 +481,7 @@ contract LilNounsEnsMapperV2 is
     if (bytes(key).length == 0) revert EmptyKey();
     if (keccak256(bytes(key)) == AVATAR_KEY_HASH) revert AvatarLocked();
     _texts[node][key] = value;
+    emit TextChanged(node, key, value, msg.sender);
   }
 
   /**
@@ -433,6 +497,7 @@ contract LilNounsEnsMapperV2 is
 
     string memory label = legacy.hashToDomainMap(oldNode);
     _claimInternal(label, tokenId);
+    emit LegacyImported(tokenId, oldNode, label, msg.sender);
   }
 
   /**
@@ -477,9 +542,10 @@ contract LilNounsEnsMapperV2 is
    * @dev Useful when NFTs are transferred and ENS records need to be updated
    *      Emits AddrChanged events for each updated token
    *      All token IDs must have associated domain registrations
+   *      WARNING: Contains external calls inside loop - consider gas limits for large arrays
    */
   function updateAddresses(uint256[] calldata ids) external whenNotPaused {
-    if (ids.length == 0) revert EmptyArray();
+    if (ids.length == 0 || ids.length > 50) revert EmptyArray(); // Limit array size to prevent DoS
     for (uint256 i; i < ids.length; ) {
       bytes32 node = tokenNode(ids[i]);
       if (node == bytes32(0)) revert UnregisteredToken();
@@ -488,5 +554,6 @@ contract LilNounsEnsMapperV2 is
         ++i;
       }
     }
+    emit BatchAddressesUpdated(ids, msg.sender, ids.length);
   }
 }

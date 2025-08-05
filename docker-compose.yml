@@ -1,0 +1,164 @@
+version: '3.8'
+
+services:
+  # Main development environment
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-dev
+    ports:
+      - "3000:3000"  # Web app
+      - "8545:8545"  # Hardhat node
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+      - foundry_cache:/root/.foundry
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true  # For file watching in Docker
+    networks:
+      - lilnouns-network
+    stdin_open: true
+    tty: true
+    command: pnpm dev
+
+  # Contracts development service
+  contracts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-contracts
+    working_dir: /app/packages/contracts
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+      - foundry_cache:/root/.foundry
+    environment:
+      - NODE_ENV=development
+    networks:
+      - lilnouns-network
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null  # Keep container running
+
+  # Local Ethereum node (Hardhat Network)
+  hardhat-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-hardhat-node
+    working_dir: /app/packages/contracts
+    ports:
+      - "8545:8545"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+    environment:
+      - NODE_ENV=development
+    networks:
+      - lilnouns-network
+    command: pnpm hardhat node --hostname 0.0.0.0
+
+  # Web application service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-web
+    working_dir: /app/apps/web
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - lilnouns-network
+    depends_on:
+      - hardhat-node
+    command: pnpm dev --host 0.0.0.0
+
+  # Testing service
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-test
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+      - foundry_cache:/root/.foundry
+    environment:
+      - NODE_ENV=test
+    networks:
+      - lilnouns-network
+    command: pnpm test
+
+  # Forge testing service
+  forge-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-forge-test
+    working_dir: /app/packages/contracts
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - foundry_cache:/root/.foundry
+    environment:
+      - NODE_ENV=test
+    networks:
+      - lilnouns-network
+    command: pnpm test:forge
+
+  # Hardhat testing service
+  hardhat-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-hardhat-test
+    working_dir: /app/packages/contracts
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+    environment:
+      - NODE_ENV=test
+    networks:
+      - lilnouns-network
+    command: pnpm test:hardhat
+
+  # Build service
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lilnouns-ens-build
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - pnpm_cache:/root/.local/share/pnpm
+      - foundry_cache:/root/.foundry
+    environment:
+      - NODE_ENV=production
+    networks:
+      - lilnouns-network
+    command: pnpm build
+
+networks:
+  lilnouns-network:
+    driver: bridge
+
+volumes:
+  node_modules:
+  pnpm_cache:
+  foundry_cache:

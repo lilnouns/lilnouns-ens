@@ -1,78 +1,181 @@
 version: 2
 updates:
-  # Maintain dependencies for GitHub Actions
-  - package-ecosystem: 'github-actions'
-    # Files stored in repository root
-    directory: '/'
-    # Check for updates every weekday
+  # Root package.json dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: "daily"
-      time: "00:00"
-      timezone: "UTC"
-    # Add assignees
-    assignees:
-      - 'nekofar'
-    # Include a list of updated dependencies
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
     commit-message:
-      prefix: 'ci'
-      include: 'scope'
-    # Specify labels for pull requests
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
     labels:
-      - 'dependencies'
-    # Allow up to 20 open pull requests for dependencies
-    open-pull-requests-limit: 20
-    # Add reviewers
-    reviewers:
-      - 'nekofar'
-    # Raise pull requests against the `develop` branch
-    target-branch: 'develop'
-
-  # Maintain dependencies for PNPM
-  - package-ecosystem: 'npm'
-    # Files stored in repository root
-    directory: '/'
-    # Check for updates every weekday
-    schedule:
-      interval: "daily"
-      time: "00:00"
-      timezone: "UTC"
-    # Add assignees
-    assignees:
-      - 'nekofar'
-    # Include a list of updated dependencies
-    commit-message:
-      prefix: 'chore'
-      include: 'scope'
-    # Specify labels for pull requests
-    labels:
-      - 'dependencies'
-    # Allow up to 10 open pull requests for dependencies
-    open-pull-requests-limit: 20
-    # Add reviewers
-    reviewers:
-      - 'nekofar'
-    # Raise pull requests against the `develop` branch
-    target-branch: 'develop'
-    # Create a group of dependencies to be updated together in one pull request
+      - "dependencies"
+      - "automated"
     groups:
-      eslint:
+      production-dependencies:
         patterns:
-          - 'eslint'
-          - '@typescript-eslint/eslint-plugin'
-          - '@typescript-eslint/parser'
-      react:
+          - "@openzeppelin/*"
+          - "@ensdomains/*"
+          - "ethers"
+          - "hardhat"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
         patterns:
-          - 'react'
-          - 'react-dom'
-          - '@types/react'
-          - '@types/react-dom'
-      wagmi:
+          - "@types/*"
+          - "eslint*"
+          - "prettier"
+          - "typescript"
+          - "chai"
+          - "mocha"
+        update-types:
+          - "minor"
+          - "patch"
+      turbo-dependencies:
         patterns:
-          - 'viem'
-          - 'wagmi'
-          - '@wagmi/*'
-    # List of packages to ignore for specific update types
+          - "turbo"
+          - "@turbo/*"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
-      - dependency-name: "*"
+      - dependency-name: "chai"
         update-types:
           - "version-update:semver-major"
+      - dependency-name: "@types/chai"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+
+  # Contracts package dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/contracts"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(contracts)"
+      prefix-development: "deps-dev(contracts)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "contracts"
+      - "automated"
+    groups:
+      smart-contract-dependencies:
+        patterns:
+          - "@openzeppelin/*"
+          - "@ensdomains/*"
+          - "ethers"
+        update-types:
+          - "patch"
+      hardhat-dependencies:
+        patterns:
+          - "hardhat*"
+          - "@nomicfoundation/*"
+          - "@nomiclabs/*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing-dependencies:
+        patterns:
+          - "chai"
+          - "mocha"
+          - "@types/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Web app dependencies
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(web)"
+      prefix-development: "deps-dev(web)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "web"
+      - "automated"
+    groups:
+      react-dependencies:
+        patterns:
+          - "react*"
+          - "@types/react*"
+        update-types:
+          - "minor"
+          - "patch"
+      wagmi-dependencies:
+        patterns:
+          - "viem"
+          - "wagmi"
+          - "@wagmi/*"
+        update-types:
+          - "minor"
+          - "patch"
+      build-dependencies:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # UI package dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/ui"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:30"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(ui)"
+      prefix-development: "deps-dev(ui)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ui"
+      - "automated"
+    groups:
+      ui-dependencies:
+        patterns:
+          - "react*"
+          - "@types/react*"
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"

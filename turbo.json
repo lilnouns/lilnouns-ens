@@ -1,21 +1,262 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "tasks": {
+  "globalDependencies": [
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    ".env*",
+    "tsconfig*.json",
+    "prettier.config.js",
+    ".lintstagedrc.json"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "VERCEL",
+    "GITHUB_ACTIONS"
+  ],
+  "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "tsconfig*.json",
+        "next.config.js",
+        "vite.config.ts",
+        "foundry.toml",
+        "hardhat.config.ts",
+        "remappings.txt"
+      ],
+      "outputs": [
+        "dist/**",
+        "build/**",
+        "out/**",
+        ".next/**",
+        "artifacts/**",
+        "cache/**",
+        "typechain-types/**"
+      ],
+      "outputMode": "hash-only"
+    },
+    "build:forge": {
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.sol",
+        "script/**/*.sol",
+        "foundry.toml",
+        "remappings.txt",
+        "lib/**"
+      ],
+      "outputs": [
+        "out/**",
+        "cache/**"
+      ],
+      "outputMode": "hash-only"
+    },
+    "build:hardhat": {
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.ts",
+        "scripts/**/*.ts",
+        "hardhat.config.ts",
+        "tsconfig.json"
+      ],
+      "outputs": [
+        "artifacts/**",
+        "cache/**",
+        "typechain-types/**"
+      ],
+      "outputMode": "hash-only"
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".eslintrc*",
+        ".solhint.json",
+        "prettier.config.js"
+      ],
+      "outputs": [],
+      "outputMode": "new-only"
+    },
+    "lint:solhint": {
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.sol",
+        "script/**/*.sol",
+        ".solhint.json"
+      ],
+      "outputs": [],
+      "outputMode": "new-only"
+    },
+    "lint:eslint": {
+      "inputs": [
+        "src/**/*.{ts,tsx,js,jsx}",
+        "test/**/*.{ts,tsx,js,jsx}",
+        "scripts/**/*.{ts,tsx,js,jsx}",
+        ".eslintrc*"
+      ],
+      "outputs": [],
+      "outputMode": "new-only"
     },
     "test": {
-      "dependsOn": ["^test"]
+      "dependsOn": ["build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "test/**",
+        ".env*"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "test:forge": {
+      "dependsOn": ["build:forge"],
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.sol",
+        "foundry.toml",
+        "remappings.txt",
+        "lib/**"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "test:hardhat": {
+      "dependsOn": ["build:hardhat"],
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.ts",
+        "hardhat.config.ts",
+        "tsconfig.json",
+        ".env*"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "coverage": {
+      "dependsOn": ["test"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "test/**",
+        ".env*"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "coverage:forge": {
+      "dependsOn": ["build:forge"],
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.sol",
+        "foundry.toml",
+        "remappings.txt",
+        "lib/**"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "coverage:hardhat": {
+      "dependsOn": ["build:hardhat"],
+      "inputs": [
+        "src/**/*.sol",
+        "test/**/*.ts",
+        "hardhat.config.ts",
+        "tsconfig.json",
+        ".env*"
+      ],
+      "outputs": [
+        "coverage/**",
+        "lcov.info"
+      ],
+      "outputMode": "full"
+    },
+    "format": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "prettier.config.js"
+      ],
+      "outputs": [],
+      "outputMode": "new-only"
+    },
+    "format:check": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "prettier.config.js"
+      ],
+      "outputs": [],
+      "outputMode": "new-only"
+    },
+    "clean": {
+      "inputs": [],
+      "outputs": [],
+      "cache": false
+    },
+    "clean:forge": {
+      "inputs": [],
+      "outputs": [],
+      "cache": false
+    },
+    "clean:hardhat": {
+      "inputs": [],
+      "outputs": [],
+      "cache": false
     },
     "dev": {
       "cache": false,
+      "persistent": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
       "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["build", "test"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "scripts/**"
+      ],
+      "outputs": [
+        "deployments/**",
+        "broadcast/**"
+      ],
+      "cache": false
+    },
+    "verify": {
+      "dependsOn": ["deploy"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "scripts/**"
+      ],
+      "outputs": [],
+      "cache": false
     }
+  },
+  "remoteCache": {
+    "signature": true
   },
   "ui": "tui"
 }
