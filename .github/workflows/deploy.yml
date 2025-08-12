@@ -23,7 +23,7 @@ jobs:
     steps:
       # 📥 CHECKOUT
       - name: 📥 Checkout repository code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
 
       # 🛠️ SETUP ENVIRONMENT
       - name: 🔧 Install Foundry
