@@ -27,7 +27,7 @@ contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgrade
     __LilNounsEnsWrapper_init(_ens, _baseRegistrar, _nameWrapper);
   }
 
-  // UUPS authorization hook
+  /// @dev UUPS authorization hook: restrict to owner.
   function _authorizeUpgrade(address) internal override onlyOwner {}
 
   /// @inheritdoc LilNounsEnsHolder
