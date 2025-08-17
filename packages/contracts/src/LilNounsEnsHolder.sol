@@ -119,4 +119,7 @@ abstract contract LilNounsEnsHolder is
   function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
+
+  // Storage gap for upgrade ability
+  uint256[50] private __gap;
 }
