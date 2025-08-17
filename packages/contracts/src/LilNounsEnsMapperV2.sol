@@ -8,7 +8,7 @@ import { ILilNounsEnsMapperV1 } from "./interfaces/ILilNounsEnsMapperV1.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
+import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsMapperV2
@@ -60,10 +60,10 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
-  function _authorizeUpgrade(address) internal override onlyOwner {}
-
-  // Storage gap for future upgrades
-  uint256[50] private __gap;
+  function _authorizeUpgrade(address) internal override onlyOwner {
+    // Intentionally empty: access control enforced by onlyOwner modifier
+    return;
+  }
 
   /// @notice Hash of the "avatar" key for text records
   /// @dev Used to identify and protect avatar text records from manual modification. Fixed by EIP-155 and ENS text record schema.
@@ -209,7 +209,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    */
   function supportsInterface(
     bytes4 interfaceId
-  ) public view override(LilNounsEnsHolder, LilNounsEnsWrapper) returns (bool) {
+  ) public view override(LilNounsEnsWrapper, ERC1155HolderUpgradeable) returns (bool) {
     return
       interfaceId == 0x3b3b57de || // addr(bytes32)
       interfaceId == 0x59d1d43c || // text(bytes32,string)
@@ -308,6 +308,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    * @return node The ENS node hash, or bytes32(0) if not registered
    * @dev Checks current contract first, then falls back to legacy contract
    */
+  // slither-disable-next-line calls-loop
   function tokenNode(uint256 tokenId) public view returns (bytes32 node) {
     node = _idToHash[tokenId];
     if (node == bytes32(0)) node = legacy.tokenHashmap(tokenId);
@@ -331,6 +332,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    * @dev Combines the stored label with the root domain to form the complete name
    *      Reverts with UnregisteredToken if the token has no associated domain
    */
+  // slither-disable-next-line calls-loop
   function getTokenDomain(uint256 tokenId) public view returns (string memory) {
     bytes32 node = tokenNode(tokenId);
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredToken();
@@ -351,6 +353,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     uint256 len = ids.length;
     if (len > 100) revert LilNounsEnsErrors.EmptyArray(); // Reuse existing error for simplicity, prevents DoS
     out = new string[](len);
+    // slither-disable-next-line calls-inside-a-loop, calls-loop
     for (uint256 i; i < len; ) {
       out[i] = getTokenDomain(ids[i]);
       unchecked {
@@ -454,6 +457,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    *      All token IDs must have associated domain registrations
    *      WARNING: Contains external calls inside loop - consider gas limits for large arrays
    */
+  // slither-disable-start calls-loop
   function updateAddresses(uint256[] calldata ids) external whenNotPaused {
     if (ids.length == 0 || ids.length > 50) revert LilNounsEnsErrors.EmptyArray(); // Limit array size to prevent DoS
     for (uint256 i; i < ids.length; ) {
@@ -466,4 +470,5 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     }
     emit BatchAddressesUpdated(ids, msg.sender, ids.length);
   }
+  // slither-disable-end calls-loop
 }
