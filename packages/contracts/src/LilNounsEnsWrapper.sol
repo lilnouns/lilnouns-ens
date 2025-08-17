@@ -56,9 +56,9 @@ abstract contract LilNounsEnsWrapper is
   /// @param _baseRegistrar Base Registrar address (nonzero)
   /// @param _nameWrapper NameWrapper address (nonzero)
   function __LilNounsEnsWrapper_init(
-    ENS _ens,
-    IBaseRegistrar _baseRegistrar,
-    INameWrapper _nameWrapper
+    address _ens,
+    address _baseRegistrar,
+    address _nameWrapper
   ) internal onlyInitializing {
     if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
       revert ZeroAddress();
@@ -79,9 +79,9 @@ abstract contract LilNounsEnsWrapper is
     } catch {
       revert MisconfiguredENS();
     }
-    ens = _ens;
-    baseRegistrar = _baseRegistrar;
-    nameWrapper = _nameWrapper;
+    ens = ENS(_ens);
+    baseRegistrar = IBaseRegistrar(_baseRegistrar);
+    nameWrapper = INameWrapper(_nameWrapper);
   }
 
   // ---------------------------
