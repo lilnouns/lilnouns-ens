@@ -64,6 +64,10 @@ abstract contract LilNounsEnsWrapper is
       revert ZeroAddress();
     }
 
+    ens = ENS(_ens);
+    baseRegistrar = IBaseRegistrar(_baseRegistrar);
+    nameWrapper = INameWrapper(_nameWrapper);
+
     // Sanity check that the NameWrapper is wired to the provided ENS and Base Registrar.
     // If the implementation doesn't expose these getters, we consider it misconfigured for this system.
     // Using try/catch to defensively handle unexpected implementations.
@@ -79,9 +83,6 @@ abstract contract LilNounsEnsWrapper is
     } catch {
       revert MisconfiguredENS();
     }
-    ens = ENS(_ens);
-    baseRegistrar = IBaseRegistrar(_baseRegistrar);
-    nameWrapper = INameWrapper(_nameWrapper);
   }
 
   // ---------------------------
