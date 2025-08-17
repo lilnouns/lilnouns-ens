@@ -10,8 +10,8 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
-/// @title LilNounsEnsVault
-/// @notice Abstract, upgrade-friendly vault to safely hold ERC-721 and ERC-1155 tokens for Lil Nouns ENS flows.
+/// @title LilNounsEnsHolder
+/// @notice Abstract, upgrade-friendly holder to safely receive and withdraw ERC-721 and ERC-1155 tokens for Lil Nouns ENS flows.
 /// @dev
 /// - Uses OZ upgradeable modules with initializer pattern so child contracts can be deployed behind proxies.
 /// - Two-step ownership via Ownable2StepUpgradeable; only the owner may withdraw assets.
@@ -26,8 +26,6 @@ abstract contract LilNounsEnsHolder is
   ERC721HolderUpgradeable,
   ERC1155HolderUpgradeable
 {
-  using LilNounsEnsErrors for *;
-
   /// @notice Emitted when an ERC-721 token is withdrawn from the vault.
   /// @param token The ERC-721 contract address.
   /// @param tokenId The token ID being withdrawn.
@@ -53,7 +51,7 @@ abstract contract LilNounsEnsHolder is
   /// @notice Initializer to configure ownership and internal modules.
   /// @param initialOwner The initial owner address for the vault.
   // solhint-disable-next-line func-name-mixedcase
-  function __LilNounsEnsVault_init(address initialOwner) internal onlyInitializing {
+  function __LilNounsEnsHolder_init(address initialOwner) internal onlyInitializing {
     if (initialOwner == address(0)) revert LilNounsEnsErrors.ZeroAddress();
 
     // Initialize parents
@@ -63,12 +61,12 @@ abstract contract LilNounsEnsHolder is
     __ERC721Holder_init();
     __ERC1155Holder_init();
 
-    __LilNounsEnsVault_init_unchained();
+    __LilNounsEnsHolder_init_unchained();
   }
 
   /// @notice Optional unchained initializer (no parent initializers).
   // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
-  function __LilNounsEnsVault_init_unchained() internal onlyInitializing {}
+  function __LilNounsEnsHolder_init_unchained() internal onlyInitializing {}
 
   /// @notice Withdraw an ERC-721 token held by the vault to a recipient.
   /// @param token The ERC-721 contract address.

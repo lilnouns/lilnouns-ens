@@ -31,7 +31,7 @@ contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgrade
     address _baseRegistrar,
     address _nameWrapper
   ) public initializer {
-    __LilNounsEnsVault_init(initialOwner);
+    __LilNounsEnsHolder_init(initialOwner);
     __LilNounsEnsWrapper_init(_ens, _baseRegistrar, _nameWrapper);
   }
 

@@ -99,10 +99,8 @@ abstract contract LilNounsEnsWrapper is
     }
   }
 
-  /// @notice Rotate ENS-related contract addresses with sanity checks.
-  /// @dev Owner-only to support upgrades or migrations of ENS contracts.
-  /// @notice Rotate ENS contract addresses after validating consistency.
-  /// @dev Owner-only. Performs try/catch checks on NameWrapper relations.
+  /// @notice Rotate ENS-related contract addresses after validating consistency.
+  /// @dev Owner-only. Performs sanity checks on NameWrapper relations via try/catch.
   /// @param _ens New ENS registry address.
   /// @param _baseRegistrar New Base Registrar address.
   /// @param _nameWrapper New NameWrapper address.
@@ -136,16 +134,11 @@ abstract contract LilNounsEnsWrapper is
   /// @notice Wrap a .eth second-level domain held in the Base Registrar so the ERC-1155 is minted to this contract.
   /// @dev
   /// - Computes tokenId via keccak256(label), as used by the .eth Base Registrar.
-  /// - Performs optional preflight to ensure NameWrapper is properly approved to transfer the token.
-  /// - Emits EnsWrapped and calls the internal hook.
+  /// - Checks approvals for NameWrapper to transfer the ERC-721; reverts if not approved.
+  /// - Emits EnsWrapped and calls the internal _afterWrap hook; reentrancy-protected.
   /// @param label The ASCII label to wrap (e.g., "lilnouns").
   /// @param resolver The resolver address to set at wrap time.
   /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
-  /// @notice Wrap a .eth name held by the Base Registrar so the ERC-1155 is minted to this contract.
-  /// @dev Checks approvals and emits EnsWrapped; reentrancy-protected.
-  /// @param label The ASCII label to wrap.
-  /// @param resolver Resolver address to set.
-  /// @param fuses Fuse configuration per ENS NameWrapper.
   function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
     if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidParams();
 
