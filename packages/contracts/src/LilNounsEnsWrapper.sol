@@ -101,43 +101,10 @@ abstract contract LilNounsEnsWrapper is
     }
   }
 
-  /// @notice Rotate ENS-related contract addresses after validating consistency.
-  /// @dev Owner-only. Performs sanity checks on NameWrapper relations via try/catch.
-  /// @param _ens New ENS registry address.
-  /// @param _baseRegistrar New Base Registrar address.
-  /// @param _nameWrapper New NameWrapper address.
-  function setEnsContracts(ENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
-    if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
-      revert LilNounsEnsErrors.ZeroAddress();
-    }
-
-    // Re-run sanity checks against the provided NameWrapper
-    try _nameWrapper.ens() returns (ENS reportedEns) {
-      if (address(reportedEns) == address(0) || address(reportedEns) != address(_ens)) {
-        revert LilNounsEnsErrors.MisconfiguredENS();
-      }
-    } catch {
-      revert LilNounsEnsErrors.MisconfiguredENS();
-    }
-    try _nameWrapper.registrar() returns (IBaseRegistrar reportedRegistrar) {
-      if (address(reportedRegistrar) == address(0) || address(reportedRegistrar) != address(_baseRegistrar)) {
-        revert LilNounsEnsErrors.MisconfiguredENS();
-      }
-    } catch {
-      revert LilNounsEnsErrors.MisconfiguredENS();
-    }
-    ens = _ens;
-    baseRegistrar = _baseRegistrar;
-    nameWrapper = _nameWrapper;
-
-    emit EnsContractsUpdated(address(_ens), address(_baseRegistrar), address(_nameWrapper));
-  }
-
   /// @notice Wrap a .eth second-level domain held in the Base Registrar so the ERC-1155 is minted to this contract.
   /// @dev
   /// - Computes tokenId via keccak256(label), as used by the .eth Base Registrar.
   /// - Checks approvals for NameWrapper to transfer the ERC-721; reverts if not approved.
-  /// - Emits EnsWrapped and calls the internal _afterWrap hook; reentrancy-protected.
   /// @param label The ASCII label to wrap (e.g., "lilnouns").
   /// @param resolver The resolver address to set at wrap time.
   /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
@@ -173,7 +140,6 @@ abstract contract LilNounsEnsWrapper is
     uint64 expiry = nameWrapper.wrapETH2LD(label, address(this), uint16(fuses), resolver);
 
     emit EnsWrapped(label, labelhash, tokenId, fuses, expiry);
-    _afterWrap(label, labelhash, tokenId, fuses, expiry, resolver);
   }
 
   /// @notice Unwrap a previously wrapped .eth name back to the Base Registrar ERC-721.
@@ -193,7 +159,6 @@ abstract contract LilNounsEnsWrapper is
     nameWrapper.unwrapETH2LD(labelhash, newRegistrant, newController);
 
     emit EnsUnwrapped(labelhash, newRegistrant, newController);
-    _afterUnwrap(labelhash, newRegistrant, newController);
   }
 
   /// @notice Approve an operator (e.g., NameWrapper) to manage the ERC-721 token in the Base Registrar.
@@ -206,7 +171,6 @@ abstract contract LilNounsEnsWrapper is
     baseRegistrar.approve(operator, tokenId);
 
     emit EnsApprovalSet(tokenId, operator);
-    _afterApprove(tokenId, operator);
   }
 
   /// @inheritdoc ERC1155HolderUpgradeable
