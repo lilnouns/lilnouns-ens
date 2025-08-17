@@ -8,6 +8,7 @@ import { ERC721HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/tok
 import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsVault
 /// @notice Abstract, upgrade-friendly vault to safely hold ERC-721 and ERC-1155 tokens for Lil Nouns ENS flows.
@@ -22,11 +23,7 @@ abstract contract LilNounsEnsHolder is
   ERC721HolderUpgradeable,
   ERC1155HolderUpgradeable
 {
-  /// @dev Revert on zero address usage.
-  error ZeroAddress();
-
-  /// @dev Revert on invalid amount (e.g., zero amount).
-  error InvalidAmount();
+  using LilNounsEnsErrors for *;
 
   /// @notice Emitted when an ERC-721 token is withdrawn from the vault.
   /// @param token The ERC-721 contract address.
@@ -53,7 +50,7 @@ abstract contract LilNounsEnsHolder is
   /// @notice Initializer to configure ownership and internal modules.
   /// @param initialOwner The initial owner address for the vault.
   function __LilNounsEnsVault_init(address initialOwner) internal onlyInitializing {
-    if (initialOwner == address(0)) revert ZeroAddress();
+    if (initialOwner == address(0)) revert LilNounsEnsErrors.ZeroAddress();
 
     // Initialize parents
     __Ownable_init(initialOwner);
@@ -73,7 +70,7 @@ abstract contract LilNounsEnsHolder is
   /// @param tokenId The token ID to withdraw.
   /// @param to The recipient address; must be nonzero.
   function withdrawERC721(address token, uint256 tokenId, address to) external virtual onlyOwner nonReentrant {
-    if (to == address(0)) revert ZeroAddress();
+    if (to == address(0)) revert LilNounsEnsErrors.ZeroAddress();
     IERC721(token).safeTransferFrom(address(this), to, tokenId);
     emit ERC721Withdrawn(token, tokenId, to);
   }
@@ -91,8 +88,8 @@ abstract contract LilNounsEnsHolder is
     address to,
     bytes calldata data
   ) external virtual onlyOwner nonReentrant {
-    if (to == address(0)) revert ZeroAddress();
-    if (amount == 0) revert InvalidAmount();
+    if (to == address(0)) revert LilNounsEnsErrors.ZeroAddress();
+    if (amount == 0) revert LilNounsEnsErrors.InvalidAmount();
     IERC1155(token).safeTransferFrom(address(this), to, id, amount, data);
     emit ERC1155Withdrawn(token, id, to, amount, data);
   }
@@ -110,8 +107,8 @@ abstract contract LilNounsEnsHolder is
     address to,
     bytes calldata data
   ) external virtual onlyOwner nonReentrant {
-    if (to == address(0)) revert ZeroAddress();
-    if (ids.length != amounts.length) revert LengthMismatch();
+    if (to == address(0)) revert LilNounsEnsErrors.ZeroAddress();
+    if (ids.length != amounts.length) revert LilNounsEnsErrors.LengthMismatch();
     IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
     emit ERC1155BatchWithdrawn(token, to, ids, amounts, data);
   }

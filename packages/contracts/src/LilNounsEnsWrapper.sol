@@ -9,7 +9,7 @@ import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/to
 import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
 import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
 import { IBaseRegistrar } from "@ensdomains/ens-contracts/ethregistrar/IBaseRegistrar.sol";
-import "./LilNounsErrors.sol";
+import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsWrapper
 /// @notice Abstract, upgradeable base to expose ENS NameWrapper flows for inheriting NFT-holding contracts.
@@ -25,10 +25,15 @@ abstract contract LilNounsEnsWrapper is
   ERC721HolderUpgradeable,
   ERC1155HolderUpgradeable
 {
-  error ZeroAddress();
-  error MisconfiguredENS();
-  error NotApproved(uint256 tokenId);
-  error InvalidParams();
+  using LilNounsEnsErrors for *;
+
+  /// @notice Emitted after a successful wrap of a .eth second-level domain.
+  /// @param label The ASCII label used to wrap (not indexed).
+  /// @param labelhash The keccak256 of the label (indexed).
+  /// @param tokenId The ERC-721 tokenId in the Base Registrar (indexed).
+  /// @param fuses The fuse configuration applied in the NameWrapper.
+  /// @param expiry The expiry returned by NameWrapper.
+  event EnsWrapped(string label, bytes32 indexed labelhash, uint256 indexed tokenId, uint32 fuses, uint64 expiry);
 
   event EnsWrapped(string label, bytes32 labelhash, uint256 tokenId, uint32 fuses, uint64 expiry);
   event EnsUnwrapped(bytes32 labelhash, address newRegistrant, address newController);
@@ -49,7 +54,7 @@ abstract contract LilNounsEnsWrapper is
     address _nameWrapper
   ) internal onlyInitializing {
     if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
-      revert ZeroAddress();
+      revert LilNounsEnsErrors.ZeroAddress();
     }
 
     ens = ENS(_ens);
@@ -59,17 +64,19 @@ abstract contract LilNounsEnsWrapper is
     // Sanity check that the NameWrapper is wired to the provided ENS and Base Registrar.
     // If the implementation doesn't expose these getters, we consider it misconfigured for this system.
     // Using try/catch to defensively handle unexpected implementations.
-    try _nameWrapper.ens() returns (address reportedEns) {
-      if (reportedEns == address(0) || reportedEns != address(_ens)) revert MisconfiguredENS();
-    } catch {
-      revert MisconfiguredENS();
-    }
-    try _nameWrapper.registrar() returns (address reportedRegistrar) {
-      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) {
-        revert MisconfiguredENS();
+    try nameWrapper.ens() returns (ENS reportedEns) {
+      if (address(reportedEns) == address(0) || address(reportedEns) != address(_ens)) {
+        revert LilNounsEnsErrors.MisconfiguredENS();
       }
     } catch {
-      revert MisconfiguredENS();
+      revert LilNounsEnsErrors.MisconfiguredENS();
+    }
+    try nameWrapper.registrar() returns (IBaseRegistrar reportedRegistrar) {
+      if (address(reportedRegistrar) == address(0) || address(reportedRegistrar) != address(_baseRegistrar)) {
+        revert LilNounsEnsErrors.MisconfiguredENS();
+      }
+    } catch {
+      revert LilNounsEnsErrors.MisconfiguredENS();
     }
   }
 
@@ -77,21 +84,21 @@ abstract contract LilNounsEnsWrapper is
   /// @dev Owner-only to support upgrades or migrations of ENS contracts.
   function setEnsContracts(ENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
     if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
-      revert ZeroAddress();
+      revert LilNounsEnsErrors.ZeroAddress();
     }
 
     // Re-run sanity checks against the provided NameWrapper
     try _nameWrapper.ens() returns (address reportedEns) {
       if (reportedEns == address(0) || reportedEns != address(_ens)) revert MisconfiguredENS();
     } catch {
-      revert MisconfiguredENS();
+      revert LilNounsEnsErrors.MisconfiguredENS();
     }
     try _nameWrapper.registrar() returns (address reportedRegistrar) {
       if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) {
-        revert MisconfiguredENS();
+        revert LilNounsEnsErrors.MisconfiguredENS();
       }
     } catch {
-      revert MisconfiguredENS();
+      revert LilNounsEnsErrors.MisconfiguredENS();
     }
     ens = _ens;
     baseRegistrar = _baseRegistrar;
@@ -109,7 +116,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param resolver The resolver address to set at wrap time.
   /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
   function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
-    if (bytes(label).length == 0) revert InvalidParams();
+    if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidParams();
 
     bytes32 labelhash = keccak256(bytes(label));
     uint256 tokenId = uint256(labelhash);
@@ -119,7 +126,7 @@ abstract contract LilNounsEnsWrapper is
     try baseRegistrar.ownerOf(tokenId) returns (address o) {
       currentOwner = o;
     } catch {
-      revert NotApproved(tokenId);
+      revert LilNounsEnsErrors.NotApproved(tokenId);
     }
     bool ok;
     if (currentOwner != address(0)) {
@@ -134,7 +141,7 @@ abstract contract LilNounsEnsWrapper is
       }
     }
 
-    if (!ok) revert NotApproved(tokenId);
+    if (!ok) revert LilNounsEnsErrors.NotApproved(tokenId);
 
     // Perform the wrap: mint ERC-1155 to this contract
     uint64 expiry = nameWrapper.wrapETH2LD(label, address(this), uint16(fuses), resolver);
@@ -154,7 +161,7 @@ abstract contract LilNounsEnsWrapper is
     address newController
   ) external virtual onlyOwner nonReentrant {
     if (labelhash == bytes32(0) || newRegistrant == address(0) || newController == address(0)) {
-      revert InvalidParams();
+      revert LilNounsEnsErrors.InvalidParams();
     }
 
     nameWrapper.unwrapETH2LD(labelhash, newRegistrant, newController);
@@ -168,7 +175,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param tokenId The .eth tokenId (uint256(keccak256(bytes(label)))).
   /// @param operator The operator to approve (commonly the NameWrapper address).
   function approveEnsName(uint256 tokenId, address operator) external virtual onlyOwner nonReentrant {
-    if (operator == address(0)) revert ZeroAddress();
+    if (operator == address(0)) revert LilNounsEnsErrors.ZeroAddress();
 
     baseRegistrar.approve(operator, tokenId);
 
