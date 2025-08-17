@@ -66,6 +66,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param _ens ENS registry address (nonzero)
   /// @param _baseRegistrar Base Registrar address (nonzero)
   /// @param _nameWrapper NameWrapper address (nonzero)
+  // solhint-disable-next-line func-name-mixedcase
   function __LilNounsEnsWrapper_init(
     address _ens,
     address _baseRegistrar,
