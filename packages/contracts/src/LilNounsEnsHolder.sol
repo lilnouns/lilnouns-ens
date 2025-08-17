@@ -15,7 +15,7 @@ import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 /// - Uses OZ upgradeable modules with initializer pattern so child contracts can be deployed behind proxies.
 /// - Two-step ownership via Ownable2StepUpgradeable; only the owner may withdraw assets.
 /// - Accepts safe transfers for ERC-721 and ERC-1155 via Holder helpers.
-abstract contract LilNounsEnsVault is
+abstract contract LilNounsEnsHolder is
   Initializable,
   Ownable2StepUpgradeable,
   ReentrancyGuardUpgradeable,
