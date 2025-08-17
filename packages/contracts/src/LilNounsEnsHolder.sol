@@ -111,6 +111,7 @@ abstract contract LilNounsEnsHolder is
     bytes calldata data
   ) external virtual onlyOwner nonReentrant {
     if (to == address(0)) revert ZeroAddress();
+    if (ids.length != amounts.length) revert LengthMismatch();
     IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
     emit ERC1155BatchWithdrawn(token, to, ids, amounts, data);
   }
