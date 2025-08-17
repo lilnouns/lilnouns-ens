@@ -4,9 +4,6 @@ pragma solidity ^0.8.29;
 import { LilNounsEnsHolder } from "./LilNounsEnsHolder.sol";
 import { LilNounsEnsWrapper } from "./LilNounsEnsWrapper.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
-import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
-import { IBaseRegistrar } from "@ensdomains/ens-contracts/ethregistrar/IBaseRegistrar.sol";
 
 contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgradeable {
   /// @custom:oz-upgrades-unsafe-allow constructor
