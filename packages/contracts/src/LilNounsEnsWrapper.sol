@@ -25,32 +25,20 @@ abstract contract LilNounsEnsWrapper is
   ERC721HolderUpgradeable,
   ERC1155HolderUpgradeable
 {
-  // ---------------------------
-  // Errors
-  // ---------------------------
   error ZeroAddress();
   error MisconfiguredENS();
   error NotApproved(uint256 tokenId);
   error InvalidParams();
 
-  // ---------------------------
-  // Events
-  // ---------------------------
   event EnsWrapped(string label, bytes32 labelhash, uint256 tokenId, uint32 fuses, uint64 expiry);
   event EnsUnwrapped(bytes32 labelhash, address newRegistrant, address newController);
   event EnsContractsUpdated(address ens, address baseRegistrar, address nameWrapper);
   event EnsApprovalSet(uint256 tokenId, address approved);
 
-  // ---------------------------
-  // Storage
-  // ---------------------------
   ENS public ens;
   IBaseRegistrar public baseRegistrar;
   INameWrapper public nameWrapper;
 
-  // ---------------------------
-  // Initializer (internal)
-  // ---------------------------
   /// @notice Internal initializer. Must be called by inheriting contract's initializer.
   /// @param _ens ENS registry address (nonzero)
   /// @param _baseRegistrar Base Registrar address (nonzero)
@@ -85,9 +73,6 @@ abstract contract LilNounsEnsWrapper is
     }
   }
 
-  // ---------------------------
-  // Admin setters
-  // ---------------------------
   /// @notice Rotate ENS-related contract addresses with sanity checks.
   /// @dev Owner-only to support upgrades or migrations of ENS contracts.
   function setEnsContracts(ENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
@@ -115,9 +100,6 @@ abstract contract LilNounsEnsWrapper is
     emit EnsContractsUpdated(address(_ens), address(_baseRegistrar), address(_nameWrapper));
   }
 
-  // ---------------------------
-  // Primary external methods
-  // ---------------------------
   /// @notice Wrap a .eth second-level domain held in the Base Registrar so the ERC-1155 is minted to this contract.
   /// @dev
   /// - Computes tokenId via keccak256(label), as used by the .eth Base Registrar.
@@ -194,9 +176,6 @@ abstract contract LilNounsEnsWrapper is
     _afterApprove(tokenId, operator);
   }
 
-  // ---------------------------
-  // Hooks (optional extension points)
-  // ---------------------------
   function _afterWrap(
     string calldata /*label*/,
     bytes32 /*labelhash*/,
@@ -210,16 +189,10 @@ abstract contract LilNounsEnsWrapper is
 
   function _afterApprove(uint256, /*tokenId*/ address /*operator*/) internal virtual {}
 
-  // ---------------------------
-  // ERC165 support
-  // ---------------------------
   /// @inheritdoc ERC1155HolderUpgradeable
   function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 
-  // ---------------------------
-  // Storage gap for upgradeability
-  // ---------------------------
   uint256[47] private __gap;
 }
