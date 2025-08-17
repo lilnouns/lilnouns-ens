@@ -14,13 +14,17 @@ contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgrade
     _disableInitializers();
   }
 
-  /// @notice Initializes the contract
-  /// @dev Use this instead of the constructor when deploying with a proxy
+  /// @notice Initialize the mapper with owner and ENS-related contracts.
+  /// @dev Calls internal initializers of Holder and Wrapper. Reverts on zero addresses or misconfiguration.
+  /// @param initialOwner The initial owner/admin of the contract.
+  /// @param _ens ENS registry contract.
+  /// @param _baseRegistrar .eth Base Registrar contract.
+  /// @param _nameWrapper ENS NameWrapper contract.
   function initialize(
     address initialOwner,
-    ENS _ens,
-    IBaseRegistrar _baseRegistrar,
-    INameWrapper _nameWrapper
+    address _ens,
+    address _baseRegistrar,
+    address _nameWrapper
   ) public initializer {
     __LilNounsEnsVault_init(initialOwner);
     __LilNounsEnsWrapper_init(_ens, _baseRegistrar, _nameWrapper);
