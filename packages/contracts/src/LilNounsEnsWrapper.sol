@@ -30,17 +30,17 @@ abstract contract LilNounsEnsWrapper is
 {
   /// @notice Emitted after a successful wrap of a .eth second-level domain.
   /// @param label The ASCII label used to wrap (not indexed).
-  /// @param labelhash The keccak256 of the label (indexed).
+  /// @param labelHash The keccak256 of the label (indexed).
   /// @param tokenId The ERC-721 tokenId in the Base Registrar (indexed).
   /// @param fuses The fuse configuration applied in the NameWrapper.
   /// @param expiry The expiry returned by NameWrapper.
-  event EnsWrapped(string label, bytes32 indexed labelhash, uint256 indexed tokenId, uint32 fuses, uint64 expiry);
+  event EnsWrapped(string label, bytes32 indexed labelHash, uint256 indexed tokenId, uint32 fuses, uint64 expiry);
 
   /// @notice Emitted after unwrapping a .eth name back to the Base Registrar ERC-721.
-  /// @param labelhash The keccak256 of the label (indexed).
+  /// @param labelHash The keccak256 of the label (indexed).
   /// @param newRegistrant The new ERC-721 registrant in the Base Registrar (indexed).
   /// @param newController The controller to set for the name.
-  event EnsUnwrapped(bytes32 indexed labelhash, address indexed newRegistrant, address newController);
+  event EnsUnwrapped(bytes32 indexed labelHash, address indexed newRegistrant, address newController);
 
   /// @notice Emitted when the ENS-related contract addresses are rotated by the owner.
   /// @param ens The ENS registry address.
@@ -111,8 +111,8 @@ abstract contract LilNounsEnsWrapper is
   function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
     if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidParams();
 
-    bytes32 labelhash = keccak256(bytes(label));
-    uint256 tokenId = uint256(labelhash);
+    bytes32 labelHash = keccak256(bytes(label));
+    uint256 tokenId = uint256(labelHash);
 
     // Optional preflight: ensure NameWrapper is approved for this tokenId by the current owner.
     address currentOwner = address(0);
@@ -139,26 +139,26 @@ abstract contract LilNounsEnsWrapper is
     // Perform the wrap: mint ERC-1155 to this contract
     uint64 expiry = nameWrapper.wrapETH2LD(label, address(this), uint16(fuses), resolver);
 
-    emit EnsWrapped(label, labelhash, tokenId, fuses, expiry);
+    emit EnsWrapped(label, labelHash, tokenId, fuses, expiry);
   }
 
   /// @notice Unwrap a previously wrapped .eth name back to the Base Registrar ERC-721.
   /// @dev The resulting ERC-721 registrant/controller are forwarded per provided arguments.
-  /// @param labelhash The keccak256 of the label being unwrapped.
+  /// @param labelHash The keccak256 of the label being unwrapped.
   /// @param newRegistrant Address to receive the ERC-721 ownership in the Base Registrar.
   /// @param newController Address to be set as controller for the name.
   function unwrapEnsName(
-    bytes32 labelhash,
+    bytes32 labelHash,
     address newRegistrant,
     address newController
   ) external virtual onlyOwner nonReentrant {
-    if (labelhash == bytes32(0) || newRegistrant == address(0) || newController == address(0)) {
+    if (labelHash == bytes32(0) || newRegistrant == address(0) || newController == address(0)) {
       revert LilNounsEnsErrors.InvalidParams();
     }
 
-    nameWrapper.unwrapETH2LD(labelhash, newRegistrant, newController);
+    nameWrapper.unwrapETH2LD(labelHash, newRegistrant, newController);
 
-    emit EnsUnwrapped(labelhash, newRegistrant, newController);
+    emit EnsUnwrapped(labelHash, newRegistrant, newController);
   }
 
   /// @notice Approve an operator (e.g., NameWrapper) to manage the ERC-721 token in the Base Registrar.
