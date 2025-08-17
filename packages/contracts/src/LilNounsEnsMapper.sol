@@ -30,7 +30,7 @@ contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgrade
   // UUPS authorization hook
   function _authorizeUpgrade(address) internal override onlyOwner {}
 
-  // Resolve multiple inheritance for ERC165 support
+  /// @inheritdoc LilNounsEnsHolder
   function supportsInterface(
     bytes4 interfaceId
   ) public view override(LilNounsEnsHolder, LilNounsEnsWrapper) returns (bool) {
