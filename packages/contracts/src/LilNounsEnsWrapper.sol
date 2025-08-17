@@ -124,14 +124,8 @@ abstract contract LilNounsEnsWrapper is
   /// - Emits EnsWrapped and calls the internal hook.
   /// @param label The ASCII label to wrap (e.g., "lilnouns").
   /// @param resolver The resolver address to set at wrap time.
-  /// @param fuses NameWrapper fuse settings to apply.
-  /// @param expiry Expiry timestamp to use respecting NameWrapper rules.
-  function wrapEnsName(
-    string calldata label,
-    address resolver,
-    uint32 fuses,
-    uint64 expiry
-  ) external virtual onlyOwner nonReentrant {
+  /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
+  function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
     if (bytes(label).length == 0) revert InvalidParams();
 
     bytes32 labelhash = keccak256(bytes(label));
@@ -160,7 +154,7 @@ abstract contract LilNounsEnsWrapper is
     if (!ok) revert NotApproved(tokenId);
 
     // Perform the wrap: mint ERC-1155 to this contract
-    nameWrapper.wrapETH2LD(label, address(this), fuses, expiry, resolver);
+    uint64 expiry = nameWrapper.wrapETH2LD(label, address(this), uint16(fuses), resolver);
 
     emit EnsWrapped(label, labelhash, tokenId, fuses, expiry);
     _afterWrap(label, labelhash, tokenId, fuses, expiry, resolver);
