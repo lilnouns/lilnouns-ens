@@ -6,9 +6,10 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { ERC721HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import { ENS } from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
-import { INameWrapper } from "@ensdomains/ens-contracts/contracts/wrapper/INameWrapper.sol";
-import { IBaseRegistrar } from "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
+import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
+import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
+import { IBaseRegistrar } from "@ensdomains/ens-contracts/ethregistrar/IBaseRegistrar.sol";
+import "./LilNounsErrors.sol";
 
 /// @title LilNounsEnsWrapper
 /// @notice Abstract, upgradeable base to expose ENS NameWrapper flows for inheriting NFT-holding contracts.
