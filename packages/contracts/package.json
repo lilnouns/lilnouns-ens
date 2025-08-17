@@ -5,6 +5,7 @@
   "keywords": [],
   "license": "Apache-2.0",
   "author": "Milad Nekofar <milad@nekofar.com>",
+  "type": "module",
   "directories": {
     "lib": "lib",
     "test": "test"
@@ -29,12 +30,12 @@
     "test:hardhat": "hardhat test --typecheck"
   },
   "dependencies": {
+    "@ensdomains/ens-contracts": "1.5.2",
     "@openzeppelin/contracts": "5.4.0",
     "@openzeppelin/contracts-upgradeable": "5.4.0",
     "@openzeppelin/foundry-upgrades": "0.4.0",
     "@openzeppelin/hardhat-upgrades": "3.9.1",
     "@openzeppelin/upgrades-core": "1.44.1",
-    "@ensdomains/ens-contracts": "1.5.2",
     "ds-test": "dapphub/ds-test",
     "forge-std": "foundry-rs/forge-std",
     "solidity-stringutils": "Arachnid/solidity-stringutils"
