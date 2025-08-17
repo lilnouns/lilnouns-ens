@@ -73,13 +73,6 @@ updates:
           - '@wagmi/*'
     # List of packages to ignore for specific update types
     ignore:
-      - dependency-name: "chai"
+      - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
-      - dependency-name: "@type/chai"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "typescript"
-        update-types:
-          - "version-update:semver-major"
-          - "version-update:semver-minor"
