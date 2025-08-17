@@ -18,6 +18,9 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 /// - Callable by other contracts; avoids EOA-only assumptions.
 /// - Exposes wrap and unwrap flows for .eth 2LDs via the official NameWrapper/Base Registrar.
 /// - Provides a helper to set Base Registrar approvals.
+/**
+ * @author LilNouns ENS Authors
+ */
 abstract contract LilNounsEnsWrapper is
   Initializable,
   Ownable2StepUpgradeable,
@@ -39,9 +42,24 @@ abstract contract LilNounsEnsWrapper is
   event EnsUnwrapped(bytes32 labelhash, address newRegistrant, address newController);
   event EnsContractsUpdated(address ens, address baseRegistrar, address nameWrapper);
   event EnsApprovalSet(uint256 tokenId, address approved);
+  /// @notice Emitted after unwrapping a .eth name back to the Base Registrar ERC-721.
+  /// @param labelhash The keccak256 of the label (indexed).
+  /// @param newRegistrant The new ERC-721 registrant in the Base Registrar (indexed).
+  /// @param newController The controller to set for the name.
+  /// @notice Emitted when the ENS-related contract addresses are rotated by the owner.
+  /// @param ens The ENS registry address.
+  /// @param baseRegistrar The Base Registrar address.
+  /// @param nameWrapper The NameWrapper address.
 
+  /// @notice Emitted when an approval is set on the Base Registrar tokenId.
+  /// @param tokenId The ERC-721 token id (indexed).
+  /// @param approved The approved operator address (indexed).
+
+  /// @notice ENS registry reference.
   ENS public ens;
+  /// @notice Base Registrar reference.
   IBaseRegistrar public baseRegistrar;
+  /// @notice NameWrapper reference.
   INameWrapper public nameWrapper;
 
   /// @notice Internal initializer. Must be called by inheriting contract's initializer.
@@ -82,6 +100,11 @@ abstract contract LilNounsEnsWrapper is
 
   /// @notice Rotate ENS-related contract addresses with sanity checks.
   /// @dev Owner-only to support upgrades or migrations of ENS contracts.
+  /// @notice Rotate ENS contract addresses after validating consistency.
+  /// @dev Owner-only. Performs try/catch checks on NameWrapper relations.
+  /// @param _ens New ENS registry address.
+  /// @param _baseRegistrar New Base Registrar address.
+  /// @param _nameWrapper New NameWrapper address.
   function setEnsContracts(ENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
     if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
       revert LilNounsEnsErrors.ZeroAddress();
@@ -115,6 +138,11 @@ abstract contract LilNounsEnsWrapper is
   /// @param label The ASCII label to wrap (e.g., "lilnouns").
   /// @param resolver The resolver address to set at wrap time.
   /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
+  /// @notice Wrap a .eth name held by the Base Registrar so the ERC-1155 is minted to this contract.
+  /// @dev Checks approvals and emits EnsWrapped; reentrancy-protected.
+  /// @param label The ASCII label to wrap.
+  /// @param resolver Resolver address to set.
+  /// @param fuses Fuse configuration per ENS NameWrapper.
   function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
     if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidParams();
 

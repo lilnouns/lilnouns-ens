@@ -16,6 +16,9 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 /// - Uses OZ upgradeable modules with initializer pattern so child contracts can be deployed behind proxies.
 /// - Two-step ownership via Ownable2StepUpgradeable; only the owner may withdraw assets.
 /// - Accepts safe transfers for ERC-721 and ERC-1155 via Holder helpers.
+/**
+ * @author LilNouns ENS Authors
+ */
 abstract contract LilNounsEnsHolder is
   Initializable,
   Ownable2StepUpgradeable,

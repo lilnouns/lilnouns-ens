@@ -5,6 +5,14 @@ import { LilNounsEnsHolder } from "./LilNounsEnsHolder.sol";
 import { LilNounsEnsWrapper } from "./LilNounsEnsWrapper.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/// @title LilNounsEnsMapper
+/// @notice UUPS-upgradeable orchestrator combining the Holder and ENS Wrapper capabilities.
+/// @dev
+/// - Uses initializer pattern; constructor disables initializers for proxies.
+/// - Authorizes upgrades via onlyOwner from Ownable2StepUpgradeable inherited through Holder/Wrapper.
+/**
+ * @author LilNouns ENS Authors
+ */
 contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgradeable {
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
