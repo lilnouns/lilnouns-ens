@@ -117,11 +117,13 @@ abstract contract LilNounsEnsHolder is
   }
 
   /// @inheritdoc ERC1155HolderUpgradeable
-  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC1155HolderUpgradeable, ERC721HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 
-  // Storage gap for upgrade ability
+  // Storage gap for upgradeability
   // solhint-disable-next-line var-name-mixedcase
   uint256[50] private __gap;
 }

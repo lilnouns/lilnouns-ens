@@ -28,8 +28,6 @@ abstract contract LilNounsEnsWrapper is
   ERC721HolderUpgradeable,
   ERC1155HolderUpgradeable
 {
-  using LilNounsEnsErrors for *;
-
   /// @notice Emitted after a successful wrap of a .eth second-level domain.
   /// @param label The ASCII label used to wrap (not indexed).
   /// @param labelhash The keccak256 of the label (indexed).
@@ -221,9 +219,12 @@ abstract contract LilNounsEnsWrapper is
   function _afterApprove(uint256, /*tokenId*/ address /*operator*/) internal virtual {}
 
   /// @inheritdoc ERC1155HolderUpgradeable
-  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC1155HolderUpgradeable, ERC721HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 
+  // Storage gap for upgradeability
   uint256[47] private __gap;
 }
