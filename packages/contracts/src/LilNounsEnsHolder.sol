@@ -49,6 +49,7 @@ abstract contract LilNounsEnsHolder is
 
   /// @notice Initializer to configure ownership and internal modules.
   /// @param initialOwner The initial owner address for the vault.
+  // solhint-disable-next-line func-name-mixedcase
   function __LilNounsEnsVault_init(address initialOwner) internal onlyInitializing {
     if (initialOwner == address(0)) revert LilNounsEnsErrors.ZeroAddress();
 
@@ -63,6 +64,7 @@ abstract contract LilNounsEnsHolder is
   }
 
   /// @notice Optional unchained initializer (no parent initializers).
+  // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
   function __LilNounsEnsVault_init_unchained() internal onlyInitializing {}
 
   /// @notice Withdraw an ERC-721 token held by the vault to a recipient.
@@ -119,5 +121,6 @@ abstract contract LilNounsEnsHolder is
   }
 
   // Storage gap for upgrade ability
+  // solhint-disable-next-line var-name-mixedcase
   uint256[50] private __gap;
 }
