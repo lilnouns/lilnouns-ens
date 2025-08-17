@@ -38,22 +38,22 @@ abstract contract LilNounsEnsWrapper is
   /// @param expiry The expiry returned by NameWrapper.
   event EnsWrapped(string label, bytes32 indexed labelhash, uint256 indexed tokenId, uint32 fuses, uint64 expiry);
 
-  event EnsWrapped(string label, bytes32 labelhash, uint256 tokenId, uint32 fuses, uint64 expiry);
-  event EnsUnwrapped(bytes32 labelhash, address newRegistrant, address newController);
-  event EnsContractsUpdated(address ens, address baseRegistrar, address nameWrapper);
-  event EnsApprovalSet(uint256 tokenId, address approved);
   /// @notice Emitted after unwrapping a .eth name back to the Base Registrar ERC-721.
   /// @param labelhash The keccak256 of the label (indexed).
   /// @param newRegistrant The new ERC-721 registrant in the Base Registrar (indexed).
   /// @param newController The controller to set for the name.
+  event EnsUnwrapped(bytes32 indexed labelhash, address indexed newRegistrant, address newController);
+
   /// @notice Emitted when the ENS-related contract addresses are rotated by the owner.
   /// @param ens The ENS registry address.
   /// @param baseRegistrar The Base Registrar address.
   /// @param nameWrapper The NameWrapper address.
+  event EnsContractsUpdated(address indexed ens, address indexed baseRegistrar, address indexed nameWrapper);
 
   /// @notice Emitted when an approval is set on the Base Registrar tokenId.
   /// @param tokenId The ERC-721 token id (indexed).
   /// @param approved The approved operator address (indexed).
+  event EnsApprovalSet(uint256 indexed tokenId, address indexed approved);
 
   /// @notice ENS registry reference.
   ENS public ens;
