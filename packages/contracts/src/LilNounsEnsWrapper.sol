@@ -65,6 +65,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param baseRegistrarAddress Base Registrar address (nonzero)
   /// @param nameWrapperAddress NameWrapper address (nonzero)
   // solhint-disable-next-line func-name-mixedcase
+  // slither-disable-next-line naming-convention
   function __LilNounsEnsWrapper_init(
     address ensAddress,
     address baseRegistrarAddress,
@@ -108,6 +109,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param label The ASCII label to wrap (e.g., "lilnouns").
   /// @param resolver The resolver address to set at wrap time.
   /// @param fuses NameWrapper fuse settings to apply (will be cast to uint16 as per INameWrapper).
+  // slither-disable-next-line cyclomatic-complexity
   function wrapEnsName(string calldata label, address resolver, uint32 fuses) external virtual onlyOwner nonReentrant {
     if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidParams();
 
@@ -126,11 +128,17 @@ abstract contract LilNounsEnsWrapper is
       // Either explicit token approval to NameWrapper or operator approval should be set.
       try baseRegistrar.getApproved(tokenId) returns (address approved) {
         if (approved == address(nameWrapper)) ok = true;
-      } catch {}
+      } catch {
+        // no-op: getApproved may revert for non-existent token or other edge cases
+        ok = ok; // solhint-disable-line no-empty-blocks
+      }
       if (!ok) {
         try baseRegistrar.isApprovedForAll(currentOwner, address(nameWrapper)) returns (bool isAll) {
           if (isAll) ok = true;
-        } catch {}
+        } catch {
+          // no-op: isApprovedForAll may revert; handled by ok flag remaining false
+          ok = ok; // solhint-disable-line no-empty-blocks
+        }
       }
     }
 
@@ -174,12 +182,11 @@ abstract contract LilNounsEnsWrapper is
   }
 
   /// @inheritdoc ERC1155HolderUpgradeable
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view virtual override(ERC1155HolderUpgradeable, ERC721HolderUpgradeable) returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 
   // Storage gap for upgrade ability
+  // slither-disable-next-line naming-convention
   uint256[47] private __gap;
 }
