@@ -3,20 +3,12 @@ pragma solidity ^0.8.29;
 
 import { LilNounsEnsHolder } from "./LilNounsEnsHolder.sol";
 import { LilNounsEnsWrapper } from "./LilNounsEnsWrapper.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { ENS } from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
 import { INameWrapper } from "@ensdomains/ens-contracts/contracts/wrapper/INameWrapper.sol";
 import { IBaseRegistrar } from "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 
-contract LilNounsEnsMapper is
-  LilNounsEnsHolder,
-  LilNounsEnsWrapper,
-  Initializable,
-  UUPSUpgradeable,
-  Ownable2StepUpgradeable
-{
+contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgradeable {
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -31,7 +23,19 @@ contract LilNounsEnsMapper is
     INameWrapper _nameWrapper
   ) public initializer {
     __LilNounsEnsVault_init(initialOwner);
-
-    __LilNounsEnsWrapper_init(ens, _baseRegistrar, _nameWrapper);
+    __LilNounsEnsWrapper_init(_ens, _baseRegistrar, _nameWrapper);
   }
+
+  // UUPS authorization hook
+  function _authorizeUpgrade(address) internal override onlyOwner {}
+
+  // Resolve multiple inheritance for ERC165 support
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override(LilNounsEnsHolder, LilNounsEnsWrapper) returns (bool) {
+    return super.supportsInterface(interfaceId);
+  }
+
+  // Storage gap for future upgrades
+  uint256[50] private __gap;
 }
