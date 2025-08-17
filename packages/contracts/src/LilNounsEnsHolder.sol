@@ -116,13 +116,6 @@ abstract contract LilNounsEnsHolder is
     emit ERC1155BatchWithdrawn(token, to, ids, amounts, data);
   }
 
-  /// @inheritdoc ERC1155HolderUpgradeable
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view virtual override(ERC1155HolderUpgradeable, ERC721HolderUpgradeable) returns (bool) {
-    return super.supportsInterface(interfaceId);
-  }
-
   // Storage gap for upgradeability
   // solhint-disable-next-line var-name-mixedcase
   uint256[50] private __gap;
