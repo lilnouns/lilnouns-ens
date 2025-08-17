@@ -22,17 +22,17 @@ contract LilNounsEnsMapper is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgrade
   /// @notice Initialize the mapper with owner and ENS-related contracts.
   /// @dev Calls internal initializers of Holder and Wrapper. Reverts on zero addresses or misconfiguration.
   /// @param initialOwner The initial owner/admin of the contract.
-  /// @param _ens ENS registry contract.
-  /// @param _baseRegistrar .eth Base Registrar contract.
-  /// @param _nameWrapper ENS NameWrapper contract.
+  /// @param ensAddress ENS registry contract.
+  /// @param baseRegistrarAddress .eth Base Registrar contract.
+  /// @param nameWrapperAddress ENS NameWrapper contract.
   function initialize(
     address initialOwner,
-    address _ens,
-    address _baseRegistrar,
-    address _nameWrapper
+    address ensAddress,
+    address baseRegistrarAddress,
+    address nameWrapperAddress
   ) public initializer {
     __LilNounsEnsHolder_init(initialOwner);
-    __LilNounsEnsWrapper_init(_ens, _baseRegistrar, _nameWrapper);
+    __LilNounsEnsWrapper_init(ensAddress, baseRegistrarAddress, nameWrapperAddress);
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
