@@ -61,35 +61,39 @@ abstract contract LilNounsEnsWrapper is
   INameWrapper public nameWrapper;
 
   /// @notice Internal initializer. Must be called by inheriting contract's initializer.
-  /// @param _ens ENS registry address (nonzero)
-  /// @param _baseRegistrar Base Registrar address (nonzero)
-  /// @param _nameWrapper NameWrapper address (nonzero)
+  /// @param ensAddress ENS registry address (nonzero)
+  /// @param baseRegistrarAddress Base Registrar address (nonzero)
+  /// @param nameWrapperAddress NameWrapper address (nonzero)
   // solhint-disable-next-line func-name-mixedcase
   function __LilNounsEnsWrapper_init(
-    address _ens,
-    address _baseRegistrar,
-    address _nameWrapper
+    address ensAddress,
+    address baseRegistrarAddress,
+    address nameWrapperAddress
   ) internal onlyInitializing {
-    if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
+    if (
+      address(ensAddress) == address(0) ||
+      address(baseRegistrarAddress) == address(0) ||
+      address(nameWrapperAddress) == address(0)
+    ) {
       revert LilNounsEnsErrors.ZeroAddress();
     }
 
-    ens = ENS(_ens);
-    baseRegistrar = IBaseRegistrar(_baseRegistrar);
-    nameWrapper = INameWrapper(_nameWrapper);
+    ens = ENS(ensAddress);
+    baseRegistrar = IBaseRegistrar(baseRegistrarAddress);
+    nameWrapper = INameWrapper(nameWrapperAddress);
 
     // Sanity check that the NameWrapper is wired to the provided ENS and Base Registrar.
     // If the implementation doesn't expose these getters, we consider it misconfigured for this system.
     // Using try/catch to defensively handle unexpected implementations.
     try nameWrapper.ens() returns (ENS reportedEns) {
-      if (address(reportedEns) == address(0) || address(reportedEns) != address(_ens)) {
+      if (address(reportedEns) == address(0) || address(reportedEns) != address(ensAddress)) {
         revert LilNounsEnsErrors.MisconfiguredENS();
       }
     } catch {
       revert LilNounsEnsErrors.MisconfiguredENS();
     }
     try nameWrapper.registrar() returns (IBaseRegistrar reportedRegistrar) {
-      if (address(reportedRegistrar) == address(0) || address(reportedRegistrar) != address(_baseRegistrar)) {
+      if (address(reportedRegistrar) == address(0) || address(reportedRegistrar) != address(baseRegistrarAddress)) {
         revert LilNounsEnsErrors.MisconfiguredENS();
       }
     } catch {
@@ -205,19 +209,6 @@ abstract contract LilNounsEnsWrapper is
     _afterApprove(tokenId, operator);
   }
 
-  function _afterWrap(
-    string calldata /*label*/,
-    bytes32 /*labelhash*/,
-    uint256 /*tokenId*/,
-    uint32 /*fuses*/,
-    uint64 /*expiry*/,
-    address /*resolver*/
-  ) internal virtual {}
-
-  function _afterUnwrap(bytes32, /*labelhash*/ address, /*newRegistrant*/ address /*newController*/) internal virtual {}
-
-  function _afterApprove(uint256, /*tokenId*/ address /*operator*/) internal virtual {}
-
   /// @inheritdoc ERC1155HolderUpgradeable
   function supportsInterface(
     bytes4 interfaceId
@@ -225,6 +216,6 @@ abstract contract LilNounsEnsWrapper is
     return super.supportsInterface(interfaceId);
   }
 
-  // Storage gap for upgradeability
+  // Storage gap for upgrade ability
   uint256[47] private __gap;
 }
