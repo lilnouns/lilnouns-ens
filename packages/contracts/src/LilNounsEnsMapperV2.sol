@@ -25,24 +25,38 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     _disableInitializers();
   }
 
-  /// @notice Initialize the mapper with owner and ENS-related contracts.
+  /// @notice Initialize the mapper with owner, ENS-related contracts, NFT, and root domain configuration.
   /// @dev Calls internal initializers of Holder and Wrapper. Reverts on zero addresses or misconfiguration.
   /// @param initialOwner The initial owner/admin of the contract.
-  /// @param ensAddress ENS registry contract.
-  /// @param baseRegistrarAddress .eth Base Registrar contract.
-  /// @param nameWrapperAddress ENS NameWrapper contract.
+  /// @param ens_ ENS registry contract.
+  /// @param baseRegistrar_ .eth Base Registrar contract.
+  /// @param nameWrapper_ ENS NameWrapper contract.
+  /// @param legacy_ Legacy mapper (V1) contract address for backward reads.
+  /// @param nft_ Lil Nouns ERC-721 contract address.
+  /// @param rootNode_ The ENS namehash of "{rootLabel}.eth" under which subdomains are created.
+  /// @param rootLabel_ The ASCII root label (e.g., "lilnouns").
   function initialize(
     address initialOwner,
-    address ensAddress,
-    address baseRegistrarAddress,
-    address nameWrapperAddress,
-    address legacyAddress
+    address ens_,
+    address baseRegistrar_,
+    address nameWrapper_,
+    address legacy_,
+    address nft_,
+    bytes32 rootNode_,
+    string calldata rootLabel_
   ) public initializer {
     __LilNounsEnsHolder_init(initialOwner);
-    __LilNounsEnsWrapper_init(ensAddress, baseRegistrarAddress, nameWrapperAddress);
+    __LilNounsEnsWrapper_init(ens_, baseRegistrar_, nameWrapper_);
 
-    if (legacyAddress == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
-    legacy = ILilNounsEnsMapperV1(legacyAddress);
+    if (legacy_ == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
+    if (nft_ == address(0)) revert LilNounsEnsErrors.ZeroAddress();
+    if (rootNode_ == bytes32(0)) revert LilNounsEnsErrors.InvalidParams();
+    if (bytes(rootLabel_).length == 0) revert LilNounsEnsErrors.EmptyLabel();
+
+    legacy = ILilNounsEnsMapperV1(legacy_);
+    nft = IERC721(nft_);
+    rootNode = rootNode_;
+    rootLabel = rootLabel_;
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
@@ -51,21 +65,8 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
   // Storage gap for future upgrades
   uint256[50] private __gap;
 
-  /// @notice The LilNouns NFT contract address
-  IERC721 internal constant NFT = IERC721(0x4b10701Bfd7BFEdc47d50562b76b436fbB5BdB3B);
-
-  /// @notice The ENS Name Wrapper contract for managing wrapped domains
-  INameWrapper internal constant WRAPPER = INameWrapper(0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401);
-
-  /// @notice The root node hash for "lilnouns.eth"
-  /// @dev Computed as namehash("lilnouns.eth")
-  bytes32 internal constant ROOT_NODE = 0x524060b540a9ca20b59a94f7b32d64ebdbeedc42dfdc7aac115003633593b492;
-
-  /// @notice The root label for the domain
-  string internal constant ROOT_LABEL = "lilnouns";
-
   /// @notice Hash of the "avatar" key for text records
-  /// @dev Used to identify and protect avatar text records from manual modification
+  /// @dev Used to identify and protect avatar text records from manual modification. Fixed by EIP-155 and ENS text record schema.
   bytes32 internal constant AVATAR_KEY_HASH = keccak256("avatar");
 
   /// @notice Reference to the legacy mapper contract for backward compatibility
@@ -83,6 +84,18 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
   /// @notice Maps token IDs to their corresponding node hashes
   /// @dev Used for reverse lookup from token to ENS node
   mapping(uint256 => bytes32) private _idToHash;
+
+  /// @notice The LilNouns NFT contract (configurable)
+  /// @dev Set once during initialize; used for ownership checks and avatar text record.
+  IERC721 internal nft;
+
+  /// @notice The ENS root node under which subdomains are created (e.g., namehash("lilnouns.eth"))
+  /// @dev Set once during initialize; used to compute subnode hashes and set subnode records.
+  bytes32 internal rootNode;
+
+  /// @notice The human-readable root label (e.g., "lilnouns")
+  /// @dev Used for name() and domain composition; set once during initialize.
+  string internal rootLabel;
 
   /**
    * @notice Emitted when an address record is updated for an ENS node
@@ -157,20 +170,8 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    * @dev Authorization is granted to either the contract owner or the current NFT owner
    */
   modifier authorised(uint256 tokenId) {
-    if (msg.sender != owner() && msg.sender != NFT.ownerOf(tokenId)) revert LilNounsEnsErrors.NotAuthorised();
+    if (msg.sender != owner() && msg.sender != nft.ownerOf(tokenId)) revert LilNounsEnsErrors.NotAuthorised();
     _;
-  }
-
-  /**
-   * @notice Overrides the upgrade function to emit ContractUpgraded event
-   * @param newImplementation The address of the new implementation
-   * @param data The initialization data for the upgrade
-   * @dev Emits ContractUpgraded event with previous and new implementation addresses
-   */
-  function _upgradeToAndCall(address newImplementation, bytes memory data) internal override {
-    address previousImplementation = _getImplementation();
-    super._upgradeToAndCall(newImplementation, data);
-    emit ContractUpgraded(previousImplementation, newImplementation, msg.sender);
   }
 
   /* ───────────── pause functionality ───────────── */
@@ -246,8 +247,8 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    * @dev Computes keccak256(abi.encodePacked(ROOT_NODE, keccak256(label)))
    *      This follows the ENS namehash algorithm for subdomains
    */
-  function _nodeForLabel(string memory label) private pure returns (bytes32) {
-    return keccak256(abi.encodePacked(ROOT_NODE, _labelHash(label)));
+  function _nodeForLabel(string memory label) private view returns (bytes32) {
+    return keccak256(abi.encodePacked(rootNode, _labelHash(label)));
   }
 
   /* ───────────── resolver interface ───────────── */
@@ -262,7 +263,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
   function addr(bytes32 node) external view returns (address) {
     (uint256 id, ) = _resolve(node);
     if (id == 0) revert LilNounsEnsErrors.UnknownNode();
-    return NFT.ownerOf(id);
+    return nft.ownerOf(id);
   }
 
   /**
@@ -279,7 +280,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     if (id == 0) revert LilNounsEnsErrors.UnknownNode();
 
     if (keccak256(bytes(key)) == AVATAR_KEY_HASH) {
-      return string.concat("eip155:1/erc721:", Strings.toHexString(address(NFT)), "/", Strings.toString(id));
+      return string.concat("eip155:1/erc721:", Strings.toHexString(address(nft)), "/", Strings.toString(id));
     }
     return fresh ? _texts[node][key] : legacy.texts(node, key);
   }
@@ -296,7 +297,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     if (id == 0) return "";
 
     string memory label = fresh ? _texts[node]["__label"] : legacy.hashToDomainMap(node);
-    return string.concat(label, ".", ROOT_LABEL, ".eth");
+    return string.concat(label, ".", rootLabel, ".eth");
   }
 
   /* ───────────── NFT ↔ ENS helpers ───────────── */
@@ -335,7 +336,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredToken();
 
     string memory label = (_hashToId[node] != 0) ? _texts[node]["__label"] : legacy.hashToDomainMap(node);
-    return string.concat(label, ".", ROOT_LABEL, ".eth");
+    return string.concat(label, ".", rootLabel, ".eth");
   }
 
   /**
@@ -427,8 +428,8 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     _texts[node]["__label"] = label;
 
     // External call after state changes
-    bytes32 resultNode = WRAPPER.setSubnodeRecord(
-      ROOT_NODE,
+    bytes32 resultNode = nameWrapper.setSubnodeRecord(
+      rootNode,
       label,
       address(this),
       address(this),
@@ -438,7 +439,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     );
     if (resultNode == bytes32(0)) revert LilNounsEnsErrors.SubnodeRecordFailed();
 
-    address currentOwner = NFT.ownerOf(tokenId);
+    address currentOwner = nft.ownerOf(tokenId);
     emit RegisterSubdomain(currentOwner, tokenId, label);
     emit AddrChanged(node, currentOwner);
   }
@@ -458,7 +459,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     for (uint256 i; i < ids.length; ) {
       bytes32 node = tokenNode(ids[i]);
       if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredToken();
-      emit AddrChanged(node, NFT.ownerOf(ids[i]));
+      emit AddrChanged(node, nft.ownerOf(ids[i]));
       unchecked {
         ++i;
       }
