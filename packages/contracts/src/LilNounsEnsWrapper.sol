@@ -111,13 +111,15 @@ abstract contract LilNounsEnsWrapper is
     }
 
     // Re-run sanity checks against the provided NameWrapper
-    try _nameWrapper.ens() returns (address reportedEns) {
-      if (reportedEns == address(0) || reportedEns != address(_ens)) revert MisconfiguredENS();
+    try _nameWrapper.ens() returns (ENS reportedEns) {
+      if (address(reportedEns) == address(0) || address(reportedEns) != address(_ens)) {
+        revert LilNounsEnsErrors.MisconfiguredENS();
+      }
     } catch {
       revert LilNounsEnsErrors.MisconfiguredENS();
     }
-    try _nameWrapper.registrar() returns (address reportedRegistrar) {
-      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) {
+    try _nameWrapper.registrar() returns (IBaseRegistrar reportedRegistrar) {
+      if (address(reportedRegistrar) == address(0) || address(reportedRegistrar) != address(_baseRegistrar)) {
         revert LilNounsEnsErrors.MisconfiguredENS();
       }
     } catch {
@@ -150,13 +152,13 @@ abstract contract LilNounsEnsWrapper is
     uint256 tokenId = uint256(labelhash);
 
     // Optional preflight: ensure NameWrapper is approved for this tokenId by the current owner.
-    address currentOwner;
+    address currentOwner = address(0);
     try baseRegistrar.ownerOf(tokenId) returns (address o) {
       currentOwner = o;
     } catch {
       revert LilNounsEnsErrors.NotApproved(tokenId);
     }
-    bool ok;
+    bool ok = false;
     if (currentOwner != address(0)) {
       // Either explicit token approval to NameWrapper or operator approval should be set.
       try baseRegistrar.getApproved(tokenId) returns (address approved) {
