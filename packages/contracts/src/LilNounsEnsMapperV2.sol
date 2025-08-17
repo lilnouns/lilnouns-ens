@@ -8,6 +8,7 @@ import { ILilNounsEnsMapperV1 } from "./interfaces/ILilNounsEnsMapperV1.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { INameWrapper } from "@ensdomains/ens-contracts/wrapper/INameWrapper.sol";
 import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsMapperV2
@@ -40,19 +41,12 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     __LilNounsEnsHolder_init(initialOwner);
     __LilNounsEnsWrapper_init(ensAddress, baseRegistrarAddress, nameWrapperAddress);
 
-    if (legacyAddress == address(0)) revert InvalidLegacyAddress();
+    if (legacyAddress == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
     legacy = ILilNounsEnsMapperV1(legacyAddress);
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
   function _authorizeUpgrade(address) internal override onlyOwner {}
-
-  /// @inheritdoc LilNounsEnsHolder
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view override(LilNounsEnsHolder, LilNounsEnsWrapper) returns (bool) {
-    return super.supportsInterface(interfaceId);
-  }
 
   // Storage gap for future upgrades
   uint256[50] private __gap;
@@ -212,7 +206,9 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
    *      - 0x691f3431: name(bytes32) - Name resolution
    *      Plus all interfaces from parent contracts
    */
-  function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override(LilNounsEnsHolder, LilNounsEnsWrapper) returns (bool) {
     return
       interfaceId == 0x3b3b57de || // addr(bytes32)
       interfaceId == 0x59d1d43c || // text(bytes32,string)
@@ -283,7 +279,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
     if (id == 0) revert LilNounsEnsErrors.UnknownNode();
 
     if (keccak256(bytes(key)) == AVATAR_KEY_HASH) {
-      return string.concat("eip155:1/erc721:", address(NFT).toHexString(), "/", id.toString());
+      return string.concat("eip155:1/erc721:", Strings.toHexString(address(NFT)), "/", Strings.toString(id));
     }
     return fresh ? _texts[node][key] : legacy.texts(node, key);
   }
