@@ -12,7 +12,7 @@ import unusedImportsPlugin from "eslint-plugin-unused-imports";
 import eslintReactPlugin from "@eslint-react/eslint-plugin";
 
 export default tseslint.config(
-  { ignores: ["dist", "src/hooks/contracts.ts"] },
+  { ignores: ["dist", "src/hooks/contracts.ts", "*.config.ts"] },
   {
     extends: [
       js.configs.recommended,
