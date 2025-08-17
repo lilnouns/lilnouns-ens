@@ -6,43 +6,9 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { ERC721HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-
-/// @notice Minimal ENS registry interface placeholder.
-/// @dev Intentionally minimal; extended functionality is not required by this base.
-interface IENS {
-  // Intentionally left blank for minimal coupling.
-}
-
-/// @notice Minimal interface for the ENS Base Registrar (ERC-721 for .eth 2LDs).
-interface IBaseRegistrar {
-  // ERC-721 core read helpers for preflight checks
-  function ownerOf(uint256 tokenId) external view returns (address);
-  function getApproved(uint256 tokenId) external view returns (address);
-  function isApprovedForAll(address owner, address operator) external view returns (bool);
-
-  // Approve an operator for a given tokenId
-  function approve(address to, uint256 tokenId) external;
-}
-
-/// @notice Minimal interface for the official ENS NameWrapper.
-interface INameWrapper {
-  // Wrap a .eth second-level label into the NameWrapper (mints ERC-1155 to `owner`)
-  function wrapETH2LD(
-    string calldata label,
-    address owner,
-    uint32 fuses,
-    uint64 expiry,
-    address resolver
-  ) external;
-
-  // Unwrap a previously wrapped .eth name back to the Base Registrar ERC-721
-  function unwrapETH2LD(bytes32 labelhash, address registrant, address controller) external;
-
-  // Optional read-only helpers used for sanity checking configuration.
-  // Implementations in the official ENS NameWrapper expose these.
-  function ens() external view returns (address);
-  function registrar() external view returns (address);
-}
+import { ENS } from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
+import { INameWrapper } from "@ensdomains/ens-contracts/contracts/wrapper/INameWrapper.sol";
+import { IBaseRegistrar } from "@ensdomains/ens-contracts/contracts/ethregistrar/IBaseRegistrar.sol";
 
 /// @title LilNounsEnsWrapper
 /// @notice Abstract, upgradeable base to expose ENS NameWrapper flows for inheriting NFT-holding contracts.
@@ -77,7 +43,7 @@ abstract contract LilNounsEnsWrapper is
   // ---------------------------
   // Storage
   // ---------------------------
-  IENS public ens;
+  ENS public ens;
   IBaseRegistrar public baseRegistrar;
   INameWrapper public nameWrapper;
 
@@ -89,7 +55,7 @@ abstract contract LilNounsEnsWrapper is
   /// @param _baseRegistrar Base Registrar address (nonzero)
   /// @param _nameWrapper NameWrapper address (nonzero)
   function __LilNounsEnsWrapper_init(
-    IENS _ens,
+    ENS _ens,
     IBaseRegistrar _baseRegistrar,
     INameWrapper _nameWrapper
   ) internal onlyInitializing {
@@ -105,13 +71,13 @@ abstract contract LilNounsEnsWrapper is
     } catch {
       revert MisconfiguredENS();
     }
-
     try _nameWrapper.registrar() returns (address reportedRegistrar) {
-      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) revert MisconfiguredENS();
+      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) {
+        revert MisconfiguredENS();
+      }
     } catch {
       revert MisconfiguredENS();
     }
-
     ens = _ens;
     baseRegistrar = _baseRegistrar;
     nameWrapper = _nameWrapper;
@@ -122,7 +88,7 @@ abstract contract LilNounsEnsWrapper is
   // ---------------------------
   /// @notice Rotate ENS-related contract addresses with sanity checks.
   /// @dev Owner-only to support upgrades or migrations of ENS contracts.
-  function setEnsContracts(IENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
+  function setEnsContracts(ENS _ens, IBaseRegistrar _baseRegistrar, INameWrapper _nameWrapper) external onlyOwner {
     if (address(_ens) == address(0) || address(_baseRegistrar) == address(0) || address(_nameWrapper) == address(0)) {
       revert ZeroAddress();
     }
@@ -133,13 +99,13 @@ abstract contract LilNounsEnsWrapper is
     } catch {
       revert MisconfiguredENS();
     }
-
     try _nameWrapper.registrar() returns (address reportedRegistrar) {
-      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) revert MisconfiguredENS();
+      if (reportedRegistrar == address(0) || reportedRegistrar != address(_baseRegistrar)) {
+        revert MisconfiguredENS();
+      }
     } catch {
       revert MisconfiguredENS();
     }
-
     ens = _ens;
     baseRegistrar = _baseRegistrar;
     nameWrapper = _nameWrapper;
@@ -177,14 +143,12 @@ abstract contract LilNounsEnsWrapper is
     } catch {
       revert NotApproved(tokenId);
     }
-
     bool ok;
     if (currentOwner != address(0)) {
       // Either explicit token approval to NameWrapper or operator approval should be set.
       try baseRegistrar.getApproved(tokenId) returns (address approved) {
         if (approved == address(nameWrapper)) ok = true;
       } catch {}
-
       if (!ok) {
         try baseRegistrar.isApprovedForAll(currentOwner, address(nameWrapper)) returns (bool isAll) {
           if (isAll) ok = true;
@@ -246,25 +210,15 @@ abstract contract LilNounsEnsWrapper is
     address /*resolver*/
   ) internal virtual {}
 
-  function _afterUnwrap(
-    bytes32 /*labelhash*/,
-    address /*newRegistrant*/,
-    address /*newController*/
-  ) internal virtual {}
+  function _afterUnwrap(bytes32, /*labelhash*/ address, /*newRegistrant*/ address /*newController*/) internal virtual {}
 
-  function _afterApprove(uint256 /*tokenId*/, address /*operator*/) internal virtual {}
+  function _afterApprove(uint256, /*tokenId*/ address /*operator*/) internal virtual {}
 
   // ---------------------------
   // ERC165 support
   // ---------------------------
   /// @inheritdoc ERC1155HolderUpgradeable
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC1155HolderUpgradeable)
-    returns (bool)
-  {
+  function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155HolderUpgradeable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
 
