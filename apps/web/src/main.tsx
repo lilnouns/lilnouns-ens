@@ -12,7 +12,11 @@ import "@repo/ui/index.css";
 
 const queryClient = new QueryClient();
 
-createRoot(document.querySelector("#root")!).render(
+const rootElement = document.querySelector("#root");
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
+createRoot(rootElement).render(
   <StrictMode>
     <ThemeProvider>
       <WagmiProvider config={config}>
