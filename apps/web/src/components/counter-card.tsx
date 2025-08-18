@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useWatchBlocks } from "wagmi";
 
 import {
@@ -16,20 +16,13 @@ import {
 } from "@/hooks/contracts";
 
 export function CounterCard() {
-  const [count, setCount] = useState(0);
-
   const { data: counterNumber, refetch: refetchCounterNumber } =
     useReadCounterNumber({});
   const { writeContract: setCounterNumber } = useWriteCounterSetNumber();
   const { writeContract: increaseCounterNumber } = useWriteCounterIncrement();
 
-  // Update the UI when the contract value changes
-  useEffect(() => {
-    const currentCount = Number(counterNumber ?? 0n);
-    if (count !== currentCount) {
-      setCount(currentCount);
-    }
-  }, [counterNumber, count]);
+  // Derive the current count from the contract read to avoid duplicating state
+  const count = Number(counterNumber ?? 0n);
 
   // Watch for blocks and refresh counter value
   useWatchBlocks({
