@@ -14,6 +14,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @notice Local imports
 import { ILilNounsEnsMapperV1 } from "./interfaces/ILilNounsEnsMapperV1.sol";
@@ -26,10 +27,12 @@ import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 /// - Implements ENS resolver interfaces: addr/text/name.
 /// - Supports migration from legacy V1 mapper.
 /// - UUPS upgradeable, controlled by contract owner.
+/// - Reentrancy-locked via OZ `ReentrancyGuardUpgradeable`.
 contract LilNounsEnsMapperV2 is
   Initializable,
   UUPSUpgradeable,
   Ownable2StepUpgradeable,
+  ReentrancyGuardUpgradeable,
   IAddrResolver,
   ITextResolver,
   INameResolver,
@@ -86,6 +89,7 @@ contract LilNounsEnsMapperV2 is
 
     __Ownable2Step_init();
     __UUPSUpgradeable_init();
+    __ReentrancyGuard_init();
 
     legacy = ILilNounsEnsMapperV1(legacyAddr);
     nft = legacy.nft();
@@ -99,6 +103,7 @@ contract LilNounsEnsMapperV2 is
 
   /// @notice Claims a new subdomain for a Lil Noun NFT.
   /// @dev
+  /// - Reentrancy-protected.
   /// - One subdomain per tokenId.
   /// - Reverts if:
   ///   - caller is not token owner,
@@ -106,7 +111,7 @@ contract LilNounsEnsMapperV2 is
   ///   - label already taken by another tokenId.
   /// @param label Desired label (e.g., "noun42").
   /// @param tokenId Token ID to associate with the subdomain.
-  function claimSubdomain(string calldata label, uint256 tokenId) external {
+  function claimSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
     if (legacy.tokenHashmap(tokenId) != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
@@ -148,8 +153,9 @@ contract LilNounsEnsMapperV2 is
   }
 
   /// @notice Migrates a V1 subdomain to V2 (owner-only).
+  /// @dev Reentrancy-protected.
   /// @param tokenId NFT token ID to migrate.
-  function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner {
+  function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner nonReentrant {
     bytes32 node = legacy.tokenHashmap(tokenId);
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
 
