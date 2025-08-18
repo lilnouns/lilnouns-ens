@@ -126,9 +126,7 @@ contract LilNounsEnsMapperV2 is
     // ENS registry call — external, but safe and trusted
     ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
 
-    /// @custom:slither-safe-event-after-call
     emit SubdomainClaimed(msg.sender, tokenId, node, label);
-    /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, msg.sender);
   }
 
