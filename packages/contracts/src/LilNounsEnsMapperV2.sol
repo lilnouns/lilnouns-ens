@@ -12,6 +12,7 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 /// @notice Orchestrator combining Holder, Wrapper, and Resolver on top of LilNounsEnsBase.
 /// @author LilNouns ENS Contributors
 contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsEnsResolver {
+  /// @notice Disable initializers in the implementation contract to prevent misuse
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -49,24 +50,43 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsE
   }
 
   /// @notice Emitted when an address record is updated for an ENS node
+  /// @param node The ENS node being updated (indexed)
+  /// @param a The new address for the node
+  // solhint-disable-next-line gas-indexed-events -- Preserve event ABI; adding indexed would be a breaking change
   event AddrChanged(bytes32 indexed node, address a);
 
   /// @notice Emitted when a text record is updated for an ENS node
+  /// @param node The ENS node being updated (indexed)
+  /// @param key The text record key (indexed)
+  /// @param value The new text value
+  /// @param updatedBy The caller who performed the update (indexed)
   event TextChanged(bytes32 indexed node, string indexed key, string value, address indexed updatedBy);
 
   /// @notice Emitted when a subdomain is successfully registered
+  /// @param registrar The address receiving the subdomain ownership
+  /// @param tokenId The associated token ID
+  /// @param label The registered label
   event RegisterSubdomain(address indexed registrar, uint256 indexed tokenId, string indexed label);
 
   /// @notice Emitted when legacy domain data is imported from V1 mapper
+  /// @param tokenId The token ID being imported
+  /// @param node The ENS node being imported
+  /// @param label The imported label
+  /// @param importedBy The caller who imported the legacy data (indexed)
   event LegacyImported(uint256 indexed tokenId, bytes32 indexed node, string label, address indexed importedBy);
 
   /// @notice Emitted when multiple address records are updated in batch
+  /// @param tokenIds The list of token IDs updated
+  /// @param updatedBy The caller who performed the batch update (indexed)
+  /// @param count The number of tokens processed
   event BatchAddressesUpdated(uint256[] tokenIds, address indexed updatedBy, uint256 count);
 
   /// @notice Emitted when the contract is paused
+  /// @param account The account that paused the contract (indexed)
   event ContractPaused(address indexed account);
 
   /// @notice Emitted when the contract is unpaused
+  /// @param account The account that unpaused the contract (indexed)
   event ContractUnpaused(address indexed account);
 
   /// @notice Ensures the caller is authorized to perform actions on behalf of a token
@@ -81,6 +101,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsE
     emit ContractPaused(msg.sender);
   }
 
+  /// @notice Unpauses the contract if not within a scheduled pause window
   function unpause() external override onlyOwner {
     _requirePauseLiftable();
     _unpause();
@@ -88,7 +109,11 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsE
   }
 
   /// @notice Checks ERC-165 support including resolver facets and base receivers
-  function supportsInterface(bytes4 interfaceId) public view override(ERC1155HolderUpgradeable) returns (bool) {
+  /// @param interfaceId The interface identifier as specified in ERC-165
+  /// @return supported True if the interface is supported
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override(ERC1155HolderUpgradeable) returns (bool supported) {
     return _supportsResolverInterface(interfaceId) || super.supportsInterface(interfaceId);
   }
 
