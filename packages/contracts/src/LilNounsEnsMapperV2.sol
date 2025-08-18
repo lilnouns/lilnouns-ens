@@ -108,8 +108,8 @@ contract LilNounsEnsMapperV2 is
   /// @param tokenId Token ID to associate with the subdomain.
   function claimSubdomain(string calldata label, uint256 tokenId) external {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
-    if (_tokenToNode[tokenId] != 0) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
-    if (legacy.tokenHashmap(tokenId) != 0) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
+    if (_tokenToNode[tokenId] != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
+    if (legacy.tokenHashmap(tokenId) != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
 
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(rootNode, labelHash));
