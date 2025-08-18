@@ -111,6 +111,9 @@ importers:
       eslint:
         specifier: 9.33.0
         version: 9.33.0(jiti@2.5.1)
+      eslint-formatter-unix:
+        specifier: 8.40.0
+        version: 8.40.0
       eslint-import-resolver-typescript:
         specifier: 4.4.4
         version: 4.4.4(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.39.1(eslint@9.33.0(jiti@2.5.1))(typescript@5.9.2))(eslint@9.33.0(jiti@2.5.1)))(eslint@9.33.0(jiti@2.5.1))
@@ -188,7 +191,7 @@ importers:
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
       forge-std:
         specifier: foundry-rs/forge-std
-        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/c7be2a3481f9e51230880bb0949072c7e3a4da82
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/0c71116a218268ee8c0157be8efcb13af0f7beaf
       solidity-stringutils:
         specifier: Arachnid/solidity-stringutils
         version: https://codeload.github.com/Arachnid/solidity-stringutils/tar.gz/4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461
@@ -229,6 +232,9 @@ importers:
       chai:
         specifier: 4.5.0
         version: 4.5.0
+      eslint-formatter-unix:
+        specifier: 8.40.0
+        version: 8.40.0
       ethers:
         specifier: 6.15.0
         version: 6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -3667,6 +3673,10 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
+  eslint-formatter-unix@8.40.0:
+    resolution: {integrity: sha512-gfsmFZ/cb1MobrMfYl2IPFLZEz2tWQVO/tnmziNQdhWJMN85GfZD64dcPsEgaEoeVKgAtK6W9LWLlOxhJWZvDw==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
   eslint-import-context@0.1.9:
     resolution: {integrity: sha512-K9Hb+yRaGAGUbwjhFNHvSmmkZs9+zbuoe3kFQ4V1wYjrepUFYM2dZAfNtjbbj3qsPfUfsA68Bx/ICWQMi+C8Eg==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
@@ -4059,8 +4069,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/c7be2a3481f9e51230880bb0949072c7e3a4da82:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/c7be2a3481f9e51230880bb0949072c7e3a4da82}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/0c71116a218268ee8c0157be8efcb13af0f7beaf:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/0c71116a218268ee8c0157be8efcb13af0f7beaf}
     version: 1.10.0
 
   form-data-encoder@2.1.4:
@@ -12286,6 +12296,8 @@ snapshots:
     dependencies:
       eslint: 9.33.0(jiti@2.5.1)
 
+  eslint-formatter-unix@8.40.0: {}
+
   eslint-import-context@0.1.9(unrs-resolver@1.11.1):
     dependencies:
       get-tsconfig: 4.10.1
@@ -12869,7 +12881,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/c7be2a3481f9e51230880bb0949072c7e3a4da82: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/0c71116a218268ee8c0157be8efcb13af0f7beaf: {}
 
   form-data-encoder@2.1.4: {}
 
