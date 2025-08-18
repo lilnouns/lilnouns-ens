@@ -169,8 +169,7 @@ contract LilNounsEnsMapperV2 is
 
   /// @inheritdoc IAddrResolver
   function addr(bytes32 node) external view override returns (address payable) {
-    uint256 tokenId = _nodeToToken[node];
-    if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
+    uint256 tokenId = _nodeToExistingToken(node);
     return payable(nft.ownerOf(tokenId));
   }
 
