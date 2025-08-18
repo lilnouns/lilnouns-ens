@@ -233,9 +233,11 @@ contract LilNounsEnsMapperV2 is
   /// @dev Useful for manual re-indexing by The Graph or Etherscan.
   /// @param tokenIds List of token IDs.
   function emitAddrEvents(uint256[] calldata tokenIds) external {
+    // slither-disable-next-line calls-loop
     for (uint256 i = 0; i < tokenIds.length; ) {
       bytes32 node = _tokenToNode[tokenIds[i]];
       if (node != bytes32(0)) {
+        // slither-disable-next-line calls-loop
         emit AddrChanged(node, nft.ownerOf(tokenIds[i]));
       }
       unchecked {
