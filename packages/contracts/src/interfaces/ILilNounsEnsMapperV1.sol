@@ -7,14 +7,14 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /// @notice Interface for the legacy ENS mapper contract used by Lil Nouns.
 /// @dev Provides read access to subdomain mappings and ENS resolver data.
 interface ILilNounsEnsMapperV1 {
-  /// @notice Returns the NFT contract associated with the ENS records
+  /// @notice Returns the NFT contract associated with the ENS records.
   function nft() external view returns (IERC721);
 
-  /// @notice Returns the ENS domain hash (namehash of the root domain, e.g., "lilnouns.eth")
+  /// @notice Returns the ENS domain hash (namehash of the root domain, e.g., "lilnouns.eth").
   function domainHash() external view returns (bytes32);
 
   /// @notice Get the ENS name for a given node (namehash).
-  /// @param node The ENS node (e.g., namehash of "noun42.lilnouns.eth")
+  /// @param node The ENS node (e.g., namehash of "noun42.lilnouns.eth").
   /// @return The ENS name string (e.g., "noun42.lilnouns.eth"), or empty string if unregistered.
   function name(bytes32 node) external view returns (string memory);
 
@@ -26,8 +26,8 @@ interface ILilNounsEnsMapperV1 {
 
   /// @notice Returns a custom text record for a given node.
   /// @dev Special-cased for key = "avatar".
-  /// @param node ENS node
-  /// @param key The text record key (e.g., "avatar", "description")
+  /// @param node ENS node.
+  /// @param key The text record key (e.g., "avatar", "description").
   /// @return The associated text value.
   function text(bytes32 node, string calldata key) external view returns (string memory);
 
@@ -38,12 +38,12 @@ interface ILilNounsEnsMapperV1 {
   function tokenHashmap(uint256 tokenId) external view returns (bytes32);
 
   /// @notice Get the tokenId associated with a given node.
-  /// @param node ENS node (namehash)
+  /// @param node ENS node (namehash).
   /// @return The ERC721 tokenId linked to the subdomain.
   function hashToIdMap(bytes32 node) external view returns (uint256);
 
   /// @notice Get the label (e.g., "noun42") mapped to a node.
-  /// @param node ENS node (namehash)
+  /// @param node ENS node (namehash).
   /// @return The label originally claimed.
   function hashToDomainMap(bytes32 node) external view returns (string memory);
 }
