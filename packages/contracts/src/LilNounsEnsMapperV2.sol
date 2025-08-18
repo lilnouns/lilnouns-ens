@@ -124,8 +124,11 @@ contract LilNounsEnsMapperV2 is
     emit AddrChanged(node, msg.sender);
   }
 
-  /// @notice Resets the resolver for a claimed subdomain
-  /// @param tokenId Token ID with an associated subdomain
+  /// @notice Resets the resolver for a claimed subdomain back to this contract.
+  /// @dev
+  /// - Useful if resolver was changed elsewhere.
+  /// - Callable by contract owner or NFT owner.
+  /// @param tokenId Token ID with an associated subdomain.
   function restoreResolver(uint256 tokenId) external {
     bytes32 node = _tokenToNode[tokenId];
     if (node == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
