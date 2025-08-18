@@ -18,6 +18,7 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 /// @title LilNounsEnsBase
 /// @notice Abstract upgradeable base that centralizes shared modules, storage, access control, pausing, and ENS config.
 /// @dev Aggregates OZ upgradeable modules once to keep children thin and avoid bytecode bloat.
+/// @author LilNouns ENS Contributors
 abstract contract LilNounsEnsBase is
   Initializable,
   Ownable2StepUpgradeable,

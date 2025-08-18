@@ -4,6 +4,7 @@ pragma solidity ^0.8.29;
 /// @title LilNouns ENS Shared Errors
 /// @notice Defines common custom errors used across LilNouns ENS contracts.
 /// @dev Present tense, active voice. Prefer custom errors to save gas and enable tooling.
+/// @author LilNouns ENS Contributors
 library LilNounsEnsErrors {
   /// @notice Thrown when a function receives the zero address for a required parameter.
   error ZeroAddress();

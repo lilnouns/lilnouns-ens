@@ -5,6 +5,7 @@ pragma solidity ^0.8.29;
  * @title ILilNounsEnsMapperV1
  * @notice Interface for mapping Lil Nouns tokens to ENS domains and associated metadata
  * @dev This interface provides bidirectional mapping between token IDs, hashes, and ENS domains
+ * @author LilNouns ENS Contributors
  */
 interface ILilNounsEnsMapperV1 {
   /**

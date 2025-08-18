@@ -10,6 +10,7 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsMapperV2
 /// @notice Orchestrator combining Holder, Wrapper, and Resolver on top of LilNounsEnsBase.
+/// @author LilNouns ENS Contributors
 contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsEnsResolver {
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {

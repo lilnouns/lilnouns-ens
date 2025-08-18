@@ -6,6 +6,7 @@ import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsWrapper
 /// @notice Thin ENS NameWrapper helper using shared storage and modules from LilNounsEnsBase.
+/// @author LilNouns ENS Contributors
 import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 abstract contract LilNounsEnsWrapper is LilNounsEnsBase, ERC1155HolderUpgradeable {

@@ -11,6 +11,7 @@ import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/to
 /// @title LilNounsEnsHolder
 /// @notice Thin holder that relies on LilNounsEnsBase for upgradeability, access control, pausing, and receivers.
 /// @dev Avoids re-importing OZ modules; delegates to base for security and lifecycle.
+/// @author LilNouns ENS Contributors
 abstract contract LilNounsEnsHolder is LilNounsEnsBase, ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
   /// @notice Emitted when an ERC-721 token is withdrawn from the vault.
   /// @param token The ERC-721 contract address.

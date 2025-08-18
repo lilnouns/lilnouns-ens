@@ -7,6 +7,7 @@ import { LilNounsEnsBase } from "./LilNounsEnsBase.sol";
 
 /// @title LilNounsEnsResolver
 /// @notice Thin resolver-specific logic using shared config/state from LilNounsEnsBase.
+/// @author LilNouns ENS Contributors
 abstract contract LilNounsEnsResolver is LilNounsEnsBase {
   /// @notice Hash of the "avatar" key for text records
   bytes32 internal constant AVATAR_KEY_HASH = keccak256("avatar");
