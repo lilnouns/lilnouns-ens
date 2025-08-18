@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import { Test } from "forge-std/Test.sol";
 
 // Contract under test
-import { LilNounsEnsMapperV2 } from "../src/LilNounsEnsMapperV2.sol";
+import { LilNounsEnsMapperV3 } from "../src/LilNounsEnsMapperV3.sol";
 
 // Errors to assert on
 import { LilNounsEnsErrors } from "../src/LilNounsEnsErrors.sol";
@@ -90,9 +90,9 @@ contract MockNameWrapper {
   address public lastOwner;
   address public lastResolver;
   bool public tryReenter;
-  LilNounsEnsMapperV2 public mapper; // set by tests when reentrancy is desired
+  LilNounsEnsMapperV3 public mapper; // set by tests when reentrancy is desired
 
-  function configureReenter(LilNounsEnsMapperV2 _mapper, bool _try) external {
+  function configureReenter(LilNounsEnsMapperV3 _mapper, bool _try) external {
     mapper = _mapper;
     tryReenter = _try;
   }
@@ -218,7 +218,7 @@ contract MockNameWrapper {
 }
 
 /// -----------------------------------------------------------------------
-/// LilNounsEnsMapperV2 Test Suite
+/// LilNounsEnsMapperV3.sol Test Suite
 /// -----------------------------------------------------------------------
 /// Minimal legacy interface matching the subset used
 interface ILegacy {
@@ -247,7 +247,7 @@ contract LegacyNull is ILegacy {
   }
 }
 
-contract LilNounsEnsMapperV2Test is Test {
+contract LilNounsEnsMapperV3Test is Test {
   // Actors
   address internal alice = address(0xA11CE);
   address internal bob = address(0xB0B);
@@ -258,7 +258,7 @@ contract LilNounsEnsMapperV2Test is Test {
   address internal ensAddr;
   address internal registrarAddr;
   MockNameWrapper internal wrapper;
-  LilNounsEnsMapperV2 internal mapper;
+  LilNounsEnsMapperV3 internal mapper;
 
   // Constants
   bytes32 internal ROOT_ETH = namehash("eth");
@@ -283,7 +283,7 @@ contract LilNounsEnsMapperV2Test is Test {
     legacy = ILegacy(address(legacyImpl));
 
     // Deploy mapper (implementation directly; using initializer pattern)
-    mapper = new LilNounsEnsMapperV2();
+    mapper = new LilNounsEnsMapperV3();
 
     // Initialize with admin as owner, and wire mocks. Root is lilnouns.eth
     mapper.initialize(
@@ -320,9 +320,9 @@ contract LilNounsEnsMapperV2Test is Test {
 
     vm.prank(alice);
     vm.expectEmit(true, true, true, true);
-    emit LilNounsEnsMapperV2.RegisterSubdomain(alice, 1, "alice");
+    emit LilNounsEnsMapperV3.RegisterSubdomain(alice, 1, "alice");
     vm.expectEmit(true, false, false, true);
-    emit LilNounsEnsMapperV2.AddrChanged(nodeFor("alice"), alice);
+    emit LilNounsEnsMapperV3.AddrChanged(nodeFor("alice"), alice);
     mapper.claim("alice", 1);
 
     // State: token -> node
@@ -410,7 +410,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // pause as admin
     vm.prank(admin);
     vm.expectEmit(true, false, false, true);
-    emit LilNounsEnsMapperV2.ContractPaused(admin);
+    emit LilNounsEnsMapperV3.ContractPaused(admin);
     mapper.pause();
 
     _mintTo(alice, 1);
@@ -421,7 +421,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // unpause as admin
     vm.prank(admin);
     vm.expectEmit(true, false, false, true);
-    emit LilNounsEnsMapperV2.ContractUnpaused(admin);
+    emit LilNounsEnsMapperV3.ContractUnpaused(admin);
     mapper.unpause();
 
     vm.prank(alice);
@@ -444,7 +444,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
     // A normal key succeeds and emits TextChanged
     vm.expectEmit(true, true, true, true);
-    emit LilNounsEnsMapperV2.TextChanged(node, "url", "https://ex", alice);
+    emit LilNounsEnsMapperV3.TextChanged(node, "url", "https://ex", alice);
     mapper.setText(node, "url", "https://ex");
     vm.stopPrank();
   }
@@ -467,11 +467,11 @@ contract LilNounsEnsMapperV2Test is Test {
     ids[1] = 12;
 
     vm.expectEmit(true, false, false, true);
-    emit LilNounsEnsMapperV2.AddrChanged(nodeFor("a11"), alice);
+    emit LilNounsEnsMapperV3.AddrChanged(nodeFor("a11"), alice);
     vm.expectEmit(true, false, false, true);
-    emit LilNounsEnsMapperV2.AddrChanged(nodeFor("a12"), bob);
+    emit LilNounsEnsMapperV3.AddrChanged(nodeFor("a12"), bob);
     vm.expectEmit(false, true, false, true);
-    emit LilNounsEnsMapperV2.BatchAddressesUpdated(ids, address(this), 2);
+    emit LilNounsEnsMapperV3.BatchAddressesUpdated(ids, address(this), 2);
     mapper.updateAddresses(ids);
   }
 
@@ -534,7 +534,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // Deploy a special wrapper that will try to reenter
     MockNameWrapper reentrant = new MockNameWrapper(ensAddr, registrarAddr);
     // We need a fresh mapper wired to this wrapper
-    LilNounsEnsMapperV2 m2 = new LilNounsEnsMapperV2();
+    LilNounsEnsMapperV3 m2 = new LilNounsEnsMapperV3();
     LegacyNull legacyImpl = new LegacyNull();
     m2.initialize(
       admin,
@@ -587,7 +587,7 @@ contract LilNounsEnsMapperV2Test is Test {
 /**
  * Run notes:
  * - This suite uses minimal mocks for ENS, NameWrapper, and BaseRegistrar to satisfy the mapper’s initializer wiring and subnode creation path.
- * - It focuses on LilNounsEnsMapperV2’s actual behaviors: claiming unique labels, authorization, pause, text records, updateAddresses, and that addr resolution tracks NFT transfers.
+ * - It focuses on LilNounsEnsMapperV3.sol’s actual behaviors: claiming unique labels, authorization, pause, text records, updateAddresses, and that addr resolution tracks NFT transfers.
  * - The contract does not expose a relinquish function; tests instead verify multiple claims by the same token update tokenNode to the latest label while earlier nodes remain mapped, matching current implementation design.
  * - Execute with:
  *   cd packages/contracts && forge test -vv

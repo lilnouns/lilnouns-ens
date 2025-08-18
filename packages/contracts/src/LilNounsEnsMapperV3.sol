@@ -8,10 +8,10 @@ import { LilNounsEnsBase } from "./LilNounsEnsBase.sol";
 import { ERC1155HolderUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import { LilNounsEnsErrors } from "./LilNounsEnsErrors.sol";
 
-/// @title LilNounsEnsMapperV2
+/// @title LilNounsEnsMapperV3.sol
 /// @notice Orchestrator combining Holder, Wrapper, and Resolver on top of LilNounsEnsBase.
 /// @author LilNouns ENS Contributors
-contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsEnsResolver {
+contract LilNounsEnsMapperV3 is LilNounsEnsHolder, LilNounsEnsWrapper, LilNounsEnsResolver {
   /// @notice Disable initializers in the implementation contract to prevent misuse
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
