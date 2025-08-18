@@ -21,7 +21,7 @@ import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsMapperV2
 /// @notice Upgradeable ENS resolver and controller for Lil Nouns NFTs
-/// @dev Implements IAddrResolver, ITextResolver, INameResolver. Compatible with ENS and UUPS proxy.
+/// @dev Implements ENS Resolver interfaces and ENS subdomain registration
 contract LilNounsEnsMapperV2 is
   Initializable,
   UUPSUpgradeable,
@@ -33,19 +33,19 @@ contract LilNounsEnsMapperV2 is
 {
   using Strings for uint256;
 
-  /// @notice ENS registry interface
+  /// @notice ENS registry reference
   ENS public ens;
 
-  /// @notice Legacy ENS mapping contract (V1)
+  /// @notice Legacy V1 mapping contract
   ILilNounsEnsMapperV1 public legacy;
 
-  /// @notice Lil Nouns ERC721 NFT contract
+  /// @notice Lil Nouns NFT contract
   IERC721 public nft;
 
-  /// @notice ENS namehash for root domain (e.g. lilnouns.eth)
+  /// @notice ENS namehash of the root domain (e.g. lilnouns.eth)
   bytes32 public rootNode;
 
-  /// @notice Root label string (e.g. "lilnouns")
+  /// @notice Human-readable root label (e.g. "lilnouns")
   string public rootLabel;
 
   /// @dev tokenId => ENS node
@@ -60,7 +60,7 @@ contract LilNounsEnsMapperV2 is
   /// @dev ENS node => text records (e.g., description, avatar, etc.)
   mapping(bytes32 => mapping(string => string)) private _texts;
 
-  /// @notice Emitted when a new subdomain is claimed
+  /// @notice Emitted when a new subdomain is registered
   event SubdomainClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
 
   /// @notice Emitted when a text record is updated
