@@ -93,6 +93,9 @@ contract LilNounsEnsMapperV2 is
   /// @notice Claims a new subdomain for a Lil Noun NFT
   /// @param label Desired label (e.g., "noun42")
   /// @param tokenId Token ID to associate with the subdomain
+  /// @inheritdoc UUPSUpgradeable
+  function _authorizeUpgrade(address) internal override onlyOwner {}
+
   function claimSubdomain(string calldata label, uint256 tokenId) external {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != 0) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
@@ -220,9 +223,6 @@ contract LilNounsEnsMapperV2 is
       emit TextChanged(_tokenToNode[tokenIds[i]], key, key);
     }
   }
-
-  /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address) internal override onlyOwner {}
 
   /// @dev Converts an address to a lowercase hex string
   /// @param input Address to convert
