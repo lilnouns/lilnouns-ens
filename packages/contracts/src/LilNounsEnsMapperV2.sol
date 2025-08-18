@@ -207,8 +207,7 @@ contract LilNounsEnsMapperV2 is
   /// @param tokenIds List of token IDs to emit AddrChanged for
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      uint256 tokenId = tokenIds[i];
-      emit AddrChanged(_tokenToNode[tokenId], nft.ownerOf(tokenId));
+      emit AddrChanged(_tokenToNode[tokenIds[i]], nft.ownerOf(tokenIds[i]));
     }
   }
 
