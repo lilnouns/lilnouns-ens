@@ -65,4 +65,7 @@ library LilNounsEnsErrors {
 
   /// @notice Thrown when initializing with an invalid legacy contract address
   error InvalidLegacyAddress();
+
+  /// @notice Thrown when a scheduled pause window is active and prevents unpausing or execution
+  error PauseWindowActive();
 }
