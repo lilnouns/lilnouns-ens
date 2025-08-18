@@ -20,8 +20,12 @@ import { ILilNounsEnsMapperV1 } from "./interfaces/ILilNounsEnsMapperV1.sol";
 import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 
 /// @title LilNounsEnsMapperV2
-/// @notice Upgradeable ENS resolver and controller for Lil Nouns NFTs
-/// @dev Implements ENS Resolver interfaces and ENS subdomain registration
+/// @notice Upgradeable ENS resolver and controller for Lil Nouns NFTs.
+/// @dev
+/// - Manages one ENS subdomain per NFT tokenId under a configured root (e.g. `lilnouns.eth`).
+/// - Implements ENS resolver interfaces: addr/text/name.
+/// - Supports migration from legacy V1 mapper.
+/// - UUPS upgradeable, controlled by contract owner.
 contract LilNounsEnsMapperV2 is
   Initializable,
   UUPSUpgradeable,
