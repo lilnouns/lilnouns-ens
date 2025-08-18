@@ -143,6 +143,30 @@ contract LilNounsEnsMapperV2 is
     ens.setResolver(node, address(this));
   }
 
+  /// @notice Migrates a V1 subdomain to V2 (owner-only).
+  /// @param tokenId NFT token ID to migrate.
+  function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner {
+    bytes32 node = legacy.tokenHashmap(tokenId);
+    if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
+
+    string memory label = legacy.hashToDomainMap(node);
+    if (bytes(label).length == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
+
+    uint256 existing = _nodeToToken[node];
+    bool taken = (existing != 0) || (_tokenToNode[0] == node);
+    if (taken) revert LilNounsEnsErrors.AlreadyClaimed(existing);
+
+    _tokenToNode[tokenId] = node;
+    _nodeToToken[node] = tokenId;
+    _nodeToLabel[node] = label;
+
+    ens.setSubnodeRecord(rootNode, keccak256(abi.encodePacked(label)), address(this), address(this), 0);
+
+    address currentOwner = nft.ownerOf(tokenId);
+    emit SubdomainClaimed(currentOwner, tokenId, node, label);
+    emit AddrChanged(node, currentOwner);
+  }
+
   /// @inheritdoc IAddrResolver
   function addr(bytes32 node) external view override returns (address payable) {
     uint256 tokenId = _nodeToToken[node];
@@ -194,28 +218,6 @@ contract LilNounsEnsMapperV2 is
 
     _texts[node][key] = value;
     emit TextChanged(node, key, key);
-  }
-
-  /// @notice Migrates a V1 subdomain to V2
-  /// @param tokenId NFT token ID to migrate
-  function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner {
-    bytes32 node = legacy.tokenHashmap(tokenId);
-    if (node == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
-
-    string memory label = legacy.hashToDomainMap(node);
-    if (bytes(label).length == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
-
-    // Reentrancy-safe: mutate before ENS call
-    _tokenToNode[tokenId] = node;
-    _nodeToToken[node] = tokenId;
-    _nodeToLabel[node] = label;
-
-    ens.setSubnodeRecord(rootNode, keccak256(abi.encodePacked(label)), address(this), address(this), 0);
-
-    /// @custom:slither-safe-event-after-call
-    emit SubdomainClaimed(nft.ownerOf(tokenId), tokenId, node, label);
-    /// @custom:slither-safe-event-after-call
-    emit AddrChanged(node, nft.ownerOf(tokenId));
   }
 
   /// @notice Emits AddrChanged for one or more tokenIds
