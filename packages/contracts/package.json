@@ -29,12 +29,12 @@
     "test:hardhat": "hardhat test --typecheck"
   },
   "dependencies": {
+    "@ensdomains/ens-contracts": "1.5.2",
     "@openzeppelin/contracts": "5.4.0",
     "@openzeppelin/contracts-upgradeable": "5.4.0",
     "@openzeppelin/foundry-upgrades": "0.4.0",
     "@openzeppelin/hardhat-upgrades": "3.9.1",
     "@openzeppelin/upgrades-core": "1.44.1",
-    "@ensdomains/ens-contracts": "1.5.2",
     "ds-test": "dapphub/ds-test",
     "forge-std": "foundry-rs/forge-std",
     "solidity-stringutils": "Arachnid/solidity-stringutils"
@@ -52,6 +52,7 @@
     "@types/mocha": "10.0.10",
     "@types/node": "24.3.0",
     "chai": "4.5.0",
+    "eslint-formatter-unix": "8.40.0",
     "ethers": "6.15.0",
     "hardhat": "2.26.1",
     "solhint": "6.0.0",

@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -47,7 +48,7 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   // Memoize the context value to prevent unnecessary rerenders
-  const contextValue = { theme, toggleTheme };
+  const contextValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
 
   return (
     <ThemeContext value={contextValue}>
@@ -70,9 +71,9 @@ export function useTheme() {
  * Gets the initial theme based on local storage or system preference
  */
 function getInitialTheme(): Theme {
-  if (globalThis.window !== undefined) {
-    const saved = localStorage.getItem("theme") as null | Theme;
-    if (saved && (saved === "dark" || saved === "light")) return saved;
+  if ("window" in globalThis) {
+    const saved = globalThis.localStorage.getItem("theme") as null | Theme;
+    if (saved) return saved;
 
     return globalThis.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"

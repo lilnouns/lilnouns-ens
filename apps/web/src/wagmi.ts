@@ -7,7 +7,7 @@ export const config = createConfig({
   connectors: [
     injected(),
     coinbaseWallet(),
-    walletConnect({ projectId: import.meta.env.VITE_WC_PROJECT_ID }),
+    walletConnect({ projectId: String(import.meta.env.VITE_WC_PROJECT_ID ?? "") }),
   ],
   transports: {
     [sepolia.id]: http(),
