@@ -142,7 +142,6 @@ contract LilNounsEnsMapperV2 is
     if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
       revert LilNounsEnsErrors.NotAuthorised(tokenId);
     }
-
     ens.setResolver(node, address(this));
   }
 
@@ -270,4 +269,7 @@ contract LilNounsEnsMapperV2 is
     }
     str = string(buf);
   }
+
+  // Reserved storage space for future variable additions in upgradeable contracts to prevent storage layout conflicts
+  uint256[44] private __gap;
 }
