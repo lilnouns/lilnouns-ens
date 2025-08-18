@@ -90,10 +90,6 @@ contract LilNounsEnsMapperV2 is
     rootLabel = labelRoot;
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Subdomain Management
-  // ------------------------------------------------------------------------------------------
-
   /// @notice Claims a new subdomain for a Lil Noun NFT
   /// @param label Desired label (e.g., "noun42")
   /// @param tokenId Token ID to associate with the subdomain
@@ -167,10 +163,6 @@ contract LilNounsEnsMapperV2 is
       interfaceId == type(IERC165).interfaceId;
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Text Records
-  // ------------------------------------------------------------------------------------------
-
   /// @notice Sets a text record (excluding "avatar")
   /// @param node ENS node
   /// @param key Key (e.g., "description")
@@ -186,10 +178,6 @@ contract LilNounsEnsMapperV2 is
     _texts[node][key] = value;
     emit TextChanged(node, key, key);
   }
-
-  // ------------------------------------------------------------------------------------------
-  // Migration from V1
-  // ------------------------------------------------------------------------------------------
 
   /// @notice Migrates a V1 subdomain to V2
   /// @param tokenId NFT token ID to migrate
@@ -212,10 +200,6 @@ contract LilNounsEnsMapperV2 is
     emit AddrChanged(node, nft.ownerOf(tokenId));
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Off-Chain Indexing Helpers
-  // ------------------------------------------------------------------------------------------
-
   /// @notice Emits AddrChanged for one or more tokenIds
   /// @dev Useful for manual re-indexing by The Graph or Etherscan
   /// @param tokenIds List of token IDs to emit AddrChanged for
@@ -236,16 +220,8 @@ contract LilNounsEnsMapperV2 is
     }
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Upgradeability
-  // ------------------------------------------------------------------------------------------
-
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address) internal override onlyOwner {}
-
-  // ------------------------------------------------------------------------------------------
-  // Internal Utilities
-  // ------------------------------------------------------------------------------------------
 
   /// @dev Converts an address to a lowercase hex string
   /// @param input Address to convert
