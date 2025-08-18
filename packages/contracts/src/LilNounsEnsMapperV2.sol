@@ -139,8 +139,6 @@ contract LilNounsEnsMapperV2 is
     _;
   }
 
-  /* ───────────── pause functionality ───────────── */
-
   /**
    * @notice Pauses all pausable contract functions
    * @dev Only the contract owner can pause the contract
@@ -160,8 +158,6 @@ contract LilNounsEnsMapperV2 is
     emit ContractUnpaused(msg.sender);
   }
 
-  /* ───────────── ERC‑165 support ───────────── */
-
   /**
    * @notice Checks if the contract supports a given interface
    * @param interfaceId The interface identifier to check
@@ -177,8 +173,6 @@ contract LilNounsEnsMapperV2 is
   ) public view override(LilNounsEnsWrapper, ERC1155HolderUpgradeable) returns (bool) {
     return _supportsResolverInterface(interfaceId) || super.supportsInterface(interfaceId);
   }
-
-  /* ───────────── registrar logic ───────────── */
 
   /**
    * @notice Claims a subdomain for an NFT token
@@ -259,8 +253,6 @@ contract LilNounsEnsMapperV2 is
     emit RegisterSubdomain(currentOwner, tokenId, label);
     emit AddrChanged(node, currentOwner);
   }
-
-  /* ───────────── maintenance ───────────── */
 
   /**
    * @notice Updates address records for multiple tokens to reflect current NFT ownership

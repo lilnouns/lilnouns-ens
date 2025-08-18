@@ -61,8 +61,6 @@ abstract contract LilNounsEnsResolver is Initializable {
     rootLabel = rootLabel_;
   }
 
-  /* ───────────── ERC‑165 support helper ───────────── */
-
   /// @notice Internal helper to advertise supported ENS resolver interfaces via ERC-165.
   function _supportsResolverInterface(bytes4 interfaceId) internal pure returns (bool) {
     return
@@ -70,8 +68,6 @@ abstract contract LilNounsEnsResolver is Initializable {
       interfaceId == 0x59d1d43c || // text(bytes32,string)
       interfaceId == 0x691f3431; // name(bytes32)
   }
-
-  /* ───────────── internal helpers ───────────── */
 
   /// @dev Resolves node to token id with legacy fallback.
   function _resolve(bytes32 node) internal view returns (uint256 id, bool fresh) {
@@ -132,8 +128,6 @@ abstract contract LilNounsEnsResolver is Initializable {
     string memory label = fresh ? _texts[node]["__label"] : legacy.hashToDomainMap(node);
     return string.concat(label, ".", rootLabel, ".eth");
   }
-
-  /* ───────────── view helpers (NFT ↔ ENS) ───────────── */
 
   /// @notice Gets the ENS node hash associated with a token ID (with legacy fallback).
   function tokenNode(uint256 tokenId) public view returns (bytes32 node) {
