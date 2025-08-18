@@ -221,8 +221,8 @@ contract LilNounsEnsMapperV2 is
   /// @param tokenIds List of token IDs to emit AddrChanged for
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      bytes32 node = _tokenToNode[tokenIds[i]];
-      emit AddrChanged(node, nft.ownerOf(tokenIds[i]));
+      uint256 tokenId = tokenIds[i];
+      emit AddrChanged(_tokenToNode[tokenId], nft.ownerOf(tokenId));
     }
   }
 
@@ -232,8 +232,7 @@ contract LilNounsEnsMapperV2 is
   /// @param key The text key to re-emit
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      bytes32 node = _tokenToNode[tokenIds[i]];
-      emit TextChanged(node, key, key);
+      emit TextChanged(_tokenToNode[tokenIds[i]], key, key);
     }
   }
 
@@ -257,7 +256,7 @@ contract LilNounsEnsMapperV2 is
     bytes memory str = new bytes(42);
     str[0] = "0";
     str[1] = "x";
-    for (uint256 i; i < 20; i++) {
+    for (uint256 i = 0; i < 20; i++) {
       str[2 + i * 2] = alphabet[uint8(data[i] >> 4)];
       str[3 + i * 2] = alphabet[uint8(data[i] & 0x0f)];
     }
