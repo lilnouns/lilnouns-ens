@@ -292,5 +292,6 @@ contract LilNounsEnsMapperV2 is
   }
 
   /// @notice Reserved storage space for future variable additions in upgradeable contracts to prevent storage layout conflicts.
+  // slither-disable-next-line naming-convention,unused-state
   uint256[44] private __gap;
 }
