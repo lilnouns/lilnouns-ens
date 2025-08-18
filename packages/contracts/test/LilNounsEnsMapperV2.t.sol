@@ -35,7 +35,7 @@ contract MockLilNouns is IERC721 {
     return o;
   }
 
-  function balanceOf(address owner) external view override returns (uint256) {
+  function balanceOf(address owner) external pure override returns (uint256) {
     owner; // unused in tests
     return 0;
   }
@@ -160,7 +160,7 @@ contract MockNameWrapper {
   function setRecord(bytes32, address, address, uint64) external {}
   function setTTL(bytes32, uint64) external {}
 
-  function setSubnodeOwner(bytes32, string calldata, address, uint32, uint64) external returns (bytes32) {
+  function setSubnodeOwner(bytes32, string calldata, address, uint32, uint64) external pure returns (bytes32) {
     return bytes32(0);
   }
 
@@ -175,11 +175,19 @@ contract MockNameWrapper {
 
   function setChildFuses(bytes32, bytes32, uint32, uint64) external {}
 
-  function setSubnodeRecord(bytes32, bytes32, address, address, uint64, uint32, uint64) external returns (bytes32) {
+  function setSubnodeRecord(
+    bytes32,
+    bytes32,
+    address,
+    address,
+    uint64,
+    uint32,
+    uint64
+  ) external pure returns (bytes32) {
     return bytes32(0);
   }
 
-  function setSubnodeOwner(bytes32, bytes32, address, uint32, uint64) external returns (bytes32) {
+  function setSubnodeOwner(bytes32, bytes32, address, uint32, uint64) external pure returns (bytes32) {
     return bytes32(0);
   }
 
