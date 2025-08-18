@@ -60,7 +60,7 @@ contract LilNounsEnsMapperV2 is LilNounsEnsHolder, LilNounsEnsWrapper, UUPSUpgra
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
-  function _authorizeUpgrade(address) internal override onlyOwner {
+  function _authorizeUpgrade(address) internal view override onlyOwner {
     // Intentionally empty: access control enforced by onlyOwner modifier
     return;
   }
