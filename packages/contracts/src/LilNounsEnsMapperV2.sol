@@ -33,44 +33,44 @@ contract LilNounsEnsMapperV2 is
 {
   using Strings for uint256;
 
-  /// @notice ENS registry reference
+  /// @notice ENS registry reference.
   ENS public ens;
 
-  /// @notice Legacy V1 mapping contract
+  /// @notice Legacy V1 mapping contract.
   ILilNounsEnsMapperV1 public legacy;
 
-  /// @notice Lil Nouns NFT contract
+  /// @notice Lil Nouns NFT contract.
   IERC721 public nft;
 
-  /// @notice ENS namehash of the root domain (e.g. lilnouns.eth)
+  /// @notice ENS namehash of the root domain (e.g. namehash("lilnouns.eth")).
   bytes32 public rootNode;
 
-  /// @notice Human-readable root label (e.g. "lilnouns")
+  /// @notice Human-readable root label (e.g. "lilnouns"), used for `name()` composition.
   string public rootLabel;
 
-  /// @dev tokenId => ENS node
+  /// @dev tokenId => ENS node.
   mapping(uint256 => bytes32) private _tokenToNode;
 
-  /// @dev ENS node => tokenId
+  /// @dev ENS node => tokenId.
   mapping(bytes32 => uint256) private _nodeToToken;
 
-  /// @dev ENS node => label
+  /// @dev ENS node => label.
   mapping(bytes32 => string) private _nodeToLabel;
 
-  /// @dev ENS node => text records (e.g., description, avatar, etc.)
+  /// @dev ENS node => text records (e.g., description, avatar, etc.).
   mapping(bytes32 => mapping(string => string)) private _texts;
 
-  /// @notice Emitted when a new subdomain is registered
+  /// @notice Emitted when a new subdomain is registered.
   event SubdomainClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
 
-  /// @notice Emitted when a text record is updated
+  /// @notice Emitted when a text record is updated.
   event TextChanged(bytes32 indexed node, string indexed indexedKey, string key);
 
-  /// @notice Initializes the resolver
-  /// @param legacyAddr Address of the legacy V1 mapping contract
-  /// @param ensRegistry Address of the ENS registry
-  /// @param ensRoot ENS namehash of the root domain
-  /// @param labelRoot Human-readable root label (e.g. "lilnouns")
+  /// @notice Initializes the resolver/controller.
+  /// @param legacyAddr Address of the legacy V1 mapping contract.
+  /// @param ensRegistry Address of the ENS registry.
+  /// @param ensRoot ENS namehash of the root domain (e.g. namehash("lilnouns.eth")).
+  /// @param labelRoot Human-readable root label (e.g. "lilnouns").
   function initialize(
     address legacyAddr,
     address ensRegistry,
