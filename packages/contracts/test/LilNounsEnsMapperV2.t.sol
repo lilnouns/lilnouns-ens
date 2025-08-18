@@ -29,10 +29,6 @@ contract MockLilNouns is IERC721 {
   mapping(address => mapping(address => bool)) public override isApprovedForAll;
   mapping(uint256 => address) public override getApproved;
 
-  event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-  event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-  event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-
   function ownerOf(uint256 tokenId) public view override returns (address) {
     address o = _owner[tokenId];
     require(o != address(0), "NOT_MINTED");
@@ -42,6 +38,10 @@ contract MockLilNouns is IERC721 {
   function balanceOf(address owner) external view override returns (uint256) {
     owner; // unused in tests
     return 0;
+  }
+
+  function supportsInterface(bytes4) external pure returns (bool) {
+    return true;
   }
 
   function approve(address to, uint256 tokenId) external override {
@@ -78,56 +78,11 @@ contract MockLilNouns is IERC721 {
   }
 }
 
-/// @notice Minimal ENS registry stub (unused but required by types). No functionality needed for tests.
-contract StubENS is ENS {
-  constructor() ENS(address(0)) {}
-}
-
-/// @notice Minimal BaseRegistrar stub exposing just the functions used in wrapper preflight checks.
-contract StubBaseRegistrar is IBaseRegistrar {
-  mapping(uint256 => address) public override ownerOf;
-  mapping(uint256 => address) public override getApproved;
-  mapping(address => mapping(address => bool)) public override isApprovedForAll;
-
-  // Unused methods stubbed to compile; not called in these tests
-  function name() external pure returns (string memory) {
-    return "stub";
-  }
-
-  function symbol() external pure returns (string memory) {
-    return "STUB";
-  }
-
-  function baseNode() external pure returns (bytes32) {
-    return bytes32(0);
-  }
-
-  function reclaim(uint256, address) external {}
-
-  function transferFrom(address from, address to, uint256 tokenId) external {
-    ownerOf[tokenId] = to;
-    from;
-  }
-
-  function approve(address to, uint256 tokenId) external {
-    getApproved[tokenId] = to;
-  }
-
-  function setApprovalForAll(address operator, bool approved) external {
-    isApprovedForAll[msg.sender][operator] = approved;
-  }
-
-  function totalSupply() external pure returns (uint256) {
-    return 0;
-  }
-
-  function supportsInterface(bytes4) external pure returns (bool) {
-    return true;
-  }
-}
+/// @notice Minimal deployment-only helper to get a distinct nonzero address.
+contract DummyAddr {}
 
 /// @notice NameWrapper mock that validates wiring and records setSubnodeRecord calls; can simulate reentrancy via hook.
-contract MockNameWrapper is INameWrapper {
+contract MockNameWrapper {
   ENS internal _ens;
   IBaseRegistrar internal _registrar;
   bytes32 public lastRoot;
@@ -142,9 +97,9 @@ contract MockNameWrapper is INameWrapper {
     tryReenter = _try;
   }
 
-  constructor(ENS ens_, IBaseRegistrar registrar_) {
-    _ens = ens_;
-    _registrar = registrar_;
+  constructor(address ensAddr, address registrarAddr) {
+    _ens = ENS(ensAddr);
+    _registrar = IBaseRegistrar(registrarAddr);
   }
 
   function ens() external view returns (ENS) {
@@ -228,14 +183,8 @@ contract MockNameWrapper is INameWrapper {
     return bytes32(0);
   }
 
-  function renew(uint256, uint256) external returns (uint64) {
-    return 0;
-  }
-
-  function upgrade(bytes32, bytes) external {}
-  function unwrap(bytes32, bytes32, address) external {}
+  // Minimal API used by production contract
   function unwrapETH2LD(bytes32, address, address) external {}
-  function wrap(bytes, address, bytes) external {}
 
   function wrapETH2LD(string calldata, address, uint16, address) external pure returns (uint64) {
     return 0;
@@ -298,8 +247,8 @@ contract LilNounsEnsMapperV2Test is Test {
 
   // Contracts
   MockLilNouns internal nft;
-  StubENS internal ens;
-  StubBaseRegistrar internal registrar;
+  address internal ensAddr;
+  address internal registrarAddr;
   MockNameWrapper internal wrapper;
   LilNounsEnsMapperV2 internal mapper;
 
@@ -314,9 +263,9 @@ contract LilNounsEnsMapperV2Test is Test {
   function setUp() public {
     // Deploy mocks
     nft = new MockLilNouns();
-    ens = new StubENS();
-    registrar = new StubBaseRegistrar();
-    wrapper = new MockNameWrapper(ens, registrar);
+    ensAddr = address(new DummyAddr());
+    registrarAddr = address(new DummyAddr());
+    wrapper = new MockNameWrapper(ensAddr, registrarAddr);
 
     // Compute namehash for lilnouns.eth
     ROOT_LILNOUNS = keccak256(abi.encodePacked(ROOT_ETH, keccak256(bytes("lilnouns"))));
@@ -331,8 +280,8 @@ contract LilNounsEnsMapperV2Test is Test {
     // Initialize with admin as owner, and wire mocks. Root is lilnouns.eth
     mapper.initialize(
       admin,
-      address(ens),
-      address(registrar),
+      ensAddr,
+      registrarAddr,
       address(wrapper),
       address(legacy),
       address(nft),
@@ -575,14 +524,14 @@ contract LilNounsEnsMapperV2Test is Test {
   /// Reentrancy attempt during setSubnodeRecord should not corrupt state due to nonReentrant on claim
   function testReentrancy_AttemptDuringClaim_IsBlocked() public {
     // Deploy a special wrapper that will try to reenter
-    MockNameWrapper reentrant = new MockNameWrapper(ens, registrar);
+    MockNameWrapper reentrant = new MockNameWrapper(ensAddr, registrarAddr);
     // We need a fresh mapper wired to this wrapper
     LilNounsEnsMapperV2 m2 = new LilNounsEnsMapperV2();
     LegacyNull legacyImpl = new LegacyNull();
     m2.initialize(
       admin,
-      address(ens),
-      address(registrar),
+      ensAddr,
+      registrarAddr,
       address(reentrant),
       address(legacyImpl),
       address(nft),
