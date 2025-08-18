@@ -204,10 +204,10 @@ contract LilNounsEnsMapperV2 is
       interfaceId == type(IERC165).interfaceId;
   }
 
-  /// @notice Sets a text record (excluding "avatar")
-  /// @param node ENS node
-  /// @param key Key (e.g., "description")
-  /// @param value Value of the text record
+  /// @notice Sets a text record (excluding "avatar").
+  /// @param node ENS node.
+  /// @param key Text key (e.g., "description").
+  /// @param value Value for the text record.
   function setText(bytes32 node, string calldata key, string calldata value) external {
     uint256 tokenId = _nodeToToken[node];
     if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
@@ -219,20 +219,20 @@ contract LilNounsEnsMapperV2 is
     _texts[node][key] = value;
     emit TextChanged(node, key, key);
   }
-
-  /// @notice Emits AddrChanged for one or more tokenIds
+  /// @notice Emits AddrChanged for multiple tokenIds.
   /// @dev Useful for manual re-indexing by The Graph or Etherscan
-  /// @param tokenIds List of token IDs to emit AddrChanged for
+  /// @param tokenIds List of token IDs.
+
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       emit AddrChanged(_tokenToNode[tokenIds[i]], nft.ownerOf(tokenIds[i]));
     }
   }
 
-  /// @notice Emits TextChanged for one or more tokenIds
+  /// @notice Emits TextChanged for one key across multiple tokenIds.
   /// @dev Useful to force reindexing of off-chain profiles
-  /// @param tokenIds List of token IDs
-  /// @param key The text key to re-emit
+  /// @param tokenIds List of token IDs.
+  /// @param key The text key to re-emit.
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       emit TextChanged(_tokenToNode[tokenIds[i]], key, key);
