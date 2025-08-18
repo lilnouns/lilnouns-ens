@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.29;
 
-// ENS contracts
+/// @notice ENS contracts
 import { ENS } from "@ensdomains/ens-contracts/registry/ENS.sol";
 import { IAddrResolver } from "@ensdomains/ens-contracts/resolvers/profiles/IAddrResolver.sol";
 import { ITextResolver } from "@ensdomains/ens-contracts/resolvers/profiles/ITextResolver.sol";
 import { INameResolver } from "@ensdomains/ens-contracts/resolvers/profiles/INameResolver.sol";
 
-// OpenZeppelin upgradeable utilities
+/// @notice OpenZeppelin upgradeable utilities
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -15,7 +15,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-// Local imports
+/// @notice Local imports
 import { ILilNounsEnsMapperV1 } from "./interfaces/ILilNounsEnsMapperV1.sol";
 import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 
@@ -119,15 +119,17 @@ contract LilNounsEnsMapperV2 is
     bool taken = (existing != 0) || (_tokenToNode[0] == node);
     if (taken) revert LilNounsEnsErrors.AlreadyClaimed(existing);
 
-    // Reentrancy-safe: mutate storage before external call
+    /// @dev Effects first: mutate storage before external call (reentrancy-safe)
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
     _nodeToLabel[node] = label;
 
-    // ENS registry call — external, but safe and trusted
+    /// @dev Interactions: ENS registry call — external, but trusted
     ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
 
+    /// @custom:slither-safe-event-after-call
     emit SubdomainClaimed(msg.sender, tokenId, node, label);
+    /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, msg.sender);
   }
 
@@ -158,14 +160,18 @@ contract LilNounsEnsMapperV2 is
     bool taken = (existing != 0) || (_tokenToNode[0] == node);
     if (taken) revert LilNounsEnsErrors.AlreadyClaimed(existing);
 
+    /// @dev Effects first: mutate storage before external call
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
     _nodeToLabel[node] = label;
 
+    /// @dev Interactions
     ens.setSubnodeRecord(rootNode, keccak256(abi.encodePacked(label)), address(this), address(this), 0);
 
     address currentOwner = nft.ownerOf(tokenId);
+    /// @custom:slither-safe-event-after-call
     emit SubdomainClaimed(currentOwner, tokenId, node, label);
+    /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, currentOwner);
   }
 
@@ -190,7 +196,7 @@ contract LilNounsEnsMapperV2 is
     if (bytes(label).length > 0) {
       return string(abi.encodePacked(label, ".", rootLabel, ".eth"));
     }
-    return legacy.name(node); // fallback to legacy
+    return legacy.name(node);
   }
 
   /// @inheritdoc IERC165
@@ -216,10 +222,10 @@ contract LilNounsEnsMapperV2 is
     _texts[node][key] = value;
     emit TextChanged(node, key, key);
   }
-  /// @notice Emits AddrChanged for multiple tokenIds.
-  /// @dev Useful for manual re-indexing by The Graph or Etherscan
-  /// @param tokenIds List of token IDs.
 
+  /// @notice Emits AddrChanged for multiple tokenIds.
+  /// @dev Useful for manual re-indexing by The Graph or Etherscan.
+  /// @param tokenIds List of token IDs.
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       bytes32 node = _tokenToNode[tokenIds[i]];
@@ -230,7 +236,7 @@ contract LilNounsEnsMapperV2 is
   }
 
   /// @notice Emits TextChanged for one key across multiple tokenIds.
-  /// @dev Useful to force reindexing of off-chain profiles
+  /// @dev Useful to force reindexing of off-chain profiles.
   /// @param tokenIds List of token IDs.
   /// @param key The text key to re-emit.
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
@@ -270,6 +276,6 @@ contract LilNounsEnsMapperV2 is
     str = string(buf);
   }
 
-  // Reserved storage space for future variable additions in upgradeable contracts to prevent storage layout conflicts
+  /// @notice Reserved storage space for future variable additions in upgradeable contracts to prevent storage layout conflicts.
   uint256[44] private __gap;
 }
