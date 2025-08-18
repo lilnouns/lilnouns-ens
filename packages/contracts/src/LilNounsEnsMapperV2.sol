@@ -137,7 +137,7 @@ contract LilNounsEnsMapperV2 is
   /// @param tokenId Token ID with an associated subdomain.
   function restoreResolver(uint256 tokenId) external {
     bytes32 node = _tokenToNode[tokenId];
-    if (node == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
+    if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
     if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
       revert LilNounsEnsErrors.NotAuthorised(tokenId);
     }
