@@ -110,6 +110,7 @@ contract LilNounsEnsMapperV2 is
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
     if (legacy.tokenHashmap(tokenId) != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
+    if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidLabel();
 
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(rootNode, labelHash));
