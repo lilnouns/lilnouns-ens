@@ -115,11 +115,13 @@ contract LilNounsEnsMapperV2 is
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(rootNode, labelHash));
 
-    ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
-
+    // Reentrancy-safe: mutate storage before external call
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
     _nodeToLabel[node] = label;
+
+    // ENS registry call — external, but safe and trusted
+    ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
 
     emit SubdomainClaimed(msg.sender, tokenId, node, label);
     emit AddrChanged(node, msg.sender);
@@ -228,11 +230,12 @@ contract LilNounsEnsMapperV2 is
     string memory label = legacy.hashToDomainMap(node);
     if (bytes(label).length == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
 
-    ens.setSubnodeRecord(rootNode, keccak256(abi.encodePacked(label)), address(this), address(this), 0);
-
+    // Reentrancy-safe: mutate before ENS call
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
     _nodeToLabel[node] = label;
+
+    ens.setSubnodeRecord(rootNode, keccak256(abi.encodePacked(label)), address(this), address(this), 0);
 
     emit SubdomainClaimed(nft.ownerOf(tokenId), tokenId, node, label);
     emit AddrChanged(node, nft.ownerOf(tokenId));
