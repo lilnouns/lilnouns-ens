@@ -227,10 +227,13 @@ contract LilNounsEnsMapperV2 is
   /// @dev Useful for manual re-indexing by The Graph or Etherscan.
   /// @param tokenIds List of token IDs.
   function emitAddrEvents(uint256[] calldata tokenIds) external {
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ) {
       bytes32 node = _tokenToNode[tokenIds[i]];
       if (node != bytes32(0)) {
         emit AddrChanged(node, nft.ownerOf(tokenIds[i]));
+      }
+      unchecked {
+        ++i;
       }
     }
   }
@@ -240,10 +243,13 @@ contract LilNounsEnsMapperV2 is
   /// @param tokenIds List of token IDs.
   /// @param key The text key to re-emit.
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ) {
       bytes32 node = _tokenToNode[tokenIds[i]];
       if (node != bytes32(0)) {
         emit TextChanged(node, key, key);
+      }
+      unchecked {
+        ++i;
       }
     }
   }
@@ -259,19 +265,22 @@ contract LilNounsEnsMapperV2 is
     }
     if (_tokenToNode[tokenId] != node) revert LilNounsEnsErrors.UnregisteredNode(node);
   }
+
   /// @dev Converts an address to a lowercase hex string (no EIP-55 checksum).
   /// @param a Address to convert.
   /// @return str Hex string.
-
   function _toHexString(address a) internal pure returns (string memory str) {
     bytes memory alphabet = "0123456789abcdef";
     bytes20 data = bytes20(a);
     bytes memory buf = new bytes(42);
     buf[0] = "0";
     buf[1] = "x";
-    for (uint256 i = 0; i < 20; i++) {
+    for (uint256 i = 0; i < 20; ) {
       buf[2 + i * 2] = alphabet[uint8(data[i] >> 4)];
       buf[3 + i * 2] = alphabet[uint8(data[i] & 0x0f)];
+      unchecked {
+        ++i;
+      }
     }
     str = string(buf);
   }
