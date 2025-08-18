@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md,sol}\"",
     "lint": "turbo run lint",
     "prepare": "husky",
