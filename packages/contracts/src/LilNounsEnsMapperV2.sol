@@ -73,29 +73,29 @@ contract LilNounsEnsMapperV2 is
   // ------------------------------------------------------------------------------------------
 
   /**
-   * @notice Initializes the contract with ENS and legacy data.
-   * @param _legacy Address of legacy V1 ENS mapper
-   * @param _ens Address of ENS registry
-   * @param _rootNode ENS node hash of "lilnouns.eth"
-   * @param _rootLabel Human-readable label of root node ("lilnouns")
+   * @notice Initializes the contract with ENS and legacy registry data
+   * @param legacyAddr Address of LilNounsEnsMapperV1
+   * @param ensRegistry Address of ENS registry
+   * @param ensRoot ENS node of "lilnouns.eth"
+   * @param labelRoot Human-readable label ("lilnouns")
    */
   function initialize(
-    address _legacy,
-    address _ens,
-    bytes32 _rootNode,
-    string calldata _rootLabel
+    address legacyAddr,
+    address ensRegistry,
+    bytes32 ensRoot,
+    string calldata labelRoot
   ) external initializer {
-    if (_legacy == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
-    if (_ens == address(0)) revert LilNounsEnsErrors.InvalidENSRegistry();
+    if (legacyAddr == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
+    if (ensRegistry == address(0)) revert LilNounsEnsErrors.InvalidENSRegistry();
 
     __Ownable2Step_init();
     __UUPSUpgradeable_init();
 
-    legacy = ILilNounsEnsMapperV1(_legacy);
+    legacy = ILilNounsEnsMapperV1(legacyAddr);
     nft = legacy.nft();
-    ens = ENS(_ens);
-    rootNode = _rootNode;
-    rootLabel = _rootLabel;
+    ens = ENS(ensRegistry);
+    rootNode = ensRoot;
+    rootLabel = labelRoot;
   }
 
   // ------------------------------------------------------------------------------------------
