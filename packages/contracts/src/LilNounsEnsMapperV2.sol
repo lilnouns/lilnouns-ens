@@ -182,9 +182,7 @@ contract LilNounsEnsMapperV2 is
     if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
       revert LilNounsEnsErrors.NotAuthorised(tokenId);
     }
-    if (keccak256(bytes(key)) == keccak256("avatar")) {
-      revert LilNounsEnsErrors.OverrideAvatarKey();
-    }
+    if (keccak256(bytes(key)) == keccak256("avatar")) revert LilNounsEnsErrors.OverrideAvatarKey();
 
     _texts[node][key] = value;
     emit TextChanged(node, key, key);
@@ -217,7 +215,7 @@ contract LilNounsEnsMapperV2 is
    * @dev Warning: calls `nft.ownerOf` inside a loop. Validate input length.
    */
   function emitAddrEvents(uint256[] calldata tokenIds) external {
-    for (uint256 i; i < tokenIds.length; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
       bytes32 node = _tokenToNode[tokenIds[i]];
       emit AddrChanged(node, nft.ownerOf(tokenIds[i]));
     }
@@ -227,7 +225,7 @@ contract LilNounsEnsMapperV2 is
    * @notice Emits TextChanged for multiple nodes (off-chain reindex)
    */
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
-    for (uint256 i; i < tokenIds.length; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
       bytes32 node = _tokenToNode[tokenIds[i]];
       emit TextChanged(node, key, key);
     }
@@ -243,7 +241,7 @@ contract LilNounsEnsMapperV2 is
     bytes memory str = new bytes(42);
     str[0] = "0";
     str[1] = "x";
-    for (uint256 i = 0; i < 20; i++) {
+    for (uint256 i; i < 20; i++) {
       str[2 + i * 2] = alphabet[uint8(data[i] >> 4)];
       str[3 + i * 2] = alphabet[uint8(data[i] & 0x0f)];
     }
