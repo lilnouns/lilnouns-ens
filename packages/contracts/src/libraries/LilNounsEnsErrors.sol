@@ -11,6 +11,9 @@ library LilNounsEnsErrors {
   /// @notice Reverts when an invalid address is provided for the ENS registry.
   error InvalidENSRegistry();
 
+  /// @notice Reverts when the provided label is invalid (e.g., empty or malformed).
+  error InvalidLabel();
+
   /// @notice Reverts when the caller is not the owner of the specified tokenId.
   /// @param tokenId The ERC721 tokenId in question.
   error NotTokenOwner(uint256 tokenId);
