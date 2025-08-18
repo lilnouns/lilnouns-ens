@@ -114,6 +114,10 @@ contract LilNounsEnsMapperV2 is
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(rootNode, labelHash));
 
+    uint256 existing = _nodeToToken[node];
+    bool taken = (existing != 0) || (_tokenToNode[0] == node);
+    if (taken) revert LilNounsEnsErrors.AlreadyClaimed(existing);
+
     // Reentrancy-safe: mutate storage before external call
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
