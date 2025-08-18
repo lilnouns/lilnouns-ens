@@ -90,12 +90,18 @@ contract LilNounsEnsMapperV2 is
     rootLabel = labelRoot;
   }
 
-  /// @notice Claims a new subdomain for a Lil Noun NFT
-  /// @param label Desired label (e.g., "noun42")
-  /// @param tokenId Token ID to associate with the subdomain
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address) internal override onlyOwner {}
 
+  /// @notice Claims a new subdomain for a Lil Noun NFT.
+  /// @dev
+  /// - One subdomain per tokenId.
+  /// - Reverts if:
+  ///   - caller is not token owner,
+  ///   - tokenId already mapped in V2 or exists in legacy V1,
+  ///   - label already taken by another tokenId.
+  /// @param label Desired label (e.g., "noun42").
+  /// @param tokenId Token ID to associate with the subdomain.
   function claimSubdomain(string calldata label, uint256 tokenId) external {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != 0) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
