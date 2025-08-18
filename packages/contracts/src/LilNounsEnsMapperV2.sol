@@ -111,6 +111,7 @@ contract LilNounsEnsMapperV2 is
 
     /// @custom:slither-safe-event-after-call
     emit SubdomainClaimed(msg.sender, tokenId, node, label);
+    /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, msg.sender);
   }
 
@@ -197,6 +198,7 @@ contract LilNounsEnsMapperV2 is
 
     /// @custom:slither-safe-event-after-call
     emit SubdomainClaimed(nft.ownerOf(tokenId), tokenId, node, label);
+    /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, nft.ownerOf(tokenId));
   }
 
