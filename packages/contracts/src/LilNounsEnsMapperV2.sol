@@ -177,13 +177,10 @@ contract LilNounsEnsMapperV2 is
 
   /// @inheritdoc ITextResolver
   function text(bytes32 node, string calldata key) external view override returns (string memory) {
-    uint256 tokenId = _nodeToToken[node];
-    if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
-
+    uint256 tokenId = _nodeToExistingToken(node);
     if (keccak256(bytes(key)) == keccak256("avatar")) {
-      return string(abi.encodePacked("eip155:1/erc721:", _toChecksumString(address(nft)), "/", tokenId.toString()));
+      return string(abi.encodePacked("eip155:1/erc721:", _toHexString(address(nft)), "/", tokenId.toString()));
     }
-
     return _texts[node][key];
   }
 
@@ -210,8 +207,7 @@ contract LilNounsEnsMapperV2 is
   /// @param key Text key (e.g., "description").
   /// @param value Value for the text record.
   function setText(bytes32 node, string calldata key, string calldata value) external {
-    uint256 tokenId = _nodeToToken[node];
-    if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
+    uint256 tokenId = _nodeToExistingToken(node);
     if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
       revert LilNounsEnsErrors.NotAuthorised(tokenId);
     }
@@ -226,7 +222,10 @@ contract LilNounsEnsMapperV2 is
 
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      emit AddrChanged(_tokenToNode[tokenIds[i]], nft.ownerOf(tokenIds[i]));
+      bytes32 node = _tokenToNode[tokenIds[i]];
+      if (node != bytes32(0)) {
+        emit AddrChanged(node, nft.ownerOf(tokenIds[i]));
+      }
     }
   }
 
@@ -236,23 +235,38 @@ contract LilNounsEnsMapperV2 is
   /// @param key The text key to re-emit.
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      emit TextChanged(_tokenToNode[tokenIds[i]], key, key);
+      bytes32 node = _tokenToNode[tokenIds[i]];
+      if (node != bytes32(0)) {
+        emit TextChanged(node, key, key);
+      }
     }
   }
 
-  /// @dev Converts an address to a lowercase hex string
-  /// @param input Address to convert
-  /// @return checksummed Address string in hex format
-  function _toChecksumString(address input) internal pure returns (string memory) {
-    bytes memory alphabet = "0123456789abcdef";
-    bytes20 data = bytes20(input);
-    bytes memory str = new bytes(42);
-    str[0] = "0";
-    str[1] = "x";
-    for (uint256 i = 0; i < 20; i++) {
-      str[2 + i * 2] = alphabet[uint8(data[i] >> 4)];
-      str[3 + i * 2] = alphabet[uint8(data[i] & 0x0f)];
+  /// @dev Resolves a node to an existing tokenId with bijection check.
+  /// @param node ENS node being resolved.
+  /// @return tokenId TokenId mapped to `node`.
+  function _nodeToExistingToken(bytes32 node) internal view returns (uint256 tokenId) {
+    tokenId = _nodeToToken[node];
+    if (tokenId == 0) {
+      if (_tokenToNode[0] != node) revert LilNounsEnsErrors.UnregisteredNode(node);
+      return 0;
     }
-    return string(str);
+    if (_tokenToNode[tokenId] != node) revert LilNounsEnsErrors.UnregisteredNode(node);
+  }
+  /// @dev Converts an address to a lowercase hex string (no EIP-55 checksum).
+  /// @param a Address to convert.
+  /// @return str Hex string.
+
+  function _toHexString(address a) internal pure returns (string memory str) {
+    bytes memory alphabet = "0123456789abcdef";
+    bytes20 data = bytes20(a);
+    bytes memory buf = new bytes(42);
+    buf[0] = "0";
+    buf[1] = "x";
+    for (uint256 i = 0; i < 20; i++) {
+      buf[2 + i * 2] = alphabet[uint8(data[i] >> 4)];
+      buf[3 + i * 2] = alphabet[uint8(data[i] & 0x0f)];
+    }
+    str = string(buf);
   }
 }
