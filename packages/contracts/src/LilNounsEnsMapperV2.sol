@@ -99,7 +99,10 @@ contract LilNounsEnsMapperV2 is
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address) internal override onlyOwner {}
+  // solhint-disable-next-line no-empty-blocks
+  function _authorizeUpgrade(address) internal override onlyOwner {
+    // Intentionally empty: authorization enforced by onlyOwner modifier.
+  }
 
   /// @notice Claims a new subdomain for a Lil Noun NFT.
   /// @dev
