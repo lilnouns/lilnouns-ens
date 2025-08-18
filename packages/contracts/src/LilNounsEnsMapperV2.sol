@@ -21,8 +21,8 @@ import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 
 /**
  * @title LilNounsEnsMapperV2
- * @notice Upgradeable ENS resolver and subdomain controller for Lil Nouns NFTs.
- * @dev Prevents duplicate claims and supports migration from V1. Compatible with ENS resolver profile interfaces.
+ * @notice Upgradeable ENS resolver and controller for Lil Nouns NFTs.
+ * @dev Uses UUPS upgrade ability. Implements IAddrResolver, ITextResolver, INameResolver.
  */
 contract LilNounsEnsMapperV2 is
   Initializable,
@@ -38,28 +38,28 @@ contract LilNounsEnsMapperV2 is
   /// @notice ENS registry
   ENS public ens;
 
-  /// @notice Reference to legacy V1 ENS mapper
+  /// @notice Legacy V1 ENS mapping contract
   ILilNounsEnsMapperV1 public legacy;
 
-  /// @notice Reference to ERC721 Lil Nouns NFT
+  /// @notice ERC721 contract for Lil Nouns
   IERC721 public nft;
 
-  /// @notice ENS node hash of the root domain (namehash of e.g. "lilnouns.eth")
+  /// @notice ENS node hash for the root domain (namehash of "lilnouns.eth")
   bytes32 public rootNode;
 
-  /// @notice Human-readable root domain label (e.g., "lilnouns")
+  /// @notice Human-readable label for root domain
   string public rootLabel;
 
-  /// @dev Mapping: tokenId => node
+  /// @dev tokenId => ENS node
   mapping(uint256 => bytes32) private _tokenToNode;
 
-  /// @dev Mapping: node => tokenId
+  /// @dev ENS node => tokenId
   mapping(bytes32 => uint256) private _nodeToToken;
 
-  /// @dev Mapping: node => label
+  /// @dev ENS node => label
   mapping(bytes32 => string) private _nodeToLabel;
 
-  /// @dev Mapping: node => text records
+  /// @dev ENS node => text records
   mapping(bytes32 => mapping(string => string)) private _texts;
 
   /// @notice Emitted when a subdomain is claimed
@@ -67,10 +67,6 @@ contract LilNounsEnsMapperV2 is
 
   /// @notice Emitted when a text record is changed
   event TextChanged(bytes32 indexed node, string indexed indexedKey, string key);
-
-  // ------------------------------------------------------------------------------------------
-  // Initialization
-  // ------------------------------------------------------------------------------------------
 
   /**
    * @notice Initializes the contract with ENS and legacy registry data
@@ -98,14 +94,10 @@ contract LilNounsEnsMapperV2 is
     rootLabel = labelRoot;
   }
 
-  // ------------------------------------------------------------------------------------------
-  // ENS Controller
-  // ------------------------------------------------------------------------------------------
-
   /**
-   * @notice Claims a subdomain for the given tokenId and assigns resolver.
-   * @param label The desired subdomain label (e.g., "noun42")
-   * @param tokenId The token ID of the Lil Nouns NFT
+   * @notice Claims a subdomain and assigns this contract as resolver and controller
+   * @param label Desired ENS label (e.g., "noun42")
+   * @param tokenId NFT tokenId to link
    */
   function claimSubdomain(string calldata label, uint256 tokenId) external {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
@@ -128,8 +120,8 @@ contract LilNounsEnsMapperV2 is
   }
 
   /**
-   * @notice Restores resolver to this contract for an existing subdomain
-   * @param tokenId Token ID whose subdomain needs to be re-resolved
+   * @notice Restores this contract as the resolver for a node
+   * @param tokenId Token with registered subdomain
    */
   function restoreResolver(uint256 tokenId) external {
     bytes32 node = _tokenToNode[tokenId];
@@ -141,23 +133,14 @@ contract LilNounsEnsMapperV2 is
     ens.setResolver(node, address(this));
   }
 
-  // ------------------------------------------------------------------------------------------
-  // ENS Resolver Implementation
-  // ------------------------------------------------------------------------------------------
-
-  /**
-   * @inheritdoc IAddrResolver
-   * @dev Returns the current owner of the token as address payable.
-   */
+  /// @inheritdoc IAddrResolver
   function addr(bytes32 node) external view override returns (address payable) {
     uint256 tokenId = _nodeToToken[node];
     if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
     return payable(nft.ownerOf(tokenId));
   }
 
-  /**
-   * @inheritdoc ITextResolver
-   */
+  /// @inheritdoc ITextResolver
   function text(bytes32 node, string calldata key) external view override returns (string memory) {
     uint256 tokenId = _nodeToToken[node];
     if (_tokenToNode[tokenId] == 0) revert LilNounsEnsErrors.UnregisteredNode(node);
@@ -169,9 +152,7 @@ contract LilNounsEnsMapperV2 is
     return _texts[node][key];
   }
 
-  /**
-   * @inheritdoc INameResolver
-   */
+  /// @inheritdoc INameResolver
   function name(bytes32 node) external view override returns (string memory) {
     string memory label = _nodeToLabel[node];
     if (bytes(label).length > 0) {
@@ -180,9 +161,7 @@ contract LilNounsEnsMapperV2 is
     return legacy.name(node); // fallback to legacy
   }
 
-  /**
-   * @inheritdoc IERC165
-   */
+  /// @inheritdoc IERC165
   function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return
       interfaceId == type(IAddrResolver).interfaceId ||
@@ -191,15 +170,11 @@ contract LilNounsEnsMapperV2 is
       interfaceId == type(IERC165).interfaceId;
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Record Mutators
-  // ------------------------------------------------------------------------------------------
-
   /**
-   * @notice Sets a user-defined text record for a node (except "avatar").
-   * @param node The ENS node
-   * @param key Text key (e.g., "description")
-   * @param value Value to set
+   * @notice Sets a text record for a node (except "avatar")
+   * @param node ENS node
+   * @param key Record key (e.g., "description")
+   * @param value Record value
    */
   function setText(bytes32 node, string calldata key, string calldata value) external {
     uint256 tokenId = _nodeToToken[node];
@@ -215,13 +190,9 @@ contract LilNounsEnsMapperV2 is
     emit TextChanged(node, key, key);
   }
 
-  // ------------------------------------------------------------------------------------------
-  // V1 Migration
-  // ------------------------------------------------------------------------------------------
-
   /**
-   * @notice Migrates a V1 subdomain into V2 with resolver takeover
-   * @param tokenId Token ID to migrate
+   * @notice Migrates a subdomain from V1 into V2
+   * @param tokenId Token ID with an existing V1 subdomain
    */
   function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner {
     bytes32 node = legacy.tokenHashmap(tokenId);
@@ -241,12 +212,9 @@ contract LilNounsEnsMapperV2 is
     emit AddrChanged(node, nft.ownerOf(tokenId));
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Indexing Utilities
-  // ------------------------------------------------------------------------------------------
-
   /**
-   * @notice Emits AddrChanged events for multiple tokenIds
+   * @notice Emits AddrChanged events for off-chain indexing
+   * @dev Warning: calls `nft.ownerOf` inside a loop. Validate input length.
    */
   function emitAddrEvents(uint256[] calldata tokenIds) external {
     for (uint256 i; i < tokenIds.length; ++i) {
@@ -256,7 +224,7 @@ contract LilNounsEnsMapperV2 is
   }
 
   /**
-   * @notice Emits TextChanged events for a key across multiple tokenIds
+   * @notice Emits TextChanged for multiple nodes (off-chain reindex)
    */
   function emitTextEvents(uint256[] calldata tokenIds, string calldata key) external {
     for (uint256 i; i < tokenIds.length; ++i) {
@@ -265,20 +233,10 @@ contract LilNounsEnsMapperV2 is
     }
   }
 
-  // ------------------------------------------------------------------------------------------
-  // Upgrade Auth
-  // ------------------------------------------------------------------------------------------
-
-  /**
-   * @dev UUPS upgrade authorization
-   */
+  /// @dev Authorizes UUPS upgrade (onlyOwner)
   function _authorizeUpgrade(address) internal override onlyOwner {}
 
-  // ------------------------------------------------------------------------------------------
-  // Utility
-  // ------------------------------------------------------------------------------------------
-
-  /// @dev Encodes an address as lowercase 0x-prefixed hex string
+  /// @dev Converts address to lowercase hex string (non-checksummed)
   function _toChecksumString(address input) internal pure returns (string memory) {
     bytes memory alphabet = "0123456789abcdef";
     bytes20 data = bytes20(input);
