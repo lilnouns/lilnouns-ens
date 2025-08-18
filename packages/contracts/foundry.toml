@@ -5,7 +5,7 @@ libs = ["lib"]
 gas_reports = ["*"]
 solc_version = "0.8.29"
 via_ir = true
-ignore_contract_size = true
+
 remappings = [
   "@ensdomains/ens-contracts/=node_modules/@ensdomains/ens-contracts/contracts/",
   "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
