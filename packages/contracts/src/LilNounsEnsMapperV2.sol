@@ -33,26 +33,27 @@ contract LilNounsEnsMapperV2 is
   /// @notice Initialize the mapper with owner, ENS-related contracts, NFT, and root domain configuration.
   /// @dev Calls internal initializers of Holder and Wrapper. Reverts on zero addresses or misconfiguration.
   /// @param initialOwner The initial owner/admin of the contract.
-  /// @param ens_ ENS registry contract.
-  /// @param baseRegistrar_ .eth Base Registrar contract.
-  /// @param nameWrapper_ ENS NameWrapper contract.
-  /// @param legacy_ Legacy mapper (V1) contract address for backward reads.
-  /// @param nft_ Lil Nouns ERC-721 contract address.
-  /// @param rootNode_ The ENS namehash of "{rootLabel}.eth" under which subdomains are created.
-  /// @param rootLabel_ The ASCII root label (e.g., "lilnouns").
+  /// @param ens ENS registry contract.
+  /// @param baseRegistrar .eth Base Registrar contract.
+  /// @param nameWrapper ENS NameWrapper contract.
+  /// @param legacy Legacy mapper (V1) contract address for backward reads.
+  /// @param nft Lil Nouns ERC-721 contract address.
+  /// @param rootNode The ENS namehash of "{rootLabel}.eth" under which subdomains are created.
+  /// @param rootLabel The ASCII root label (e.g., "lilnouns").
   function initialize(
     address initialOwner,
-    address ens_,
-    address baseRegistrar_,
-    address nameWrapper_,
-    address legacy_,
-    address nft_,
-    bytes32 rootNode_,
-    string calldata rootLabel_
+    address ens,
+    address baseRegistrar,
+    address nameWrapper,
+    address legacy,
+    address nft,
+    bytes32 rootNode,
+    string calldata rootLabel
   ) public initializer {
+    // Initialize inherited LilNouns ENS modules (holder, wrapper, resolver) with their respective parameters
     __LilNounsEnsHolder_init(initialOwner);
-    __LilNounsEnsWrapper_init(ens_, baseRegistrar_, nameWrapper_);
-    __LilNounsEnsResolver_init(legacy_, nft_, rootNode_, rootLabel_);
+    __LilNounsEnsWrapper_init(ens, baseRegistrar, nameWrapper);
+    __LilNounsEnsResolver_init(legacy, nft, rootNode, rootLabel);
   }
 
   /// @dev UUPS authorization hook: restrict to owner.
