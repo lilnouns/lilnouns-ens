@@ -212,6 +212,36 @@ contract LilNounsEnsMapperV2 is
     return legacy.name(node);
   }
 
+  /// @notice Returns the ENS node associated with a given tokenId (V2 first, then legacy).
+  /// @param tokenId The NFT token id.
+  /// @return node The ENS node for the token, or bytes32(0) if none is registered.
+  function ensNodeOf(uint256 tokenId) external view returns (bytes32 node) {
+    node = _tokenToNode[tokenId];
+    if (node == bytes32(0)) {
+      node = legacy.tokenHashmap(tokenId);
+    }
+  }
+
+  /// @notice Returns the ENS name attached to a tokenId if present.
+  /// @dev Prefers the V2 label if available; falls back to legacy resolver name.
+  /// @param tokenId The NFT token id.
+  /// @return The ENS name (e.g., "noun42.lilnouns.eth") or empty string if not registered.
+  function ensNameOf(uint256 tokenId) public view returns (string memory) {
+    bytes32 node = _tokenToNode[tokenId];
+    if (node == bytes32(0)) {
+      node = legacy.tokenHashmap(tokenId);
+    }
+    if (node == bytes32(0)) {
+      return "";
+    }
+
+    string memory label = _nodeToLabel[node];
+    if (bytes(label).length > 0) {
+      return string(abi.encodePacked(label, ".", rootLabel, ".eth"));
+    }
+    return legacy.name(node);
+  }
+
   /// @inheritdoc IERC165
   function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return
