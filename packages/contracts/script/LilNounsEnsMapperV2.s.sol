@@ -17,7 +17,7 @@ import { LilNounsEnsMapperV2 } from "../src/LilNounsEnsMapperV2.sol";
 ///      Provide configuration via environment variables when running with `forge script`:
 ///       - LEGACY_MAPPER   (address) : Address of the legacy V1 mapping contract implementing ILilNounsEnsMapperV1
 ///       - ENS_REGISTRY    (address) : Address of the ENS registry
-///       - ENS_ROOT_NODE   (bytes32) : Namehash of the root domain (e.g., namehash("lilnouns.eth"))
+///       - ENS_ROOT_NODE   (bytes32) : Namehash of the root name (e.g., namehash("lilnouns.eth"))
 ///       - ROOT_LABEL      (string)  : Human-readable root label (e.g., "lilnouns")
 ///       - INITIAL_OWNER   (address) : Address to set as the initial owner of the proxy
 ///
