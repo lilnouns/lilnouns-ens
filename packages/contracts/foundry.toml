@@ -16,6 +16,10 @@ remappings = [
   "ds-test/=node_modules/ds-test/src/",
   "solidity-stringutils/=node_modules/solidity-stringutils/",
 ]
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
 [fmt]
 line_length = 80
