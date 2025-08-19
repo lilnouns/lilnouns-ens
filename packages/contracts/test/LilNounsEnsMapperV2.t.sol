@@ -314,4 +314,30 @@ contract LilNounsEnsMapperV2Test is Test {
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenA));
     mapper.claimSubdomain(label, tokenB);
   }
+
+  // ============ ensNameOf / ensNamesOf tests ============
+
+  function testEnsNameOf_WhenV2Claimed_ShouldReturnFullName() public {
+    uint256 tokenId = 100;
+    string memory label = "noun100";
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    mapper.claimSubdomain(label, tokenId);
+
+    string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
+    assertEq(mapper.ensNameOf(tokenId), expected, "ensNameOf should return full V2 name");
+  }
+
+  function testEnsNameOf_WhenLegacyOnly_ShouldFallback() public {
+    uint256 tokenId = 200;
+    string memory legacyLabel = "legacy200";
+    bytes32 legacyNode = _nodeFor(legacyLabel);
+
+    // Set only legacy mapping; do not claim in V2
+    legacy.setLegacyMapping(tokenId, legacyNode, legacyLabel);
+
+    // MockLegacy.name(node) returns the label (not full domain) in this test harness
+    assertEq(mapper.ensNameOf(tokenId), legacyLabel, "ensNameOf should fallback to legacy name");
+  }
 }
