@@ -128,7 +128,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // Deploy implementation and initialize (no proxy needed for tests)
     mapper = new LilNounsEnsMapperV2();
     vm.prank(owner);
-    mapper.initialize(address(legacy), address(ens), rootNode, ROOT_LABEL);
+    mapper.initialize(owner, address(legacy), address(ens), rootNode, ROOT_LABEL);
   }
 
   // Utility: ENS namehash
