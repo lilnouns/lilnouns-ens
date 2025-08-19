@@ -114,7 +114,7 @@ contract LilNounsEnsMapperV2Test is Test {
   bytes32 internal rootNode;
 
   // Events mirrors
-  event SubdomainClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
+  event SubnameClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
   event AddrChanged(bytes32 indexed node, address a);
 
   function setUp() public {
@@ -128,7 +128,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // Deploy implementation and initialize (no proxy needed for tests)
     mapper = new LilNounsEnsMapperV2();
     vm.prank(owner);
-    mapper.initialize(address(legacy), address(ens), rootNode, ROOT_LABEL);
+    mapper.initialize(owner, address(legacy), address(ens), rootNode, ROOT_LABEL);
   }
 
   // Utility: ENS namehash
@@ -187,10 +187,10 @@ contract LilNounsEnsMapperV2Test is Test {
 
     vm.startPrank(alice);
     vm.expectEmit(address(mapper));
-    emit SubdomainClaimed(alice, tokenId, node, label);
+    emit SubnameClaimed(alice, tokenId, node, label);
     vm.expectEmit(address(mapper));
     emit AddrChanged(node, alice);
-    mapper.claimSubdomain(label, tokenId);
+    mapper.claimSubname(label, tokenId);
     vm.stopPrank();
 
     // name() should reflect the new mapping
@@ -223,7 +223,7 @@ contract LilNounsEnsMapperV2Test is Test {
     bytes32 node = _nodeFor(label);
 
     vm.prank(alice);
-    mapper.claimSubdomain(label, tokenId);
+    mapper.claimSubname(label, tokenId);
 
     // Verify mapping via name()
     string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
@@ -238,7 +238,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
     vm.prank(bob);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotTokenOwner.selector, tokenId));
-    mapper.claimSubdomain(label, tokenId);
+    mapper.claimSubname(label, tokenId);
   }
 
   function testClaimSubdomain_WhenTokenAlreadyClaimedV2_ShouldRevert() public {
@@ -246,11 +246,11 @@ contract LilNounsEnsMapperV2Test is Test {
     _mintTo(alice, tokenId);
 
     vm.prank(alice);
-    mapper.claimSubdomain("a", tokenId);
+    mapper.claimSubname("a", tokenId);
 
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenId));
-    mapper.claimSubdomain("b", tokenId);
+    mapper.claimSubname("b", tokenId);
   }
 
   function testClaimSubdomain_WhenTokenAlreadyClaimedV1_ShouldRevert() public {
@@ -263,7 +263,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenId));
-    mapper.claimSubdomain("new", tokenId);
+    mapper.claimSubname("new", tokenId);
   }
 
   function testClaimSubdomain_WhenLabelAlreadyTakenByAnotherToken_ShouldRevertWithExistingTokenId() public {
@@ -274,12 +274,12 @@ contract LilNounsEnsMapperV2Test is Test {
     _mintTo(bob, tokenB);
 
     vm.prank(alice);
-    mapper.claimSubdomain(label, tokenA);
+    mapper.claimSubname(label, tokenA);
 
     // Now Bob tries to claim the same label; expect AlreadyClaimed(tokenA)
     vm.prank(bob);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenA));
-    mapper.claimSubdomain(label, tokenB);
+    mapper.claimSubname(label, tokenB);
   }
 
   function testClaimSubdomain_WhenEmptyLabel_ShouldRevert() public {
@@ -288,7 +288,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.InvalidLabel.selector));
-    mapper.claimSubdomain("", tokenId);
+    mapper.claimSubname("", tokenId);
   }
 
   function testClaimSubdomain_WhenTokenDoesNotExist_ShouldBubbleERC721Revert() public {
@@ -296,7 +296,7 @@ contract LilNounsEnsMapperV2Test is Test {
     uint256 nonexistentToken = 9999;
     vm.prank(alice);
     vm.expectRevert(); // generic since OZ uses custom message
-    mapper.claimSubdomain("ghost", nonexistentToken);
+    mapper.claimSubname("ghost", nonexistentToken);
   }
 
   // Attempt re-claim of same label by original owner with different token should still revert by taken label
@@ -308,10 +308,36 @@ contract LilNounsEnsMapperV2Test is Test {
     _mintTo(alice, tokenB);
 
     vm.prank(alice);
-    mapper.claimSubdomain(label, tokenA);
+    mapper.claimSubname(label, tokenA);
 
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenA));
-    mapper.claimSubdomain(label, tokenB);
+    mapper.claimSubname(label, tokenB);
+  }
+
+  // ============ ensNameOf / ensNamesOf tests ============
+
+  function testEnsNameOf_WhenV2Claimed_ShouldReturnFullName() public {
+    uint256 tokenId = 100;
+    string memory label = "noun100";
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenId);
+
+    string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
+    assertEq(mapper.ensNameOf(tokenId), expected, "ensNameOf should return full V2 name");
+  }
+
+  function testEnsNameOf_WhenLegacyOnly_ShouldFallback() public {
+    uint256 tokenId = 200;
+    string memory legacyLabel = "legacy200";
+    bytes32 legacyNode = _nodeFor(legacyLabel);
+
+    // Set only legacy mapping; do not claim in V2
+    legacy.setLegacyMapping(tokenId, legacyNode, legacyLabel);
+
+    // MockLegacy.name(node) returns the label (not full domain) in this test harness
+    assertEq(mapper.ensNameOf(tokenId), legacyLabel, "ensNameOf should fallback to legacy name");
   }
 }

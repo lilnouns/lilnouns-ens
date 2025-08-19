@@ -25,7 +25,7 @@
     "remappings": "forge remappings > remappings.txt",
     "pretest": "pnpm run build",
     "test": "pnpm run --sequential '/^test:.*/'",
-    "test:forge": "forge test -vvvv",
+    "test:forge": "forge test -vvv",
     "test:hardhat": "hardhat test --typecheck"
   },
   "dependencies": {

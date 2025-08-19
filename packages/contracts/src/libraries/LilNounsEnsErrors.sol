@@ -2,7 +2,7 @@
 pragma solidity ^0.8.29;
 
 /// @title LilNounsEnsErrors
-/// @notice Custom errors used by LilNounsEnsMapperV2 and related ENS subdomain/resolver contracts.
+/// @notice Custom errors used by LilNounsEnsMapperV2 and related ENS subname/resolver contracts.
 /// @dev All errors are defined in this reusable library for gas efficiency and modularity.
 library LilNounsEnsErrors {
   /// @notice Reverts when an invalid address is provided for the legacy V1 contract.
@@ -18,8 +18,8 @@ library LilNounsEnsErrors {
   /// @param tokenId The ERC721 tokenId in question.
   error NotTokenOwner(uint256 tokenId);
 
-  /// @notice Reverts when a token already has a claimed subdomain in V1 or V2.
-  /// @param tokenId The tokenId that already has a subdomain claimed.
+  /// @notice Reverts when a token already has a claimed subname in V1 or V2.
+  /// @param tokenId The tokenId that already has a subname claimed.
   error AlreadyClaimed(uint256 tokenId);
 
   /// @notice Reverts when an operation is attempted on an ENS node that has not been registered.

@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.11] - 2025-08-19
+
+### 🚀 Features
+
+- *(contracts)* Add deployment script for `LilNounsEnsMapperV2`
+- *(contracts)* Add `initialOwner` to `initialize`
+- *(contracts)* Update script to support `initialOwner`
+- *(contracts)* Add ENS resolution methods to `LilNounsEnsMapperV2`
+
+### 💼 Other
+
+- *(contracts)* Enable additional foundry build options
+
+### 🚜 Refactor
+
+- *(contracts)* Rename subdomain references to subname
+
+### 🧪 Testing
+
+- *(contracts)* Reduce verbosity level in `test:forge`
+- *(contracts)* Update `initialize` test to use `owner`
+- *(contracts)* Add tests for `ensNameOf` method
+
 ## [1.0.0-alpha.10] - 2025-08-18
 
 ### 🚀 Features

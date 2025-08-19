@@ -23,7 +23,7 @@ import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 /// @title LilNounsEnsMapperV2
 /// @notice Upgradeable ENS resolver and controller for Lil Nouns NFTs.
 /// @dev
-/// - Manages one ENS subdomain per NFT tokenId under a configured root (e.g. `lilnouns.eth`).
+/// - Manages one ENS subname per NFT tokenId under a configured root (e.g. `lilnouns.eth`).
 /// - Implements ENS resolver interfaces: addr/text/name.
 /// - Supports migration from legacy V1 mapper.
 /// - UUPS upgradeable, controlled by contract owner.
@@ -49,7 +49,7 @@ contract LilNounsEnsMapperV2 is
   /// @notice Lil Nouns NFT contract.
   IERC721 public nft;
 
-  /// @notice ENS namehash of the root domain (e.g. namehash("lilnouns.eth")).
+  /// @notice ENS namehash of the root name (e.g. namehash("lilnouns.eth")).
   bytes32 public rootNode;
 
   /// @notice Human-readable root label (e.g. "lilnouns"), used for `name()` composition.
@@ -67,18 +67,20 @@ contract LilNounsEnsMapperV2 is
   /// @dev ENS node => text records (e.g., description, avatar, etc.).
   mapping(bytes32 => mapping(string => string)) private _texts;
 
-  /// @notice Emitted when a new subdomain is registered.
-  event SubdomainClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
+  /// @notice Emitted when a new subname is registered.
+  event SubnameClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
 
   /// @notice Emitted when a text record is updated.
   event TextChanged(bytes32 indexed node, string indexed indexedKey, string key);
 
   /// @notice Initializes the resolver/controller.
+  /// @param initialOwner Address to set as the initial contract owner.
   /// @param legacyAddr Address of the legacy V1 mapping contract.
   /// @param ensRegistry Address of the ENS registry.
-  /// @param ensRoot ENS namehash of the root domain (e.g. namehash("lilnouns.eth")).
+  /// @param ensRoot ENS namehash of the root name (e.g. namehash("lilnouns.eth")).
   /// @param labelRoot Human-readable root label (e.g. "lilnouns").
   function initialize(
+    address initialOwner,
     address legacyAddr,
     address ensRegistry,
     bytes32 ensRoot,
@@ -87,6 +89,8 @@ contract LilNounsEnsMapperV2 is
     if (legacyAddr == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
     if (ensRegistry == address(0)) revert LilNounsEnsErrors.InvalidENSRegistry();
 
+    // Initialize Ownable with explicit owner, then 2-step ownership extension.
+    __Ownable_init(initialOwner);
     __Ownable2Step_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
@@ -104,17 +108,17 @@ contract LilNounsEnsMapperV2 is
     // Intentionally empty: authorization enforced by onlyOwner modifier.
   }
 
-  /// @notice Claims a new subdomain for a Lil Noun NFT.
+  /// @notice Claims a new subname for a Lil Noun NFT.
   /// @dev
   /// - Reentrancy-protected.
-  /// - One subdomain per tokenId.
+  /// - One subname per tokenId.
   /// - Reverts if:
   ///   - caller is not token owner,
   ///   - tokenId already mapped in V2 or exists in legacy V1,
   ///   - label already taken by another tokenId.
   /// @param label Desired label (e.g., "noun42").
-  /// @param tokenId Token ID to associate with the subdomain.
-  function claimSubdomain(string calldata label, uint256 tokenId) external nonReentrant {
+  /// @param tokenId Token ID to associate with the subname.
+  function claimSubname(string calldata label, uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
     if (legacy.tokenHashmap(tokenId) != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
@@ -136,16 +140,16 @@ contract LilNounsEnsMapperV2 is
     ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
 
     /// @custom:slither-safe-event-after-call
-    emit SubdomainClaimed(msg.sender, tokenId, node, label);
+    emit SubnameClaimed(msg.sender, tokenId, node, label);
     /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, msg.sender);
   }
 
-  /// @notice Resets the resolver for a claimed subdomain back to this contract.
+  /// @notice Resets the resolver for a claimed subname back to this contract.
   /// @dev
   /// - Useful if resolver was changed elsewhere.
   /// - Callable by contract owner or NFT owner.
-  /// @param tokenId Token ID with an associated subdomain.
+  /// @param tokenId Token ID with an associated subname.
   function restoreResolver(uint256 tokenId) external {
     bytes32 node = _tokenToNode[tokenId];
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
@@ -155,10 +159,10 @@ contract LilNounsEnsMapperV2 is
     ens.setResolver(node, address(this));
   }
 
-  /// @notice Migrates a V1 subdomain to V2 (owner-only).
+  /// @notice Migrates a V1 subname to V2 (owner-only).
   /// @dev Reentrancy-protected.
   /// @param tokenId NFT token ID to migrate.
-  function migrateSubdomainFromV1(uint256 tokenId) external onlyOwner nonReentrant {
+  function migrateSubnameFromV1(uint256 tokenId) external onlyOwner nonReentrant {
     bytes32 node = legacy.tokenHashmap(tokenId);
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
 
@@ -179,7 +183,7 @@ contract LilNounsEnsMapperV2 is
 
     address currentOwner = nft.ownerOf(tokenId);
     /// @custom:slither-safe-event-after-call
-    emit SubdomainClaimed(currentOwner, tokenId, node, label);
+    emit SubnameClaimed(currentOwner, tokenId, node, label);
     /// @custom:slither-safe-event-after-call
     emit AddrChanged(node, currentOwner);
   }
@@ -201,6 +205,36 @@ contract LilNounsEnsMapperV2 is
 
   /// @inheritdoc INameResolver
   function name(bytes32 node) external view override returns (string memory) {
+    string memory label = _nodeToLabel[node];
+    if (bytes(label).length > 0) {
+      return string(abi.encodePacked(label, ".", rootLabel, ".eth"));
+    }
+    return legacy.name(node);
+  }
+
+  /// @notice Returns the ENS node associated with a given tokenId (V2 first, then legacy).
+  /// @param tokenId The NFT token id.
+  /// @return node The ENS node for the token, or bytes32(0) if none is registered.
+  function ensNodeOf(uint256 tokenId) external view returns (bytes32 node) {
+    node = _tokenToNode[tokenId];
+    if (node == bytes32(0)) {
+      node = legacy.tokenHashmap(tokenId);
+    }
+  }
+
+  /// @notice Returns the ENS name attached to a tokenId if present.
+  /// @dev Prefers the V2 label if available; falls back to legacy resolver name.
+  /// @param tokenId The NFT token id.
+  /// @return The ENS name (e.g., "noun42.lilnouns.eth") or empty string if not registered.
+  function ensNameOf(uint256 tokenId) public view returns (string memory) {
+    bytes32 node = _tokenToNode[tokenId];
+    if (node == bytes32(0)) {
+      node = legacy.tokenHashmap(tokenId);
+    }
+    if (node == bytes32(0)) {
+      return "";
+    }
+
     string memory label = _nodeToLabel[node];
     if (bytes(label).length > 0) {
       return string(abi.encodePacked(label, ".", rootLabel, ".eth"));

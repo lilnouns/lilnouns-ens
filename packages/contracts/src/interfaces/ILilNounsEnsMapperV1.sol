@@ -5,12 +5,12 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title ILilNounsEnsMapperV1
 /// @notice Interface for the legacy ENS mapper contract used by Lil Nouns.
-/// @dev Provides read access to subdomain mappings and ENS resolver data.
+/// @dev Provides read access to subname mappings and ENS resolver data.
 interface ILilNounsEnsMapperV1 {
   /// @notice Returns the NFT contract associated with the ENS records.
   function nft() external view returns (IERC721);
 
-  /// @notice Returns the ENS domain hash (namehash of the root domain, e.g., "lilnouns.eth").
+  /// @notice Returns the ENS name hash (namehash of the root name, e.g., "lilnouns.eth").
   function domainHash() external view returns (bytes32);
 
   /// @notice Get the ENS name for a given node (namehash).
@@ -32,14 +32,14 @@ interface ILilNounsEnsMapperV1 {
   function text(bytes32 node, string calldata key) external view returns (string memory);
 
   /// @notice Get the ENS nodehash associated with a given tokenId.
-  /// @dev Returns 0x0 if the token does not have a registered subdomain.
+  /// @dev Returns 0x0 if the token does not have a registered subname.
   /// @param tokenId Token ID of the NFT.
-  /// @return The node (namehash) of the subdomain.
+  /// @return The node (namehash) of the subname.
   function tokenHashmap(uint256 tokenId) external view returns (bytes32);
 
   /// @notice Get the tokenId associated with a given node.
   /// @param node ENS node (namehash).
-  /// @return The ERC721 tokenId linked to the subdomain.
+  /// @return The ERC721 tokenId linked to the subname.
   function hashToIdMap(bytes32 node) external view returns (uint256);
 
   /// @notice Get the label (e.g., "noun42") mapped to a node.
