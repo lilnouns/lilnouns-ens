@@ -74,11 +74,13 @@ contract LilNounsEnsMapperV2 is
   event TextChanged(bytes32 indexed node, string indexed indexedKey, string key);
 
   /// @notice Initializes the resolver/controller.
+  /// @param initialOwner Address to set as the initial contract owner.
   /// @param legacyAddr Address of the legacy V1 mapping contract.
   /// @param ensRegistry Address of the ENS registry.
   /// @param ensRoot ENS namehash of the root domain (e.g. namehash("lilnouns.eth")).
   /// @param labelRoot Human-readable root label (e.g. "lilnouns").
   function initialize(
+    address initialOwner,
     address legacyAddr,
     address ensRegistry,
     bytes32 ensRoot,
@@ -87,6 +89,8 @@ contract LilNounsEnsMapperV2 is
     if (legacyAddr == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
     if (ensRegistry == address(0)) revert LilNounsEnsErrors.InvalidENSRegistry();
 
+    // Initialize Ownable with explicit owner, then 2-step ownership extension.
+    __Ownable_init(initialOwner);
     __Ownable2Step_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
