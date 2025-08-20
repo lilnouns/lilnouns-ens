@@ -2,6 +2,7 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+test = "test"
 gas_reports = ["*"]
 solc_version = "0.8.29"
 via_ir = true
