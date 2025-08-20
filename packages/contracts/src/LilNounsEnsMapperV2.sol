@@ -132,6 +132,11 @@ contract LilNounsEnsMapperV2 is
     bytes32 labelHash = keccak256(abi.encodePacked(label));
     bytes32 node = keccak256(abi.encodePacked(rootNode, labelHash));
 
+    // Prevent claiming if the ENS subnode already exists (owned by anyone).
+    if (ens.owner(node) != address(0)) {
+      revert LilNounsEnsErrors.PreexistingENSRecord(node);
+    }
+
     uint256 existing = _nodeToToken[node];
     bool taken = (existing != 0) || (_tokenToNode[0] == node);
     if (taken) revert LilNounsEnsErrors.AlreadyClaimed(existing);
