@@ -434,4 +434,92 @@ contract LilNounsEnsMapperV2Test is Test {
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenX));
     mapper.migrateLegacySubname(tokenY);
   }
+
+  // ============ Relinquish tests ============
+
+  function testRelinquish_ByTokenOwner_ClearsState_And_AllowsReclaim() public {
+    string memory label = "same";
+    uint256 tokenA = 1;
+    uint256 tokenB = 2;
+
+    _mintTo(alice, tokenA);
+    _mintTo(bob, tokenB);
+
+    bytes32 node = _nodeFor(label);
+
+    // Alice claims first
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenA, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, alice);
+    mapper.claimSubname(label, tokenA);
+
+    // Release by token owner
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, address(0));
+    mapper.relinquishSubname(tokenA);
+
+    // ENS record cleared
+    (address subOwner, address subResolver, uint64 ttl) = ens.records(node);
+    assertEq(subOwner, address(0), "ENS subnode owner not cleared");
+    assertEq(subResolver, address(0), "ENS subnode resolver not cleared");
+
+    // addr() should revert as unregistered
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, node));
+    mapper.addr(node);
+
+    // Bob can now claim the same label for his token
+    vm.prank(bob);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(bob, tokenB, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, bob);
+    mapper.claimSubname(label, tokenB);
+
+    // addr() resolves to Bob
+    assertEq(mapper.addr(node), payable(bob), "addr should resolve to Bob");
+  }
+
+  function testRelinquish_ByContractOwner_Works() public {
+    string memory label = "ownerRelease";
+    uint256 tokenId = 3;
+    _mintTo(alice, tokenId);
+    bytes32 node = _nodeFor(label);
+
+    // Alice claims
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenId);
+
+    // Contract owner can release
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, address(0));
+    mapper.relinquishSubname(tokenId);
+
+    // After release, attempting to resolve addr should revert
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, node));
+    mapper.addr(node);
+  }
+
+  function testRelinquish_NotAuthorised_Reverts() public {
+    string memory label = "na";
+    uint256 tokenId = 4;
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenId);
+
+    // Bob is not authorized to relinquish Alice's subname
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotAuthorised.selector, tokenId));
+    mapper.relinquishSubname(tokenId);
+  }
+
+  function testRelinquish_Unregistered_Reverts() public {
+    uint256 tokenId = 55; // no claim exists for this tokenId
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
+    mapper.relinquishSubname(tokenId);
+  }
 }
