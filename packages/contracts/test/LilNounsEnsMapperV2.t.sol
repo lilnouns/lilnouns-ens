@@ -126,6 +126,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // 200-char label
     bytes memory b = new bytes(200);
     for (uint256 i = 0; i < b.length; ) {
+      // forge-lint: disable-next-line(unsafe-typecast)
       b[i] = bytes1("a");
       unchecked {
         i++;
