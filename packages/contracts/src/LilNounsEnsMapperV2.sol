@@ -162,7 +162,7 @@ contract LilNounsEnsMapperV2 is
   /// @notice Migrates a V1 subname to V2 (owner-only).
   /// @dev Reentrancy-protected.
   /// @param tokenId NFT token ID to migrate.
-  function migrateSubnameFromV1(uint256 tokenId) external onlyOwner nonReentrant {
+  function migrateLegacySubname(uint256 tokenId) external onlyOwner nonReentrant {
     bytes32 node = legacy.tokenHashmap(tokenId);
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
 
