@@ -67,6 +67,9 @@ contract LilNounsEnsMapperV2 is
   /// @dev ENS node => text records (e.g., description, avatar, etc.).
   mapping(bytes32 => mapping(string => string)) private _texts;
 
+  /// @dev Marks tokens whose legacy subname has been explicitly released, allowing V2 claim.
+  mapping(uint256 => bool) private _legacyReleased;
+
   /// @notice Emitted when a new subname is registered.
   event SubnameClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
 
@@ -121,7 +124,9 @@ contract LilNounsEnsMapperV2 is
   function claimSubname(string calldata label, uint256 tokenId) external nonReentrant {
     if (nft.ownerOf(tokenId) != msg.sender) revert LilNounsEnsErrors.NotTokenOwner(tokenId);
     if (_tokenToNode[tokenId] != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
-    if (legacy.tokenHashmap(tokenId) != bytes32(0)) revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
+    if (legacy.tokenHashmap(tokenId) != bytes32(0) && !_legacyReleased[tokenId]) {
+      revert LilNounsEnsErrors.AlreadyClaimed(tokenId);
+    }
     if (bytes(label).length == 0) revert LilNounsEnsErrors.InvalidLabel();
 
     bytes32 labelHash = keccak256(abi.encodePacked(label));
@@ -135,6 +140,9 @@ contract LilNounsEnsMapperV2 is
     _tokenToNode[tokenId] = node;
     _nodeToToken[node] = tokenId;
     _nodeToLabel[node] = label;
+    if (_legacyReleased[tokenId]) {
+      delete _legacyReleased[tokenId];
+    }
 
     /// @dev Interactions: ENS registry call — external, but trusted
     ens.setSubnodeRecord(rootNode, labelHash, address(this), address(this), 0);
@@ -159,10 +167,66 @@ contract LilNounsEnsMapperV2 is
     ens.setResolver(node, address(this));
   }
 
+  /// @notice Releases (unclaims) a subname so it can be claimed again by someone else.
+  /// @dev
+  /// - Callable by contract owner or current NFT owner.
+  /// - Clears internal mappings and clears the ENS subnode record.
+  /// @param tokenId Token ID whose subname should be released.
+  function relinquishSubname(uint256 tokenId) external nonReentrant {
+    bytes32 node = _tokenToNode[tokenId];
+    if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
+
+    if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
+      revert LilNounsEnsErrors.NotAuthorised(tokenId);
+    }
+
+    string memory label = _nodeToLabel[node];
+    bytes32 labelHash = keccak256(abi.encodePacked(label));
+
+    // Effects: clear internal mappings
+    delete _nodeToToken[node];
+    delete _nodeToLabel[node];
+    delete _tokenToNode[tokenId];
+    // Note: _texts[node][key] entries (if any) become unreachable.
+
+    // Interactions: clear the ENS subnode record for indexers/UIs
+    ens.setSubnodeRecord(rootNode, labelHash, address(0), address(0), 0);
+
+    // Emit reindex hint
+    emit AddrChanged(node, address(0));
+  }
+
+  /// @notice Releases a legacy (V1) subname for a token so it can claim again in V2.
+  /// @dev
+  /// - Callable by contract owner or current NFT owner.
+  /// - Marks the token as legacy-released and clears the ENS subnode record for the legacy label.
+  /// @param tokenId Token ID with a legacy subname to release.
+  function releaseLegacySubname(uint256 tokenId) external nonReentrant {
+    bytes32 node = legacy.tokenHashmap(tokenId);
+    if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
+
+    if (msg.sender != owner() && nft.ownerOf(tokenId) != msg.sender) {
+      revert LilNounsEnsErrors.NotAuthorised(tokenId);
+    }
+
+    // Mark legacy as released to allow V2 claim
+    _legacyReleased[tokenId] = true;
+
+    // Best-effort: clear subnode in ENS for indexers/UIs
+    string memory label = legacy.hashToDomainMap(node);
+    if (bytes(label).length != 0) {
+      bytes32 labelHash = keccak256(abi.encodePacked(label));
+      ens.setSubnodeRecord(rootNode, labelHash, address(0), address(0), 0);
+    }
+
+    // Emit reindex hint on the legacy node
+    emit AddrChanged(node, address(0));
+  }
+
   /// @notice Migrates a V1 subname to V2 (owner-only).
   /// @dev Reentrancy-protected.
   /// @param tokenId NFT token ID to migrate.
-  function migrateSubnameFromV1(uint256 tokenId) external onlyOwner nonReentrant {
+  function migrateLegacySubname(uint256 tokenId) external onlyOwner nonReentrant {
     bytes32 node = legacy.tokenHashmap(tokenId);
     if (node == bytes32(0)) revert LilNounsEnsErrors.UnregisteredNode(node);
 
@@ -240,6 +304,19 @@ contract LilNounsEnsMapperV2 is
       return string(abi.encodePacked(label, ".", rootLabel, ".eth"));
     }
     return legacy.name(node);
+  }
+
+  /// @notice Returns whether the subname associated with a given tokenId is managed by the legacy V1 mapper.
+  /// @dev A subname is considered legacy if there is no mapping in V2 for the tokenId, but a mapping exists in V1.
+  /// @param tokenId The NFT token id to check.
+  /// @return isLegacy True if the subname is legacy (exists only in V1), false otherwise.
+  function isLegacySubname(uint256 tokenId) public view returns (bool isLegacy) {
+    // If V2 mapping exists, it's not legacy.
+    if (_tokenToNode[tokenId] != bytes32(0)) {
+      return false;
+    }
+    // Legacy if V1 has a mapping for this tokenId.
+    return legacy.tokenHashmap(tokenId) != bytes32(0);
   }
 
   /// @inheritdoc IERC165
@@ -332,5 +409,5 @@ contract LilNounsEnsMapperV2 is
 
   /// @notice Reserved storage space for future variable additions in upgradeable contracts to prevent storage layout conflicts.
   // slither-disable-next-line naming-convention,unused-state
-  uint256[44] private __gap;
+  uint256[43] private __gap;
 }

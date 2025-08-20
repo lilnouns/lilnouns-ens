@@ -9,93 +9,9 @@ import { LilNounsEnsErrors } from "../src/libraries/LilNounsEnsErrors.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-// Minimal ENS mock that supports the functions used by the CUT
-contract MockENS {
-  // Store last set data for optional assertions
-  struct Record {
-    address owner;
-    address resolver;
-    uint64 ttl;
-  }
-
-  mapping(bytes32 => Record) public records; // node => record
-
-  event NewSubnode(bytes32 indexed parent, bytes32 indexed label, address owner, address resolver, uint64 ttl);
-  event ResolverSet(bytes32 indexed node, address resolver);
-
-  function setSubnodeRecord(bytes32 parentNode, bytes32 label, address owner, address resolver, uint64 ttl) external {
-    bytes32 node = keccak256(abi.encodePacked(parentNode, label));
-    records[node] = Record(owner, resolver, ttl);
-    emit NewSubnode(parentNode, label, owner, resolver, ttl);
-  }
-
-  function setResolver(bytes32 node, address resolver) external {
-    records[node].resolver = resolver;
-    emit ResolverSet(node, resolver);
-  }
-}
-
-// Minimal legacy mapper mock
-contract MockLegacy is ILilNounsEnsMapperV1 {
-  IERC721 public immutable _nft;
-  bytes32 public _domainHash;
-  mapping(uint256 => bytes32) public tokenHashmapMock;
-  mapping(bytes32 => uint256) public hashToIdMapMock;
-  mapping(bytes32 => string) public hashToDomainMapMock;
-
-  constructor(IERC721 nft_, bytes32 domainHash_) {
-    _nft = nft_;
-    _domainHash = domainHash_;
-  }
-
-  function nft() external view returns (IERC721) {
-    return _nft;
-  }
-
-  function domainHash() external view returns (bytes32) {
-    return _domainHash;
-  }
-
-  function name(bytes32 node) external view returns (string memory) {
-    return hashToDomainMapMock[node];
-  }
-
-  function addr(bytes32 /*node*/) external view returns (address) {
-    return address(0);
-  }
-
-  function text(bytes32, /*node*/ string calldata /*key*/) external pure returns (string memory) {
-    return "";
-  }
-
-  function tokenHashmap(uint256 tokenId) external view returns (bytes32) {
-    return tokenHashmapMock[tokenId];
-  }
-
-  function hashToIdMap(bytes32 node) external view returns (uint256) {
-    return hashToIdMapMock[node];
-  }
-
-  function hashToDomainMap(bytes32 node) external view returns (string memory) {
-    return hashToDomainMapMock[node];
-  }
-
-  // helpers for tests
-  function setLegacyMapping(uint256 tokenId, bytes32 node, string memory label) external {
-    tokenHashmapMock[tokenId] = node;
-    hashToIdMapMock[node] = tokenId;
-    hashToDomainMapMock[node] = label;
-  }
-}
-
-// Simple mintable ERC721 for tokens
-contract TestERC721 is ERC721 {
-  constructor() ERC721("LilNouns", "LILNOUNS") {}
-
-  function mint(address to, uint256 tokenId) external {
-    _mint(to, tokenId);
-  }
-}
+import { MockENS } from "./mocks/MockENS.sol";
+import { MockLegacy } from "./mocks/MockLegacy.sol";
+import { MockERC721 } from "./mocks/MockERC721.sol";
 
 contract LilNounsEnsMapperV2Test is Test {
   // Actors
@@ -104,7 +20,7 @@ contract LilNounsEnsMapperV2Test is Test {
   address internal bob = makeAddr("bob");
 
   // Deployed contracts
-  TestERC721 internal nft;
+  MockERC721 internal nft;
   MockENS internal ens;
   MockLegacy internal legacy;
   LilNounsEnsMapperV2 internal mapper;
@@ -119,7 +35,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
   function setUp() public {
     // Deploy minimal dependencies
-    nft = new TestERC721();
+    nft = new MockERC721();
 
     rootNode = namehash("lilnouns.eth");
     ens = new MockENS();
@@ -339,5 +255,373 @@ contract LilNounsEnsMapperV2Test is Test {
 
     // MockLegacy.name(node) returns the label (not full domain) in this test harness
     assertEq(mapper.ensNameOf(tokenId), legacyLabel, "ensNameOf should fallback to legacy name");
+  }
+
+  // ============ Fuzz tests for claimSubname ============
+  function _labelFrom(bytes32 salt, uint256 idx) internal pure returns (string memory) {
+    // produce a non-empty, ascii lower-case label using salt and idx
+    bytes memory alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+    uint256 len = 6 + (uint256(salt) % 10); // 6..15
+    bytes memory out = new bytes(len);
+    uint256 x = uint256(keccak256(abi.encodePacked(salt, idx)));
+    for (uint256 i = 0; i < len; ) {
+      out[i] = alphabet[x % alphabet.length];
+      x /= 37;
+      unchecked {
+        ++i;
+      }
+    }
+    return string(out);
+  }
+
+  function testFuzz_ClaimSubname_SucceedsForOwner(uint256 tokenId, bytes32 salt) public {
+    tokenId = bound(tokenId, 1, type(uint128).max);
+    string memory label = _labelFrom(salt, tokenId);
+    bytes32 node = _nodeFor(label);
+
+    _mintTo(alice, tokenId);
+
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, alice);
+    mapper.claimSubname(label, tokenId);
+    vm.stopPrank();
+
+    // Check properties
+    assertEq(mapper.addr(node), payable(alice));
+    string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
+    assertEq(mapper.name(node), expected);
+  }
+
+  function testFuzz_ClaimSubname_RevertOnDuplicateLabel(uint256 tokenA, uint256 tokenB, bytes32 salt) public {
+    tokenA = bound(tokenA, 1, type(uint64).max);
+    tokenB = bound(tokenB, 1, type(uint64).max);
+    vm.assume(tokenA != tokenB);
+
+    string memory label = _labelFrom(salt, 1);
+    bytes32 node = _nodeFor(label);
+
+    _mintTo(alice, tokenA);
+    _mintTo(bob, tokenB);
+
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenA);
+
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenA));
+    mapper.claimSubname(label, tokenB);
+
+    // Ensure mapping remains to tokenA
+    assertEq(mapper.addr(node), payable(alice));
+  }
+
+  function testFuzz_ClaimSubname_RevertOnUnauthorized(uint256 tokenId, bytes32 salt) public {
+    tokenId = bound(tokenId, 1, type(uint64).max);
+    string memory label = _labelFrom(salt, 2);
+
+    _mintTo(alice, tokenId);
+
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotTokenOwner.selector, tokenId));
+    mapper.claimSubname(label, tokenId);
+  }
+
+  function testFuzz_ClaimSubname_UniquenessInvariant(uint256 n, bytes32 seed) public {
+    n = bound(n, 1, 20);
+
+    bytes32[] memory nodes = new bytes32[](n);
+
+    // Create n distinct claims
+    for (uint256 i = 0; i < n; ) {
+      uint256 tokenId = i + 1; // avoid 0 sentinel
+      string memory label = _labelFrom(seed, i + 1000);
+      nodes[i] = _nodeFor(label);
+
+      _mintTo(alice, tokenId);
+      vm.prank(alice);
+      mapper.claimSubname(label, tokenId);
+      unchecked {
+        ++i;
+      }
+    }
+
+    // Invariant: all nodes are unique and resolve to distinct tokenIds
+    for (uint256 i = 0; i < n; ) {
+      for (uint256 j = i + 1; j < n; ) {
+        vm.assume(i != j);
+        assertTrue(nodes[i] != nodes[j], "duplicate node detected");
+        unchecked {
+          ++j;
+        }
+      }
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  // ============ Fuzz tests for migrateLegacySubname ============
+  function testFuzz_MigrateLegacySubname_Succeeds(uint256 tokenId, bytes32 salt) public {
+    tokenId = bound(tokenId, 1, type(uint64).max);
+    string memory label = _labelFrom(salt, 77);
+    bytes32 node = _nodeFor(label);
+
+    // Prepare legacy mapping and mint the NFT to alice
+    legacy.setLegacyMapping(tokenId, node, label);
+    _mintTo(alice, tokenId);
+
+    vm.startPrank(owner);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, alice);
+    mapper.migrateLegacySubname(tokenId);
+    vm.stopPrank();
+
+    // Properties preserved
+    assertEq(mapper.addr(node), payable(alice));
+    string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
+    assertEq(mapper.name(node), expected);
+    assertEq(mapper.ensNameOf(tokenId), expected);
+    assertFalse(mapper.isLegacySubname(tokenId));
+  }
+
+  function testFuzz_MigrateLegacySubname_RevertIfUnregistered(uint256 tokenId) public {
+    tokenId = bound(tokenId, 1, type(uint64).max);
+    // Ensure legacy has no mapping for tokenId
+    vm.prank(owner);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
+    mapper.migrateLegacySubname(tokenId);
+  }
+
+  function testFuzz_MigrateLegacySubname_RevertIfCallerNotOwner(uint256 tokenId, bytes32 salt) public {
+    tokenId = bound(tokenId, 1, type(uint64).max);
+    string memory label = _labelFrom(salt, 99);
+    bytes32 node = _nodeFor(label);
+
+    legacy.setLegacyMapping(tokenId, node, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", alice));
+    mapper.migrateLegacySubname(tokenId);
+  }
+
+  function testFuzz_MigrateLegacySubname_RevertOnConflictWithExistingV2(
+    uint256 tokenX,
+    uint256 tokenY,
+    bytes32 salt
+  ) public {
+    tokenX = bound(tokenX, 1, type(uint64).max);
+    tokenY = bound(tokenY, 1, type(uint64).max);
+    vm.assume(tokenX != tokenY);
+
+    string memory label = _labelFrom(salt, 12345);
+    bytes32 node = _nodeFor(label);
+
+    // V2 already claimed by tokenX
+    _mintTo(alice, tokenX);
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenX);
+
+    // Legacy tries to migrate same label for tokenY
+    legacy.setLegacyMapping(tokenY, node, label);
+    _mintTo(bob, tokenY);
+
+    vm.prank(owner);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenX));
+    mapper.migrateLegacySubname(tokenY);
+  }
+
+  // ============ Legacy relinquish tests ============
+
+  function testLegacyRelinquish_ByTokenOwner_AllowsV2Claim() public {
+    uint256 tokenId = 501;
+    string memory oldLabel = "oldlegacy";
+    string memory newLabel = "brandnew";
+
+    bytes32 legacyNode = _nodeFor(oldLabel);
+    legacy.setLegacyMapping(tokenId, legacyNode, oldLabel);
+
+    _mintTo(alice, tokenId);
+
+    // Before release, claim should be blocked by legacy mapping
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenId));
+    mapper.claimSubname(newLabel, tokenId);
+
+    // Release legacy and ensure event emitted
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Now V2 claim should succeed
+    bytes32 newNode = _nodeFor(newLabel);
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, newNode, newLabel);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(newNode, alice);
+    mapper.claimSubname(newLabel, tokenId);
+    vm.stopPrank();
+
+    // addr resolves to alice
+    assertEq(mapper.addr(newNode), payable(alice));
+  }
+
+  function testLegacyRelinquish_CanClaimSameLegacyLabelInV2() public {
+    uint256 tokenId = 777;
+    string memory label = "sameafterrelease";
+
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    // Release by token owner
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Claim the exact same label under V2
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, legacyNode, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, alice);
+    mapper.claimSubname(label, tokenId);
+    vm.stopPrank();
+
+    assertEq(mapper.addr(legacyNode), payable(alice));
+  }
+
+  function testLegacyRelinquish_ByContractOwner_Works() public {
+    uint256 tokenId = 888;
+    string memory label = "ownerreleaseslegacy";
+
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Now token owner can claim in V2
+    vm.prank(alice);
+    mapper.claimSubname("fresh", tokenId);
+  }
+
+  function testLegacyRelinquish_NotAuthorised_Reverts() public {
+    uint256 tokenId = 999;
+    string memory label = "nope";
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotAuthorised.selector, tokenId));
+    mapper.releaseLegacySubname(tokenId);
+  }
+
+  function testLegacyRelinquish_Unregistered_Reverts() public {
+    uint256 tokenId = 1001; // no legacy mapping
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
+    mapper.releaseLegacySubname(tokenId);
+  }
+
+  // ============ Relinquish tests ============
+
+  function testRelinquish_ByTokenOwner_ClearsState_And_AllowsReclaim() public {
+    string memory label = "same";
+    uint256 tokenA = 1;
+    uint256 tokenB = 2;
+
+    _mintTo(alice, tokenA);
+    _mintTo(bob, tokenB);
+
+    bytes32 node = _nodeFor(label);
+
+    // Alice claims first
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenA, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, alice);
+    mapper.claimSubname(label, tokenA);
+
+    // Release by token owner
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, address(0));
+    mapper.relinquishSubname(tokenA);
+
+    // ENS record cleared
+    (address subOwner, address subResolver, uint64 ttl) = ens.records(node);
+    assertEq(subOwner, address(0), "ENS subnode owner not cleared");
+    assertEq(subResolver, address(0), "ENS subnode resolver not cleared");
+
+    // addr() should revert as unregistered
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, node));
+    mapper.addr(node);
+
+    // Bob can now claim the same label for his token
+    vm.prank(bob);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(bob, tokenB, node, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, bob);
+    mapper.claimSubname(label, tokenB);
+
+    // addr() resolves to Bob
+    assertEq(mapper.addr(node), payable(bob), "addr should resolve to Bob");
+  }
+
+  function testRelinquish_ByContractOwner_Works() public {
+    string memory label = "ownerRelease";
+    uint256 tokenId = 3;
+    _mintTo(alice, tokenId);
+    bytes32 node = _nodeFor(label);
+
+    // Alice claims
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenId);
+
+    // Contract owner can release
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(node, address(0));
+    mapper.relinquishSubname(tokenId);
+
+    // After release, attempting to resolve addr should revert
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, node));
+    mapper.addr(node);
+  }
+
+  function testRelinquish_NotAuthorised_Reverts() public {
+    string memory label = "na";
+    uint256 tokenId = 4;
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    mapper.claimSubname(label, tokenId);
+
+    // Bob is not authorized to relinquish Alice's subname
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotAuthorised.selector, tokenId));
+    mapper.relinquishSubname(tokenId);
+  }
+
+  function testRelinquish_Unregistered_Reverts() public {
+    uint256 tokenId = 55; // no claim exists for this tokenId
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
+    mapper.relinquishSubname(tokenId);
   }
 }
