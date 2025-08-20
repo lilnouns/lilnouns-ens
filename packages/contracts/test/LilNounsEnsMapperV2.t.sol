@@ -385,7 +385,7 @@ contract LilNounsEnsMapperV2Test is Test {
     string memory expected = string(abi.encodePacked(label, ".", ROOT_LABEL, ".eth"));
     assertEq(mapper.name(node), expected);
     assertEq(mapper.ensNameOf(tokenId), expected);
-    assertFalse(mapper.isLegacySubname(tokenId));
+    assertFalse(mapper.isLegacyNode(node));
   }
 
   function testFuzz_MigrateLegacySubname_RevertIfUnregistered(uint256 tokenId) public {
