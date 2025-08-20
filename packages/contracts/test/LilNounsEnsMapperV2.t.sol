@@ -435,6 +435,108 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.migrateLegacySubname(tokenY);
   }
 
+  // ============ Legacy relinquish tests ============
+
+  function testLegacyRelinquish_ByTokenOwner_AllowsV2Claim() public {
+    uint256 tokenId = 501;
+    string memory oldLabel = "oldlegacy";
+    string memory newLabel = "brandnew";
+
+    bytes32 legacyNode = _nodeFor(oldLabel);
+    legacy.setLegacyMapping(tokenId, legacyNode, oldLabel);
+
+    _mintTo(alice, tokenId);
+
+    // Before release, claim should be blocked by legacy mapping
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenId));
+    mapper.claimSubname(newLabel, tokenId);
+
+    // Release legacy and ensure event emitted
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Now V2 claim should succeed
+    bytes32 newNode = _nodeFor(newLabel);
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, newNode, newLabel);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(newNode, alice);
+    mapper.claimSubname(newLabel, tokenId);
+    vm.stopPrank();
+
+    // addr resolves to alice
+    assertEq(mapper.addr(newNode), payable(alice));
+  }
+
+  function testLegacyRelinquish_CanClaimSameLegacyLabelInV2() public {
+    uint256 tokenId = 777;
+    string memory label = "sameafterrelease";
+
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    // Release by token owner
+    vm.prank(alice);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Claim the exact same label under V2
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, legacyNode, label);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, alice);
+    mapper.claimSubname(label, tokenId);
+    vm.stopPrank();
+
+    assertEq(mapper.addr(legacyNode), payable(alice));
+  }
+
+  function testLegacyRelinquish_ByContractOwner_Works() public {
+    uint256 tokenId = 888;
+    string memory label = "ownerreleaseslegacy";
+
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(legacyNode, address(0));
+    mapper.releaseLegacySubname(tokenId);
+
+    // Now token owner can claim in V2
+    vm.prank(alice);
+    mapper.claimSubname("fresh", tokenId);
+  }
+
+  function testLegacyRelinquish_NotAuthorised_Reverts() public {
+    uint256 tokenId = 999;
+    string memory label = "nope";
+    bytes32 legacyNode = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, legacyNode, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(bob);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.NotAuthorised.selector, tokenId));
+    mapper.releaseLegacySubname(tokenId);
+  }
+
+  function testLegacyRelinquish_Unregistered_Reverts() public {
+    uint256 tokenId = 1001; // no legacy mapping
+    _mintTo(alice, tokenId);
+
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
+    mapper.releaseLegacySubname(tokenId);
+  }
+
   // ============ Relinquish tests ============
 
   function testRelinquish_ByTokenOwner_ClearsState_And_AllowsReclaim() public {
