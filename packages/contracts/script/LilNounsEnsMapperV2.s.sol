@@ -22,7 +22,7 @@ import { LilNounsEnsMapperV2 } from "../src/LilNounsEnsMapperV2.sol";
 ///       - <PREFIX>_LEGACY_MAPPER   (address)
 ///       - <PREFIX>_ENS_REGISTRY    (address)
 ///       - <PREFIX>_ENS_ROOT_NODE   (bytes32)
-///       - <PREFIX>_ROOT_LABEL      (string)
+///       - <PREFIX>_ENS_ROOT_LABEL      (string)
 ///       - <PREFIX>_INITIAL_OWNER   (address)
 ///
 /// Example:
@@ -118,7 +118,7 @@ contract LilNounsEnsMapperV2Script is Script {
     require(legacy != address(0), string.concat(prefix, "_LEGACY_MAPPER is zero"));
     require(ensRegistry != address(0), string.concat(prefix, "_ENS_REGISTRY is zero"));
     require(rootNode != bytes32(0), string.concat(prefix, "_ENS_ROOT_NODE is zero"));
-    require(bytes(rootLabel).length > 0, string.concat(prefix, "_ROOT_LABEL empty"));
+    require(bytes(rootLabel).length > 0, string.concat(prefix, "_ENS_ROOT_LABEL empty"));
     require(initialOwner != address(0), string.concat(prefix, "_INITIAL_OWNER is zero"));
 
     // Prepare initializer calldata for the proxy. This will invoke:
