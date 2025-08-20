@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.29;
 
-import { Test, console2 as console } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { LilNounsEnsMapperV2 } from "../src/LilNounsEnsMapperV2.sol";
 import { LilNounsEnsErrors } from "../src/libraries/LilNounsEnsErrors.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import { MockENS } from "./mocks/MockENS.sol";
 import { MockLegacy } from "./mocks/MockLegacy.sol";
