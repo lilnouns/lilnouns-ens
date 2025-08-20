@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.13] - 2025-08-20
+
+### 🚜 Refactor
+
+- *(contracts)* Replace `isLegacySubname` by `isLegacyNode`
+
+### 🧪 Testing
+
+- *(contracts)* Update tests to use `isLegacyNode`
+- *(contracts)* Remove unused `ILilNounsEnsMapperV1` import
+- *(contracts)* Remove unused `console` import
+
 ## [1.0.0-alpha.12] - 2025-08-20
 
 ### 🚀 Features
