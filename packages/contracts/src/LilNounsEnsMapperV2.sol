@@ -306,17 +306,23 @@ contract LilNounsEnsMapperV2 is
     return legacy.name(node);
   }
 
-  /// @notice Returns whether the subname associated with a given tokenId is managed by the legacy V1 mapper.
-  /// @dev A subname is considered legacy if there is no mapping in V2 for the tokenId, but a mapping exists in V1.
-  /// @param tokenId The NFT token id to check.
-  /// @return isLegacy True if the subname is legacy (exists only in V1), false otherwise.
-  function isLegacySubname(uint256 tokenId) public view returns (bool isLegacy) {
-    // If V2 mapping exists, it's not legacy.
-    if (_tokenToNode[tokenId] != bytes32(0)) {
+  /// @notice Returns whether a given ENS node is managed by the legacy V1 mapper.
+  /// @dev A node is considered legacy if it is not mapped in V2, but the legacy V1 mapper resolves it.
+  /// @param node The ENS node to check.
+  /// @return isLegacy True if the node is legacy (exists only in V1), false otherwise.
+  function isLegacyNode(bytes32 node) public view returns (bool isLegacy) {
+    // If V2 has a mapping for this node, it's not legacy.
+    if (_nodeToToken[node] != 0) {
       return false;
     }
-    // Legacy if V1 has a mapping for this tokenId.
-    return legacy.tokenHashmap(tokenId) != bytes32(0);
+    // bytes32(0) is not a valid legacy node.
+    if (node == bytes32(0)) {
+      return false;
+    }
+    // Consider legacy if the legacy mapper recognizes the node (has a label).
+    // Using label presence to avoid relying on name() formatting.
+    string memory label = legacy.hashToDomainMap(node);
+    return bytes(label).length != 0;
   }
 
   /// @inheritdoc IERC165
