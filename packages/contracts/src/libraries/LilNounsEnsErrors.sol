@@ -26,6 +26,10 @@ library LilNounsEnsErrors {
   /// @param node The ENS namehash of the node.
   error UnregisteredNode(bytes32 node);
 
+  /// @notice Reverts when attempting to claim a label whose ENS subnode already exists in the registry.
+  /// @param node The ENS node that is already registered in ENS.
+  error PreexistingENSRecord(bytes32 node);
+
   /// @notice Reverts when the caller is neither the contract owner nor the NFT token holder.
   /// @param tokenId The tokenId for which the authorization failed.
   error NotAuthorised(uint256 tokenId);

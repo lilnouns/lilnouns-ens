@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.14] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- *(contracts)* Prevent claiming existing ENS subnodes
+- *(contracts)* Enhance error handling for ENS subnodes
+
+### 🧪 Testing
+
+- *(contracts)* Add test for claiming new label after relinquishing
+- *(contracts)* Add test for pre-existing ENS subnodes
+- *(contracts)* Disable lint on unsafe typecast in test
+
 ## [1.0.0-alpha.13] - 2025-08-20
 
 ### 🚜 Refactor

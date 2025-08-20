@@ -25,4 +25,9 @@ contract MockENS {
     records[node].resolver = resolver;
     emit ResolverSet(node, resolver);
   }
+
+  // ENS-compatible: owner(bytes32) returns current owner of node
+  function owner(bytes32 node) external view returns (address) {
+    return records[node].owner;
+  }
 }

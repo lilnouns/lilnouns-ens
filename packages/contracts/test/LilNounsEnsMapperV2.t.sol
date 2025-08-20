@@ -126,6 +126,7 @@ contract LilNounsEnsMapperV2Test is Test {
     // 200-char label
     bytes memory b = new bytes(200);
     for (uint256 i = 0; i < b.length; ) {
+      // forge-lint: disable-next-line(unsafe-typecast)
       b[i] = bytes1("a");
       unchecked {
         i++;
@@ -194,6 +195,21 @@ contract LilNounsEnsMapperV2Test is Test {
     vm.prank(bob);
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.AlreadyClaimed.selector, tokenA));
     mapper.claimSubname(label, tokenB);
+  }
+
+  function testClaimSubdomain_WhenENSSubnodePreexisting_ShouldRevert() public {
+    uint256 tokenId = 1234;
+    string memory label = "occupied";
+    _mintTo(alice, tokenId);
+
+    // Pre-register the subnode directly in ENS with a non-zero owner
+    bytes32 labelHash = keccak256(abi.encodePacked(label));
+    bytes32 node = _nodeFor(label);
+    ens.setSubnodeRecord(rootNode, labelHash, address(0xBEEF), address(0), 0);
+
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.PreexistingENSRecord.selector, node));
+    mapper.claimSubname(label, tokenId);
   }
 
   function testClaimSubdomain_WhenEmptyLabel_ShouldRevert() public {
@@ -621,5 +637,51 @@ contract LilNounsEnsMapperV2Test is Test {
     uint256 tokenId = 55; // no claim exists for this tokenId
     vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, bytes32(0)));
     mapper.relinquishSubname(tokenId);
+  }
+
+  function testRelinquish_ThenSameTokenClaimsNewLabel() public {
+    uint256 tokenId = 66;
+    string memory oldLabel = "oldname";
+    string memory newLabel = "newname";
+
+    _mintTo(alice, tokenId);
+
+    bytes32 oldNode = _nodeFor(oldLabel);
+    bytes32 newNode = _nodeFor(newLabel);
+
+    // Alice claims the old label first
+    vm.startPrank(alice);
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, oldNode, oldLabel);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(oldNode, alice);
+    mapper.claimSubname(oldLabel, tokenId);
+
+    // Relinquish the old label
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(oldNode, address(0));
+    mapper.relinquishSubname(tokenId);
+
+    // ENS record for old node should be cleared
+    (address subOwner, address subResolver, ) = ens.records(oldNode);
+    assertEq(subOwner, address(0), "ENS subnode owner not cleared");
+    assertEq(subResolver, address(0), "ENS subnode resolver not cleared");
+
+    // Resolving the old node should now revert
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.UnregisteredNode.selector, oldNode));
+    mapper.addr(oldNode);
+
+    // Now claim a different new label with the same token
+    vm.expectEmit(address(mapper));
+    emit SubnameClaimed(alice, tokenId, newNode, newLabel);
+    vm.expectEmit(address(mapper));
+    emit AddrChanged(newNode, alice);
+    mapper.claimSubname(newLabel, tokenId);
+    vm.stopPrank();
+
+    // New node resolves and name is correct
+    assertEq(mapper.addr(newNode), payable(alice));
+    string memory expected = string(abi.encodePacked(newLabel, ".", ROOT_LABEL, ".eth"));
+    assertEq(mapper.name(newNode), expected);
   }
 }
