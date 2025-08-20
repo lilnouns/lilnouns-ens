@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.12] - 2025-08-20
+
+### 🚀 Features
+
+- *(contracts)* Add `isLegacySubname` method
+- *(contracts)* Add `relinquishSubname` method
+- *(contracts)* Add `releaseLegacySubname` method
+
+### 🚜 Refactor
+
+- *(contracts)* Rename `migrateSubnameFromV1` method
+
+### 🧪 Testing
+
+- *(mocks)* Add mocks for ENS, ERC721, and legacy mappings
+- *(contracts)* Add fuzz tests for subname claims and migration
+- *(contracts)* Add tests for `relinquishSubname` method
+- *(contracts)* Add tests for `releaseLegacySubname` method
+
 ## [1.0.0-alpha.11] - 2025-08-19
 
 ### 🚀 Features
