@@ -196,6 +196,21 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname(label, tokenB);
   }
 
+  function testClaimSubdomain_WhenENSSubnodePreexisting_ShouldRevert() public {
+    uint256 tokenId = 1234;
+    string memory label = "occupied";
+    _mintTo(alice, tokenId);
+
+    // Pre-register the subnode directly in ENS with a non-zero owner
+    bytes32 labelHash = keccak256(abi.encodePacked(label));
+    bytes32 node = _nodeFor(label);
+    ens.setSubnodeRecord(rootNode, labelHash, address(0xBEEF), address(0), 0);
+
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSelector(LilNounsEnsErrors.PreexistingENSRecord.selector, node));
+    mapper.claimSubname(label, tokenId);
+  }
+
   function testClaimSubdomain_WhenEmptyLabel_ShouldRevert() public {
     uint256 tokenId = 5;
     _mintTo(alice, tokenId);
