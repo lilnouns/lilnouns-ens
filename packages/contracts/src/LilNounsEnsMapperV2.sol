@@ -242,6 +242,19 @@ contract LilNounsEnsMapperV2 is
     return legacy.name(node);
   }
 
+  /// @notice Returns whether the subname associated with a given tokenId is managed by the legacy V1 mapper.
+  /// @dev A subname is considered legacy if there is no mapping in V2 for the tokenId, but a mapping exists in V1.
+  /// @param tokenId The NFT token id to check.
+  /// @return isLegacy True if the subname is legacy (exists only in V1), false otherwise.
+  function isLegacySubname(uint256 tokenId) public view returns (bool isLegacy) {
+    // If V2 mapping exists, it's not legacy.
+    if (_tokenToNode[tokenId] != bytes32(0)) {
+      return false;
+    }
+    // Legacy if V1 has a mapping for this tokenId.
+    return legacy.tokenHashmap(tokenId) != bytes32(0);
+  }
+
   /// @inheritdoc IERC165
   function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return
