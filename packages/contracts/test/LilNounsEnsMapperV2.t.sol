@@ -9,93 +9,9 @@ import { LilNounsEnsErrors } from "../src/libraries/LilNounsEnsErrors.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-// Minimal ENS mock that supports the functions used by the CUT
-contract MockENS {
-  // Store last set data for optional assertions
-  struct Record {
-    address owner;
-    address resolver;
-    uint64 ttl;
-  }
-
-  mapping(bytes32 => Record) public records; // node => record
-
-  event NewSubnode(bytes32 indexed parent, bytes32 indexed label, address owner, address resolver, uint64 ttl);
-  event ResolverSet(bytes32 indexed node, address resolver);
-
-  function setSubnodeRecord(bytes32 parentNode, bytes32 label, address owner, address resolver, uint64 ttl) external {
-    bytes32 node = keccak256(abi.encodePacked(parentNode, label));
-    records[node] = Record(owner, resolver, ttl);
-    emit NewSubnode(parentNode, label, owner, resolver, ttl);
-  }
-
-  function setResolver(bytes32 node, address resolver) external {
-    records[node].resolver = resolver;
-    emit ResolverSet(node, resolver);
-  }
-}
-
-// Minimal legacy mapper mock
-contract MockLegacy is ILilNounsEnsMapperV1 {
-  IERC721 public immutable _nft;
-  bytes32 public _domainHash;
-  mapping(uint256 => bytes32) public tokenHashmapMock;
-  mapping(bytes32 => uint256) public hashToIdMapMock;
-  mapping(bytes32 => string) public hashToDomainMapMock;
-
-  constructor(IERC721 nft_, bytes32 domainHash_) {
-    _nft = nft_;
-    _domainHash = domainHash_;
-  }
-
-  function nft() external view returns (IERC721) {
-    return _nft;
-  }
-
-  function domainHash() external view returns (bytes32) {
-    return _domainHash;
-  }
-
-  function name(bytes32 node) external view returns (string memory) {
-    return hashToDomainMapMock[node];
-  }
-
-  function addr(bytes32 /*node*/) external view returns (address) {
-    return address(0);
-  }
-
-  function text(bytes32, /*node*/ string calldata /*key*/) external pure returns (string memory) {
-    return "";
-  }
-
-  function tokenHashmap(uint256 tokenId) external view returns (bytes32) {
-    return tokenHashmapMock[tokenId];
-  }
-
-  function hashToIdMap(bytes32 node) external view returns (uint256) {
-    return hashToIdMapMock[node];
-  }
-
-  function hashToDomainMap(bytes32 node) external view returns (string memory) {
-    return hashToDomainMapMock[node];
-  }
-
-  // helpers for tests
-  function setLegacyMapping(uint256 tokenId, bytes32 node, string memory label) external {
-    tokenHashmapMock[tokenId] = node;
-    hashToIdMapMock[node] = tokenId;
-    hashToDomainMapMock[node] = label;
-  }
-}
-
-// Simple mintable ERC721 for tokens
-contract TestERC721 is ERC721 {
-  constructor() ERC721("LilNouns", "LILNOUNS") {}
-
-  function mint(address to, uint256 tokenId) external {
-    _mint(to, tokenId);
-  }
-}
+import { MockENS } from "./mocks/MockENS.sol";
+import { MockLegacy } from "./mocks/MockLegacy.sol";
+import { MockERC721 } from "./mocks/MockERC721.sol";
 
 contract LilNounsEnsMapperV2Test is Test {
   // Actors
@@ -104,7 +20,7 @@ contract LilNounsEnsMapperV2Test is Test {
   address internal bob = makeAddr("bob");
 
   // Deployed contracts
-  TestERC721 internal nft;
+  MockERC721 internal nft;
   MockENS internal ens;
   MockLegacy internal legacy;
   LilNounsEnsMapperV2 internal mapper;
@@ -119,7 +35,7 @@ contract LilNounsEnsMapperV2Test is Test {
 
   function setUp() public {
     // Deploy minimal dependencies
-    nft = new TestERC721();
+    nft = new MockERC721();
 
     rootNode = namehash("lilnouns.eth");
     ens = new MockENS();
