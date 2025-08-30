@@ -9,7 +9,6 @@ import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
-import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { registrarAbi } from "@/lib/abis/registrar";
 import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 import { shortenAddress } from "@/utils/address";
@@ -138,9 +137,6 @@ export function SubdomainClaimCard() {
         <CardHeader>
           <CardTitle className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Claim your Lil Nouns subdomain</span>
-            <div className="w-full sm:w-auto">
-              <WalletConnectButton />
-            </div>
           </CardTitle>
           <CardDescription>
             {isConnected ? (
