@@ -1,17 +1,17 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import { useQuery } from "@tanstack/react-query";
-
 import { Button } from "@repo/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/card";
 import { Separator } from "@repo/ui/components/separator";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
-import { WalletConnectButton } from "@/components/wallet-connect-button";
+import type { OwnedNft } from "@/lib/types";
+
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
-import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { registrarAbi } from "@/lib/abis/registrar";
-import type { OwnedNft } from "@/lib/types";
+import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 import { shortenAddress } from "@/utils/address";
 
 const REGISTRAR_ADDRESS = (import.meta.env.VITE_REGISTRAR_ADDRESS as `0x${string}` | undefined) ??
@@ -19,27 +19,27 @@ const REGISTRAR_ADDRESS = (import.meta.env.VITE_REGISTRAR_ADDRESS as `0x${string
 
 export function SubdomainClaimCard() {
   const { toast } = useToast();
-  const { address, isConnected, chain } = useAccount();
+  const { address, chain, isConnected } = useAccount();
   const [isRegistered, setIsRegistered] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTokenId, setSelectedTokenId] = useState<string | undefined>(undefined);
+  const [selectedTokenId, setSelectedTokenId] = useState<string | undefined>();
   const [subdomain, setSubdomain] = useState("");
 
-  const { data: nouns, isLoading: nounsLoading, isError: nounsError } = useQuery<OwnedNft[]>({
+  const { data: nouns, isError: nounsError, isLoading: nounsLoading } = useQuery<OwnedNft[]>({
     enabled: isConnected && !!address,
+    queryFn: () => fetchOwnedLilNouns(address!),
     queryKey: ["ownedLilNouns", address],
-    queryFn: () => fetchOwnedLilNouns(address as `0x${string}`),
   });
 
   const ownedCount = nouns?.length ?? 0;
 
-  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract();
-  const { isLoading: txPending, isSuccess: txSuccess, isError: txError } = useWaitForTransactionReceipt({
+  const { data: txHash, error: writeError, isPending: isWriting, writeContract } = useWriteContract();
+  const { isError: txError, isLoading: txPending, isSuccess: txSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
     query: { enabled: !!txHash },
   });
 
-  const canClaimDirectly = isConnected && ownedCount === 1;
+  // const canClaimDirectly = isConnected && ownedCount === 1;
   const mustChooseToken = isConnected && ownedCount > 1;
   const cannotClaim = isConnected && ownedCount === 0;
 
@@ -52,7 +52,7 @@ export function SubdomainClaimCard() {
     return undefined;
   }, []);
 
-  const [subdomainError, setSubdomainError] = useState<string | undefined>(undefined);
+  const [subdomainError, setSubdomainError] = useState<string | undefined>();
 
   const claim = useCallback(
     (tokenId: bigint) => {
@@ -61,36 +61,36 @@ export function SubdomainClaimCard() {
         writeContract({
           abi: registrarAbi,
           address: REGISTRAR_ADDRESS,
-          functionName: "claimSubname",
           args: [subdomain, tokenId],
+          functionName: "claimSubname",
         });
       } catch {
-        toast({ title: "Transaction error", description: "Could not submit transaction.", variant: "destructive" });
+        toast({ description: "Could not submit transaction.", title: "Transaction error", variant: "destructive" });
       }
     },
     [address, subdomain, toast, writeContract],
   );
 
   const onSubmit = useCallback(() => {
-    const err = validateSubdomain(subdomain);
-    setSubdomainError(err);
-    if (err) {
-      toast({ title: "Invalid subdomain", description: err, variant: "destructive" });
+    const error = validateSubdomain(subdomain);
+    setSubdomainError(error);
+    if (error) {
+      toast({ description: error, title: "Invalid subdomain", variant: "destructive" });
       return;
     }
     if (!isConnected) {
-      toast({ title: "Connect wallet", description: "Please connect your wallet first." });
+      toast({ description: "Please connect your wallet first.", title: "Connect wallet" });
       return;
     }
     if (ownedCount === 0) {
       toast({
-        title: "No Lil Nouns found",
         description: "You must own at least one Lil Noun to claim.",
+        title: "No Lil Nouns found",
         variant: "destructive",
       });
       return;
     }
-    if (ownedCount === 1 && nouns && nouns[0]) {
+    if (ownedCount === 1 && nouns?.[0]) {
       claim(BigInt(nouns[0].tokenId));
       return;
     }
@@ -98,7 +98,7 @@ export function SubdomainClaimCard() {
       setDialogOpen(true);
       return;
     }
-    toast({ title: "Unable to proceed", description: "Unknown state; please try again." });
+    toast({ description: "Unknown state; please try again.", title: "Unable to proceed" });
   }, [validateSubdomain, subdomain, isConnected, ownedCount, nouns, claim, toast]);
 
   const onTokenSelect = useCallback(
@@ -115,7 +115,7 @@ export function SubdomainClaimCard() {
     if (nounsLoading) return "Loading your Lil Nouns…";
     if (nounsError) return "Error loading Lil Nouns";
     if (cannotClaim) return "You do not have a Lil Noun";
-    return undefined;
+    return;
   }, [isConnected, nounsLoading, nounsError, cannotClaim]);
 
   const pending = isWriting || txPending;
@@ -125,11 +125,11 @@ export function SubdomainClaimCard() {
   if (txSuccess && !announced.current) {
     announced.current = true;
     setIsRegistered(true);
-    toast({ title: "Success", description: "Subdomain claimed successfully!" });
+    toast({ description: "Subdomain claimed successfully!", title: "Success" });
   }
   if (hasError && !announced.current) {
     announced.current = true;
-    toast({ title: "Transaction failed", description: "Please check your wallet or try again.", variant: "destructive" });
+    toast({ description: "Please check your wallet or try again.", title: "Transaction failed", variant: "destructive" });
   }
 
   return (
@@ -153,37 +153,37 @@ export function SubdomainClaimCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 text-sm text-muted-foreground" role="status" aria-live="polite">
+          <div aria-live="polite" className="mb-4 text-sm text-muted-foreground" role="status">
             {isConnected && nounsLoading && "Fetching your Lil Nouns…"}
             {isConnected && !nounsLoading && !nounsError && `Owned Lil Nouns: ${ownedCount}`}
             {nounsError && "Could not fetch Lil Nouns. Using fallback if available."}
           </div>
 
-          <div className="space-y-3" aria-busy={pending} aria-live="polite">
-            <label htmlFor="subdomain" className="text-sm font-medium">
+          <div aria-busy={pending} aria-live="polite" className="space-y-3">
+            <label className="text-sm font-medium" htmlFor="subdomain">
               Desired subdomain
             </label>
             <input
+              aria-invalid={!!subdomainError}
+              autoComplete="off"
+              className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
               id="subdomain"
+              inputMode="text"
+              onBlur={() => { setSubdomainError(validateSubdomain(subdomain)); }}
+              onChange={(e) => { setSubdomain(e.target.value); }}
+              placeholder="e.g. lilnouns"
               type="text"
               value={subdomain}
-              onChange={(e) => setSubdomain(e.target.value)}
-              onBlur={() => setSubdomainError(validateSubdomain(subdomain))}
-              placeholder="e.g. lilnouns"
-              autoComplete="off"
-              inputMode="text"
-              aria-invalid={!!subdomainError}
-              className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
             />
             {subdomainError ? <p className="text-destructive text-sm">{subdomainError}</p> : null}
 
             <div className="space-y-2 pt-2">
               <Button
-                type="button"
-                onClick={onSubmit}
-                disabled={!!subdomainDisabledReason || pending || isRegistered}
                 aria-disabled={!!subdomainDisabledReason || pending || isRegistered}
                 aria-label="Claim subdomain"
+                disabled={!!subdomainDisabledReason || pending || isRegistered}
+                onClick={onSubmit}
+                type="button"
               >
                 {pending ? "Claiming…" : "Claim subdomain"}
               </Button>
@@ -205,15 +205,15 @@ export function SubdomainClaimCard() {
               <Separator className="my-6" />
               <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                 <p className="text-sm text-muted-foreground">You have multiple Lil Nouns. Choose which to use.</p>
-                <Button variant="secondary" onClick={() => setDialogOpen(true)}>
+                <Button onClick={() => { setDialogOpen(true); }} variant="secondary">
                   Open selector
                 </Button>
               </div>
               <NftGalleryDialog
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
                 nfts={nouns}
+                onOpenChange={setDialogOpen}
                 onSelect={onTokenSelect}
+                open={dialogOpen}
                 pendingTokenId={selectedTokenId}
               />
             </>
