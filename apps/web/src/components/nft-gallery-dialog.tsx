@@ -19,7 +19,7 @@ export function NftGalleryDialog({ open, onOpenChange, nfts, pendingTokenId, onS
       className="fixed inset-0 z-50 flex items-center justify-center"
     >
       <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-      <div className="relative z-10 w-full max-w-xl rounded-lg border bg-background p-4 shadow-lg">
+      <div className="relative z-10 w-full max-w-xl rounded-lg border bg-background p-4 shadow-lg sm:p-6">
         <div className="mb-3">
           <h2 className="text-lg font-semibold">Select a Lil Noun</h2>
           <p className="text-muted-foreground text-sm">Choose one of your NFTs to use for claiming the subdomain.</p>
@@ -63,4 +63,3 @@ export function NftGalleryDialog({ open, onOpenChange, nfts, pendingTokenId, onS
     </div>
   );
 }
-

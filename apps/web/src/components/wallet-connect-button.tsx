@@ -15,7 +15,7 @@ export function WalletConnectButton() {
   if (!isConnected) {
     const primary = connectors.find((c) => c.id === "injected") ?? connectors[0];
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           onClick={() => primary && connect({ connector: primary })}
           disabled={!hasInjected || isPending}
@@ -36,7 +36,7 @@ export function WalletConnectButton() {
   const activeChainName = chains.find((c) => c.id === chainId)?.name ?? "Unknown";
 
   return (
-    <div className="flex items-center gap-2" aria-label="Connected wallet">
+    <div className="flex flex-wrap items-center gap-2" aria-label="Connected wallet">
       <Button variant="outline">{shortenAddress(address ?? "")} • {activeChainName}</Button>
       <Button variant="destructive" onClick={() => disconnect()} aria-label="Disconnect wallet">
         Disconnect
@@ -44,4 +44,3 @@ export function WalletConnectButton() {
     </div>
   );
 }
-

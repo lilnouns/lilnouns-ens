@@ -36,11 +36,11 @@ export function WalletCard() {
         {account.isConnected ? (
           <div className="space-y-4">
             <div className="grid gap-1">
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Status:</span>
                 <span className="font-medium">{account.status}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Address:</span>
                 <span className="font-medium">
                   {account.addresses
@@ -48,7 +48,7 @@ export function WalletCard() {
                     .join(", ") ?? "Not available"}
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Chain ID:</span>
                 <span className="font-medium">{account.chainId}</span>
               </div>
