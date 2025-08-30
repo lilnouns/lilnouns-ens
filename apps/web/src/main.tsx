@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { WagmiProvider } from "wagmi";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/toast";
 
 import App from "./app.tsx";
 import { config } from "./wagmi.ts";
@@ -21,7 +22,9 @@ createRoot(rootElement).render(
     <ThemeProvider>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
