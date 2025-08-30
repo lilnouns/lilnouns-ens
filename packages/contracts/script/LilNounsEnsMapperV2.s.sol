@@ -111,7 +111,7 @@ contract LilNounsEnsMapperV2Script is Script {
     address legacy = _envAddress(prefix, "LEGACY_MAPPER", true);
     address ensRegistry = _envAddress(prefix, "ENS_REGISTRY", true);
     bytes32 rootNode = _envBytes32(prefix, "ENS_ROOT_NODE", true);
-    string memory rootLabel = _envString(prefix, "ROOT_LABEL", true);
+    string memory rootLabel = _envString(prefix, "ENS_ROOT_LABEL", true);
     address initialOwner = _envAddress(prefix, "INITIAL_OWNER", true);
 
     // Validate values with clear errors
