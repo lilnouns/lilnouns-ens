@@ -2,6 +2,7 @@ import { memo } from "react";
 
 import { SubdomainClaimCard } from "@/components/subdomain-claim-card";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
 
 /**
  * Main application component
@@ -16,6 +17,7 @@ function App() {
           </div>
           <div className="flex w-full items-center justify-start gap-2 sm:w-auto sm:justify-end">
             <ThemeToggle />
+            <WalletConnectButton />
           </div>
         </div>
       </header>
