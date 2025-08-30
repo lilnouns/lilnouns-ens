@@ -20,7 +20,7 @@ export function NetworkCard() {
         <CardDescription>Current blockchain network status</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between py-2">
+        <div className="flex items-center justify-between gap-2 py-2">
           <span className="text-muted-foreground">Latest block:</span>
           <Badge className="animate-pulse bg-green-500/10" variant="secondary">
             {blockNumber ? blockNumber.toLocaleString() : "..."}

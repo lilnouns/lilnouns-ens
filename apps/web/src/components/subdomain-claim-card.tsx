@@ -136,9 +136,11 @@ export function SubdomainClaimCard() {
     <div className="mx-auto w-full max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Claim your Lil Nouns subdomain
-            <WalletConnectButton />
+          <CardTitle className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>Claim your Lil Nouns subdomain</span>
+            <div className="w-full sm:w-auto">
+              <WalletConnectButton />
+            </div>
           </CardTitle>
           <CardDescription>
             {isConnected ? (
@@ -201,7 +203,7 @@ export function SubdomainClaimCard() {
           {mustChooseToken && nouns && (
             <>
               <Separator className="my-6" />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                 <p className="text-sm text-muted-foreground">You have multiple Lil Nouns. Choose which to use.</p>
                 <Button variant="secondary" onClick={() => setDialogOpen(true)}>
                   Open selector
@@ -221,4 +223,3 @@ export function SubdomainClaimCard() {
     </div>
   );
 }
-
