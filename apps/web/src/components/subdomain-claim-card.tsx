@@ -169,7 +169,7 @@ export function SubdomainClaimCard() {
               value={subdomain}
               onChange={(e) => setSubdomain(e.target.value)}
               onBlur={() => setSubdomainError(validateSubdomain(subdomain))}
-              placeholder="e.g. lilnouna"
+              placeholder="e.g. lilnouns"
               autoComplete="off"
               inputMode="text"
               aria-invalid={!!subdomainError}
