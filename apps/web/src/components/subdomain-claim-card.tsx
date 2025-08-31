@@ -74,7 +74,7 @@ export function SubdomainClaimCard() {
     const error = validateSubdomain(subdomain);
     setSubdomainError(error);
     if (error) {
-      toast({ description: error, title: "Invalid subdomain", variant: "destructive" });
+      toast({ description: error, title: "Invalid subname", variant: "destructive" });
       return;
     }
     if (!isConnected) {
@@ -124,7 +124,7 @@ export function SubdomainClaimCard() {
   if (txSuccess && !announced.current) {
     announced.current = true;
     setIsRegistered(true);
-    toast({ description: "Subdomain claimed successfully!", title: "Success" });
+    toast({ description: "Subname claimed successfully!", title: "Success" });
   }
   if (hasError && !announced.current) {
     announced.current = true;
@@ -136,7 +136,7 @@ export function SubdomainClaimCard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Claim your Lil Nouns subdomain</span>
+            <span>Claim your Lil Nouns subname</span>
           </CardTitle>
           <CardDescription>
             {isConnected ? (
@@ -157,7 +157,7 @@ export function SubdomainClaimCard() {
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
             <label className="text-sm font-medium" htmlFor="subdomain">
-              Desired subdomain
+              Desired subname
             </label>
             <input
               aria-invalid={!!subdomainError}
@@ -176,12 +176,12 @@ export function SubdomainClaimCard() {
             <div className="space-y-2 pt-2">
               <Button
                 aria-disabled={!!subdomainDisabledReason || pending || isRegistered}
-                aria-label="Claim subdomain"
+                aria-label="Claim subname"
                 disabled={!!subdomainDisabledReason || pending || isRegistered}
                 onClick={onSubmit}
                 type="button"
               >
-                {pending ? "Claiming…" : "Claim subdomain"}
+                {pending ? "Claiming…" : "Claim subname"}
               </Button>
               {subdomainDisabledReason && (
                 <p className="text-sm text-muted-foreground" role="note">
