@@ -1,22 +1,22 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type PropsWithChildren } from "react";
+import { createContext, type PropsWithChildren, use, useCallback, useMemo, useRef, useState } from "react";
 
-type Toast = {
+interface Toast {
+  description?: string;
+  duration?: number;
   id: string;
   title: string;
-  description?: string;
   variant?: "default" | "destructive";
-  duration?: number;
-};
+}
 
-type ToastContextValue = {
+interface ToastContextValue {
   toast: (t: Omit<Toast, "id">) => void;
-};
+}
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: PropsWithChildren) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const idRef = useRef(0);
+  const idReference = useRef(0);
 
   const remove = useCallback((id: string) => {
     setToasts((ts) => ts.filter((t) => t.id !== id));
@@ -24,26 +24,26 @@ export function ToastProvider({ children }: PropsWithChildren) {
 
   const api = useMemo<ToastContextValue>(
     () => ({
-      toast: ({ title, description, variant = "default", duration = 3500 }) => {
-        const id = String(++idRef.current);
-        const next: Toast = { id, title, description, variant, duration };
+      toast: ({ description, duration = 3500, title, variant = "default" }) => {
+        const id = String(++idReference.current);
+        const next: Toast = { description, duration, id, title, variant };
         setToasts((ts) => [...ts, next]);
-        window.setTimeout(() => remove(id), duration);
+        globalThis.setTimeout(() => { remove(id); }, duration);
       },
     }),
     [remove],
   );
 
   return (
-    <ToastContext.Provider value={api}>
+    <ToastContext value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end gap-2 p-4" aria-live="polite">
+      <div aria-live="polite" className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end gap-2 p-4">
         {toasts.map((t) => (
           <div
-            key={t.id}
             className={`pointer-events-auto max-w-sm rounded-md border p-3 shadow-md ${
               t.variant === "destructive" ? "border-destructive bg-destructive/10" : "bg-background"
             }`}
+            key={t.id}
             role="status"
           >
             <div className="font-medium">{t.title}</div>
@@ -51,13 +51,13 @@ export function ToastProvider({ children }: PropsWithChildren) {
           </div>
         ))}
       </div>
-    </ToastContext.Provider>
+    </ToastContext>
   );
 }
 
 export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within ToastProvider");
-  return ctx;
+  const context = use(ToastContext);
+  if (!context) throw new Error("useToast must be used within ToastProvider");
+  return context;
 }
 

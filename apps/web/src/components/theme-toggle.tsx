@@ -1,20 +1,39 @@
 import { Button } from "@repo/ui/components/button";
 import { memo } from "react";
+import * as React from "react";
 
 import { useTheme } from "@/components/theme-provider";
 
-function SunIcon(props: React.SVGProps<SVGSVGElement>) {
+function MoonIcon(properties: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
+      aria-hidden="true"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      {...properties}
+    >
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function SunIcon(properties: Readonly<React.SVGProps<SVGSVGElement>>) {
+  return (
+    <svg
       aria-hidden="true"
-      {...props}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      {...properties}
     >
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2" />
@@ -29,24 +48,6 @@ function SunIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
 export const ThemeToggle = memo(function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
@@ -55,12 +56,12 @@ export const ThemeToggle = memo(function ThemeToggle() {
 
   return (
     <Button
-      variant="outline"
-      size="icon"
-      onClick={toggleTheme}
-      aria-pressed={isDark}
       aria-label={label}
+      aria-pressed={isDark}
+      onClick={toggleTheme}
+      size="icon"
       title={label}
+      variant="outline"
     >
       <SunIcon className="size-5 dark:hidden" />
       <MoonIcon className="hidden size-5 dark:inline" />
