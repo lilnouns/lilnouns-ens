@@ -22,7 +22,7 @@ export function NftGalleryDialog({ open, onOpenChange, nfts, pendingTokenId, onS
       <div className="relative z-10 w-full max-w-xl rounded-lg border bg-background p-4 shadow-lg sm:p-6">
         <div className="mb-3">
           <h2 className="text-lg font-semibold">Select a Lil Noun</h2>
-          <p className="text-muted-foreground text-sm">Choose one of your NFTs to use for claiming the subdomain.</p>
+          <p className="text-muted-foreground text-sm">Choose one of your NFTs to use for claiming the subname.</p>
         </div>
         <div className="max-h-[50vh] overflow-auto">
           <ul className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
