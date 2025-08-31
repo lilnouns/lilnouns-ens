@@ -1,8 +1,8 @@
 import {
   createContext,
   type ReactNode,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -62,7 +62,7 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
  * @throws Error if used outside ThemeProvider
  */
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = use(ThemeContext);
   if (!context) throw new Error("useTheme must be used inside ThemeProvider");
   return context;
 }
