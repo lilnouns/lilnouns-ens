@@ -11,5 +11,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@repo/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
+    // Ensure a single instance of these libs across the workspace (pnpm + Vite)
+    dedupe: [
+      "react",
+      "react-dom",
+      "wagmi",
+      "viem",
+      "@tanstack/react-query",
+    ],
   },
 });
