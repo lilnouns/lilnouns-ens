@@ -1,50 +1,55 @@
-import type { OwnedNft } from "./types";
+import type { Query } from "@nekofar/lilnouns/subgraphs";
 
-type TokensResponse = {
-  data?: { tokens: Array<{ id: string; tokenId: string; image?: string | null; name?: string | null }> };
-  errors?: Array<{ message: string }>;
-};
+import { gql, GraphQLClient } from "graphql-request";
 
-const DEFAULT_IMAGE = "https://placehold.co/512x512/png?text=Lil+Noun";
+import type { OwnedNft } from "@/lib/types.ts";
 
-const QUERY = `
-  query Tokens($owner: String!) {
-    tokens(where: { owner: $owner }) {
-      id
-      tokenId
-      image
-      name
-    }
-  }
-`;
+import { appConfig } from "@/config/app.ts";
 
-const SUBGRAPH_URL = import.meta.env.VITE_SUBGRAPH_URL as string | undefined;
+const placeholderImageURL = "https://placehold.co/512x512/png?text=Lil+Noun";
 
-export async function fetchOwnedLilNouns(address: `0x${string}`): Promise<OwnedNft[]> {
-  if (!SUBGRAPH_URL) return mockOwned(address);
+export async function fetchOwnedLilNouns(
+  address: `0x${string}`,
+): Promise<OwnedNft[]> {
+  if (!appConfig.subgraphUrl) return mockOwned(address);
   try {
-    const res = await fetch(SUBGRAPH_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query: QUERY, variables: { owner: address.toLowerCase() } }),
-    });
-    const json = (await res.json()) as TokensResponse;
-    if (json.errors) return mockOwned(address);
-    const items = json.data?.tokens ?? [];
-    return items.map((t) => ({ tokenId: t.tokenId, image: t.image ?? DEFAULT_IMAGE, name: t.name ?? `Lil Noun #${t.tokenId}` }));
+    const client = new GraphQLClient(appConfig.subgraphUrl);
+
+    const data = await client.request<Query>(
+      gql`
+        query Nouns($owner: String!) {
+          nouns(where: { owner: $owner }) {
+            id
+          }
+        }
+      `,
+      {
+        owner: address.toLowerCase(),
+      },
+    );
+
+    const items = data.nouns;
+    return items.map((t) => ({
+      image: /*t.image ??*/ placeholderImageURL,
+      name: /*t.name ??*/ `Lil Noun #${t.id}`,
+      tokenId: t.id,
+    }));
   } catch {
     return mockOwned(address);
   }
 }
 
 function mockOwned(address: string): OwnedNft[] {
-  const last = parseInt(address.slice(-2), 16);
+  const last = Number.parseInt(address.slice(-2), 16);
   const count = last % 3; // 0,1,2 deterministic
-  const arr: OwnedNft[] = [];
-  for (let i = 0; i < count; i++) {
-    const id = (1000 + i).toString();
-    arr.push({ tokenId: id, image: `${DEFAULT_IMAGE}&token=${id}`, name: `Lil Noun #${id}` });
+  const array: OwnedNft[] = [];
+  for (let index = 0; index < count; index++) {
+    const id = (1000 + index).toString();
+    array.push({
+      image: `${placeholderImageURL}&token=${id}`,
+      name: `Lil Noun #${id}`,
+      tokenId: id,
+    });
   }
-  return arr;
+  return array;
 }
-
