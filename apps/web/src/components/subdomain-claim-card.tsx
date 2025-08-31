@@ -3,18 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo
 import { Separator } from "@repo/ui/components/separator";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 
 import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
-import { registrarAbi } from "@/lib/abis/registrar";
+import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
 import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 import { shortenAddress } from "@/utils/address";
 
-const REGISTRAR_ADDRESS = (import.meta.env.VITE_REGISTRAR_ADDRESS as `0x${string}` | undefined) ??
-  "0x0000000000000000000000000000000000000000";
+// Address provided via generated hooks; no local constant needed.
 
 export function SubdomainClaimCard() {
   const { toast } = useToast();
@@ -32,7 +31,8 @@ export function SubdomainClaimCard() {
 
   const ownedCount = nouns?.length ?? 0;
 
-  const { data: txHash, error: writeError, isPending: isWriting, writeContract } = useWriteContract();
+  const { data: txHash, error: writeError, isPending: isWriting, writeContract } =
+    useWriteLilNounsEnsMapperClaimSubname();
   const { isError: txError, isLoading: txPending, isSuccess: txSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
     query: { enabled: !!txHash },
@@ -57,12 +57,7 @@ export function SubdomainClaimCard() {
     (tokenId: bigint) => {
       if (!address) return;
       try {
-        writeContract({
-          abi: registrarAbi,
-          address: REGISTRAR_ADDRESS,
-          args: [subdomain, tokenId],
-          functionName: "claimSubname",
-        });
+        writeContract({ args: [subdomain, tokenId] });
       } catch {
         toast({ description: "Could not submit transaction.", title: "Transaction error", variant: "destructive" });
       }
