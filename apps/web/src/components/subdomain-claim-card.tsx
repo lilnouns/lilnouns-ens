@@ -190,14 +190,21 @@ export function SubdomainClaimCard() {
     if (!isConnected) return "Connect your wallet to proceed";
     if (chain?.id !== chainId)
       return `Wrong network. Please switch to ${configuredChain.name}.`;
-    if (balanceLoading) return "Loading your Lil Nouns…";
     if (balanceError) return "Error loading Lil Nouns";
-    if (mustChooseToken && nounsLoading) return "Loading your Lil Nouns…";
     if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
     if (cannotClaim) return "You do not have a Lil Noun";
-  }, [isConnected, chain?.id, balanceLoading, balanceError, mustChooseToken, nounsLoading, nounsError, cannotClaim]);
+    return undefined;
+  }, [
+    isConnected,
+    chain?.id,
+    balanceError,
+    mustChooseToken,
+    nounsError,
+    cannotClaim,
+  ]);
 
   const pending = isWriting || txPending;
+  const isLoadingState = balanceLoading || (mustChooseToken && nounsLoading);
   const hasError = !!writeError || txError;
 
   const announced = useRef(false);
@@ -288,10 +295,12 @@ export function SubdomainClaimCard() {
             <div className="space-y-2 pt-2">
               <Button
                 aria-disabled={
-                  !!subdomainDisabledReason || pending || isRegistered
+                  !!subdomainDisabledReason || isLoadingState || pending || isRegistered
                 }
                 aria-label="Claim subname"
-                disabled={!!subdomainDisabledReason || pending || isRegistered}
+                disabled={
+                  !!subdomainDisabledReason || isLoadingState || pending || isRegistered
+                }
                 onClick={onSubmit}
                 type="button"
               >
