@@ -8,8 +8,11 @@ import {
 } from "@repo/ui/components/card";
 import { useBlockNumber } from "wagmi";
 
+import { chainId } from "@/config/chain";
+
 export function NetworkCard() {
   const { data: blockNumber } = useBlockNumber({
+    chainId,
     watch: true,
   });
 

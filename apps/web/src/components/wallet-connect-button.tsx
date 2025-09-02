@@ -9,14 +9,15 @@ import {
 } from "@repo/ui/components/dropdown-menu";
 import { Wallet } from "lucide-react";
 import { useMemo } from "react";
-import { useAccount, useChainId, useChains, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { chain as configuredChain, chainId as configuredChainId } from "@/config/chain";
 
 import { shortenAddress } from "@/utils/address";
 
 export function WalletConnectButton() {
   const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const chains = useChains();
+  // Keep list if needed for future; not used currently
+  // const chains = useChains();
   const { connect, connectors, error, isPending, status } = useConnect();
   const { disconnect } = useDisconnect();
 
@@ -28,7 +29,7 @@ export function WalletConnectButton() {
     [connectors],
   );
 
-  const activeChainName = chains.find((c) => c.id === chainId)?.name ?? "Unknown";
+  const activeChainName = configuredChain.name ?? "Unknown";
 
   const handleSwitchAccount = async () => {
     try {
@@ -101,7 +102,10 @@ export function WalletConnectButton() {
                   aria-disabled={!available || isPending}
                   className={available ? "" : "opacity-50"}
                   key={connector.id}
-                  onClick={() => { connect({ connector }); }}
+                  onClick={() => {
+                    // Force connect to the configured chain
+                    connect({ chainId: configuredChainId, connector });
+                  }}
                 >
                   {connector.name}
                   {available ? "" : " (unavailable)"}

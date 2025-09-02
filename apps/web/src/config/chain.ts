@@ -76,5 +76,6 @@ export const chain: Chain = resolveChainFromEnvironmentVariables(
   viteChainId,
   viteChainName,
 );
-export const chainId: number = chain.id;
-export type SupportedChainId = typeof chainId;
+// Narrow the chain id type to supported deployments for stronger typing in hooks
+export type SupportedChainId = 11_155_111; // Extend when mainnet is supported
+export const chainId: SupportedChainId = chain.id as SupportedChainId;
