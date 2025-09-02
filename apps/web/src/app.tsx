@@ -1,6 +1,7 @@
 import { memo } from "react";
 
 import { SubdomainClaimCard } from "@/components/subdomain-claim-card";
+import { SubdomainInstructions } from "@/components/subdomain-instructions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 
@@ -24,6 +25,7 @@ function App() {
 
       <main className="container mx-auto my-4 p-3 sm:my-8 sm:p-4">
         <SubdomainClaimCard />
+        <SubdomainInstructions />
       </main>
     </div>
   );
