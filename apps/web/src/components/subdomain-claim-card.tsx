@@ -103,6 +103,7 @@ export function SubdomainClaimCard() {
     (tokenId: bigint) => {
       if (!address) return;
       try {
+        // Wagmi config is restricted to the configured chain; write will use it.
         writeContract({ args: [subdomain, tokenId] });
       } catch {
         toast({
