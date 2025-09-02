@@ -1,4 +1,5 @@
 import type { Query } from "@nekofar/lilnouns/subgraphs";
+import type { Address } from "viem";
 
 import { gql, GraphQLClient } from "graphql-request";
 
@@ -9,8 +10,9 @@ import { appConfig } from "@/config/app.ts";
 const placeholderImageURL = "https://placehold.co/512x512/png?text=Lil+Noun";
 
 export async function fetchOwnedLilNouns(
-  address: `0x${string}`,
+  address: Address | undefined,
 ): Promise<OwnedNft[]> {
+  if (!address) return [];
   if (!appConfig.subgraphUrl) return mockOwned(address);
   try {
     const client = new GraphQLClient(appConfig.subgraphUrl);
