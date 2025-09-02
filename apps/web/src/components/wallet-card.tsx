@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@repo/ui/components/card";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { chainId as configuredChainId } from "@/config/chain";
 
 import { shortenAddress } from "@/utils/address";
 
@@ -65,7 +66,8 @@ export function WalletCard() {
                   className="min-w-24 flex-1"
                   key={connector.uid}
                   onClick={() => {
-                    connect({ connector });
+                    // Force connection on the configured chain only
+                    connect({ chainId: configuredChainId, connector });
                   }}
                   variant="outline"
                 >
