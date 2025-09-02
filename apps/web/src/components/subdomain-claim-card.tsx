@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@repo/ui/components/card";
 import { Separator } from "@repo/ui/components/separator";
+import { Skeleton } from "@repo/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
@@ -19,7 +20,7 @@ import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
-import { chain as configuredChain, chainId } from "@/config/chain";
+import { chainId, chain as configuredChain } from "@/config/chain";
 import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
 import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 import { shortenAddress } from "@/utils/address";
@@ -40,7 +41,7 @@ export function SubdomainClaimCard() {
     isError: balanceError,
     isLoading: balanceLoading,
   } = useReadLilNounsTokenBalanceOf({
-    args: address ? [address as `0x${string}`] : undefined,
+    args: address ? [address] : undefined,
     chainId,
     query: { enabled: isConnected && !!address },
   });
@@ -50,7 +51,7 @@ export function SubdomainClaimCard() {
   // Prefetch the first token id for single-token direct claim
   const { data: firstTokenId, isLoading: firstTokenLoading } =
     useReadLilNounsTokenTokenOfOwnerByIndex({
-      args: address ? [address as `0x${string}`, 0n] : undefined,
+      args: address ? [address, 0n] : undefined,
       chainId,
       query: { enabled: isConnected && !!address && ownedCount === 1 },
     });
@@ -141,7 +142,7 @@ export function SubdomainClaimCard() {
       return;
     }
     if (ownedCount === 1) {
-      if (firstTokenId != null) {
+      if (firstTokenId != undefined) {
         claim(BigInt(firstTokenId));
       } else if (firstTokenLoading) {
         toast({
@@ -191,9 +192,11 @@ export function SubdomainClaimCard() {
       return `Wrong network. Please switch to ${configuredChain.name}.`;
     if (balanceLoading) return "Loading your Lil Nouns…";
     if (balanceError) return "Error loading Lil Nouns";
+    if (mustChooseToken && nounsLoading) return "Loading your Lil Nouns…";
+    if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
     if (cannotClaim) return "You do not have a Lil Noun";
     return;
-  }, [isConnected, chain?.id, balanceLoading, balanceError, cannotClaim]);
+  }, [isConnected, chain?.id, balanceLoading, balanceError, mustChooseToken, nounsLoading, nounsError, cannotClaim]);
 
   const pending = isWriting || txPending;
   const hasError = !!writeError || txError;
@@ -240,13 +243,23 @@ export function SubdomainClaimCard() {
             className="text-muted-foreground mb-4 text-sm"
             role="status"
           >
-            {isConnected && balanceLoading && "Fetching your Lil Nouns…"}
-            {isConnected &&
-              !balanceLoading &&
-              !balanceError &&
-              `Owned Lil Nouns: ${ownedCount}`}
-            {balanceError &&
-              "Could not fetch wallet balance. Using fallback if available."}
+            {isConnected && balanceLoading ? (
+              <Skeleton className="h-4 w-48" />
+            ) : (
+              <>
+                {isConnected &&
+                  !balanceError &&
+                  `Owned Lil Nouns: ${ownedCount}`}
+                {balanceError &&
+                  "Could not fetch wallet balance. Using fallback if available."}
+              </>
+            )}
+            {mustChooseToken && nounsLoading && (
+              <div className="mt-2">
+                <Skeleton className="h-3 w-40" />
+              </div>
+            )}
+            {mustChooseToken && nounsError && "Error loading Lil Nouns list."}
           </div>
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
@@ -298,29 +311,49 @@ export function SubdomainClaimCard() {
             </div>
           </div>
 
-          {mustChooseToken && nouns && (
+          {mustChooseToken && (
             <>
               <Separator className="my-6" />
-              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                <p className="text-muted-foreground text-sm">
-                  You have multiple Lil Nouns. Choose which to use.
-                </p>
-                <Button
-                  onClick={() => {
-                    setDialogOpen(true);
-                  }}
-                  variant="secondary"
-                >
-                  Open selector
-                </Button>
-              </div>
-              <NftGalleryDialog
-                nfts={nouns}
-                onOpenChange={setDialogOpen}
-                onSelect={onTokenSelect}
-                open={dialogOpen}
-                pendingTokenId={selectedTokenId}
-              />
+              {nounsLoading && (
+                <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="w-full">
+                      <Skeleton className="aspect-square w-full rounded-md" />
+                      <div className="mt-2 space-y-2">
+                        <Skeleton className="h-3 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {nounsError && (
+                <p className="text-destructive text-sm">Error loading your Lil Nouns. Please try again.</p>
+              )}
+              {nouns && !nounsLoading && !nounsError && (
+                <>
+                  <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                    <p className="text-muted-foreground text-sm">
+                      You have multiple Lil Nouns. Choose which to use.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setDialogOpen(true);
+                      }}
+                      variant="secondary"
+                    >
+                      Open selector
+                    </Button>
+                  </div>
+                  <NftGalleryDialog
+                    nfts={nouns}
+                    onOpenChange={setDialogOpen}
+                    onSelect={onTokenSelect}
+                    open={dialogOpen}
+                    pendingTokenId={selectedTokenId}
+                  />
+                </>
+              )}
             </>
           )}
         </CardContent>
