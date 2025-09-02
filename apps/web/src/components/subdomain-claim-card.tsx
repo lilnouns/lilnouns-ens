@@ -9,6 +9,7 @@ import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
+import { chain as configuredChain, chainId } from "@/config/chain";
 import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
 import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 import { shortenAddress } from "@/utils/address";
@@ -34,6 +35,7 @@ export function SubdomainClaimCard() {
   const { data: txHash, error: writeError, isPending: isWriting, writeContract } =
     useWriteLilNounsEnsMapperClaimSubname();
   const { isError: txError, isLoading: txPending, isSuccess: txSuccess } = useWaitForTransactionReceipt({
+    chainId,
     hash: txHash,
     query: { enabled: !!txHash },
   });
@@ -106,11 +108,13 @@ export function SubdomainClaimCard() {
 
   const subdomainDisabledReason = useMemo(() => {
     if (!isConnected) return "Connect your wallet to proceed";
+    if (chain?.id !== chainId)
+      return `Wrong network. Please switch to ${configuredChain.name}.`;
     if (nounsLoading) return "Loading your Lil Nouns…";
     if (nounsError) return "Error loading Lil Nouns";
     if (cannotClaim) return "You do not have a Lil Noun";
     return;
-  }, [isConnected, nounsLoading, nounsError, cannotClaim]);
+  }, [isConnected, chain?.id, nounsLoading, nounsError, cannotClaim]);
 
   const pending = isWriting || txPending;
   const hasError = !!writeError || txError;
