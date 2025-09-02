@@ -1,11 +1,11 @@
 export function Logo() {
   return (
     <svg
-      className="h-16 w-auto select-none sm:h-18"
+      className="h-6 w-auto select-none sm:h-8"
       fill="none"
-      height="320"
-      viewBox="0 0 320 320"
-      width="320"
+      height="80"
+      viewBox="50 140 200 80"
+      width="200"
       xmlns="http://www.w3.org/2000/svg"
     >
       <rect fill="var(--primary)" height="10" width="80" x="80" y="140" />
