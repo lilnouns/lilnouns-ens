@@ -56,14 +56,14 @@ export function SubdomainClaimCard() {
       query: { enabled: isConnected && !!address && ownedCount === 1 },
     });
 
-  // Only use subgraph when user has multiple tokens to populate the gallery
+  // Only use subgraph when the user has multiple tokens to populate the gallery
   const {
     data: nouns,
     isError: nounsError,
     isLoading: nounsLoading,
   } = useQuery<OwnedNft[]>({
     enabled: isConnected && !!address && ownedCount > 1,
-    queryFn: () => fetchOwnedLilNouns(address!),
+    queryFn: () => fetchOwnedLilNouns(address),
     queryKey: ["ownedLilNouns", address],
   });
 
@@ -143,7 +143,7 @@ export function SubdomainClaimCard() {
     }
     if (ownedCount === 1) {
       if (firstTokenId != undefined) {
-        claim(BigInt(firstTokenId));
+        claim(firstTokenId satisfies bigint);
       } else if (firstTokenLoading) {
         toast({
           description: "Fetching your token ID. Please try again in a moment.",
@@ -195,7 +195,6 @@ export function SubdomainClaimCard() {
     if (mustChooseToken && nounsLoading) return "Loading your Lil Nouns…";
     if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
     if (cannotClaim) return "You do not have a Lil Noun";
-    return;
   }, [isConnected, chain?.id, balanceLoading, balanceError, mustChooseToken, nounsLoading, nounsError, cannotClaim]);
 
   const pending = isWriting || txPending;
@@ -249,7 +248,7 @@ export function SubdomainClaimCard() {
               <>
                 {isConnected &&
                   !balanceError &&
-                  `Owned Lil Nouns: ${ownedCount}`}
+                  `Owned Lil Nouns: ${ownedCount.toString()}`}
                 {balanceError &&
                   "Could not fetch wallet balance. Using fallback if available."}
               </>
@@ -275,8 +274,8 @@ export function SubdomainClaimCard() {
               onBlur={() => {
                 setSubdomainError(validateSubdomain(subdomain));
               }}
-              onChange={(e) => {
-                setSubdomain(e.target.value);
+              onChange={(event) => {
+                setSubdomain(event.target.value);
               }}
               placeholder="e.g. lilnouns"
               type="text"
@@ -284,7 +283,7 @@ export function SubdomainClaimCard() {
             />
             {subdomainError ? (
               <p className="text-destructive text-sm">{subdomainError}</p>
-            ) : null}
+            ) : undefined}
 
             <div className="space-y-2 pt-2">
               <Button
@@ -316,8 +315,8 @@ export function SubdomainClaimCard() {
               <Separator className="my-6" />
               {nounsLoading && (
                 <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, idx) => (
-                    <div key={idx} className="w-full">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div className="w-full" key={index}>
                       <Skeleton className="aspect-square w-full rounded-md" />
                       <div className="mt-2 space-y-2">
                         <Skeleton className="h-3 w-3/4" />
