@@ -93,17 +93,21 @@ export function WalletConnectButton() {
           <>
             <DropdownMenuLabel>Connect Wallet</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {connectors.map((connector) => (
-              <DropdownMenuItem
-                aria-disabled={!connector.ready || isPending}
-                className={connector.ready ? "" : "opacity-50"}
-                key={connector.id}
-                onClick={() => { connect({ connector }); }}
-              >
-                {connector.name}
-                {connector.ready ? "" : " (unavailable)"}
-              </DropdownMenuItem>
-            ))}
+            {connectors.map((connector) => {
+              const isInjected = connector.id === "injected";
+              const available = !isInjected || hasInjected;
+              return (
+                <DropdownMenuItem
+                  aria-disabled={!available || isPending}
+                  className={available ? "" : "opacity-50"}
+                  key={connector.id}
+                  onClick={() => { connect({ connector }); }}
+                >
+                  {connector.name}
+                  {available ? "" : " (unavailable)"}
+                </DropdownMenuItem>
+              );
+            })}
             {!hasInjected && (
               <div className="px-2 py-1 text-sm text-muted-foreground">
                 No injected wallet detected
