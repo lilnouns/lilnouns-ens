@@ -14,7 +14,17 @@ function App() {
       <header className="border-b">
         <div className="container mx-auto flex flex-col items-start gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-bold sm:text-2xl">Lil Nouns</h1>
+            <a href="/" className="inline-flex items-center rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Lil Nouns home">
+              <img
+                src="/logo.svg"
+                alt="Lil Nouns"
+                decoding="async"
+                loading="eager"
+                width="128"
+                height="32"
+                className="h-6 w-auto sm:h-8 select-none"
+              />
+            </a>
           </div>
           <div className="flex w-full items-center justify-start gap-2 sm:w-auto sm:justify-end">
             <ThemeToggle />
