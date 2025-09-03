@@ -3,10 +3,10 @@ import { Separator } from "@repo/ui/components/separator";
 import { memo } from "react";
 
 /**
- * Simple instructional panel displayed under the SubdomainClaimCard.
+ * Simple instructional panel displayed under the SubnameClaimCard.
  * Matches the Card look & feel from the shared UI library.
  */
-function SubdomainInstructionsImpl() {
+function SubnameInstructionsImpl() {
   return (
     <div className="mx-auto mt-4 w-full max-w-2xl sm:mt-6">
       <Card>
@@ -35,4 +35,4 @@ function SubdomainInstructionsImpl() {
   );
 }
 
-export const SubdomainInstructions = memo(SubdomainInstructionsImpl);
+export const SubnameInstructions = memo(SubnameInstructionsImpl);
