@@ -31,6 +31,7 @@ const tsTypeAware = {
     parserOptions: {
       // Use TypeScript’s Project Service to auto-detect tsconfig per workspace.
       projectService: true,
+      noWarnOnMultipleProjects: true,
       tsconfigRootDir: fileURLToPath(new URL("./", import.meta.url)),
     },
   },
@@ -76,8 +77,9 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"]
   },
-  { ...tsTypeAware, ...tseslint.configs.strictTypeChecked },
-  tseslint.configs.stylisticTypeChecked,
+  tsTypeAware,
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
 
   // 4) React + React Hooks + modern React rules with TS
   pluginReact.configs.flat.recommended,
