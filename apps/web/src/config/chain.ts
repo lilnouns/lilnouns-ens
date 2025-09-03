@@ -1,15 +1,22 @@
 import { type Chain, mainnet, sepolia } from "viem/chains";
+import { entries, map, pipe } from "remeda";
 import { z } from "zod";
 
 import { logEnvironmentDefaultChainWarning } from "@/config/print-environment-warning";
 
 const supportedChains: readonly Chain[] = [mainnet, sepolia] as const;
-const byId = new Map<number, Chain>(supportedChains.map((c) => [c.id, c]));
-const nameAliases = new Map<string, Chain>([
-  ["ethereum", mainnet],
-  ["mainnet", mainnet],
-  ["sepolia", sepolia],
-]);
+const byId = new Map<number, Chain>(
+  pipe(
+    supportedChains,
+    map((c) => [c.id, c] as const),
+  ),
+);
+const nameAliases = new Map<string, Chain>(
+  pipe(
+    { ethereum: mainnet, mainnet, sepolia },
+    entries(),
+  ),
+);
 
 function normalizeName(input: string): string {
   return input
