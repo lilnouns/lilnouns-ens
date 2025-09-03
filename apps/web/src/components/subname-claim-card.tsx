@@ -16,8 +16,8 @@ import { useAccount } from "wagmi";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useSubnameClaim } from "@/hooks/use-subname-claim";
+import { chainId, chain as configuredChain } from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
-import { chain as configuredChain, chainId } from "@/config/chain";
 import {
   lilNounsEnsMapperAddress,
   useReadLilNounsEnsMapperName,
@@ -58,48 +58,36 @@ export function SubnameClaimCard() {
     }
   });
 
+  const handleSingleTokenClaim = useCallback(() => {
+    if (firstTokenId != undefined) {
+      claim(firstTokenId);
+      return;
+    }
+    if (firstTokenLoading) {
+      toast({ description: "Fetching your token ID. Please try again in a moment.", title: "Please wait" });
+      return;
+    }
+    toast({ description: "Could not resolve your token ID. Please try again.", title: "Token not found", variant: "destructive" });
+  }, [claim, firstTokenId, firstTokenLoading]);
+
   const onSubmit = useCallback(() => {
     const error = validateSubname(subname);
     setSubnameError(error);
-    if (error) return;
-    if (!isConnected) return;
+    if (error || !isConnected) return;
     if (ownedCount === 0) return;
+
     if (ownedCount === 1) {
-      if (firstTokenId != undefined) {
-        claim(firstTokenId);
-      } else if (firstTokenLoading) {
-        toast({
-          description: "Fetching your token ID. Please try again in a moment.",
-          title: "Please wait",
-        });
-      } else {
-        toast({
-          description: "Could not resolve your token ID. Please try again.",
-          title: "Token not found",
-          variant: "destructive",
-        });
-      }
+      handleSingleTokenClaim();
       return;
     }
+
     if (ownedCount > 1) {
       setDialogOpen(true);
       return;
     }
-    toast({
-      description: "Unknown state; please try again.",
-      title: "Unable to proceed",
-    });
-  }, [
-    validateSubname,
-    subname,
-    setSubnameError,
-    isConnected,
-    ownedCount,
-    firstTokenId,
-    firstTokenLoading,
-    claim,
-    toast,
-  ]);
+
+    toast({ description: "Unknown state; please try again.", title: "Unable to proceed" });
+  }, [validateSubname, subname, setSubnameError, isConnected, ownedCount, handleSingleTokenClaim]);
 
   const onTokenSelect = useCallback(
     (tokenId: string) => {
@@ -113,8 +101,8 @@ export function SubnameClaimCard() {
   const isLoadingState = mustChooseToken && nounsLoading;
 
   const explorerBase = configuredChain.blockExplorers?.default.url;
-  const mapperAddress = lilNounsEnsMapperAddress[configuredChain.id as 11155111];
-  const contractHref = explorerBase && mapperAddress ? `${explorerBase}/address/${mapperAddress}` : undefined;
+  const mapperAddress = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
+  const contractHref = explorerBase ? `${explorerBase}/address/${mapperAddress}` : undefined;
   // Dynamically resolve the root domain (e.g., "lilnouns.eth")
   const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
   const { data: resolvedRootName } = useReadLilNounsEnsMapperName({
@@ -123,16 +111,18 @@ export function SubnameClaimCard() {
     query: { enabled: !!rootNode },
   });
   const fallbackRoot = "lilnouns.eth";
-  const rootName = (resolvedRootName as string | undefined)?.trim() || fallbackRoot;
+  const rootName = resolvedRootName?.trim() ?? fallbackRoot;
   const previewName = subname ? `${subname}.${rootName}` : undefined;
 
   // Pre-check availability via simulate when we know a tokenId
-  const effectiveTokenId =
-    ownedCount === 1 && firstTokenId != undefined
-      ? firstTokenId
-      : ownedCount > 1 && selectedTokenId
-        ? BigInt(selectedTokenId)
-        : undefined;
+  let effectiveTokenId: bigint | undefined;
+  if (ownedCount === 1 && firstTokenId != undefined) {
+    effectiveTokenId = firstTokenId;
+  } else if (ownedCount > 1 && selectedTokenId) {
+    effectiveTokenId = BigInt(selectedTokenId);
+  } else {
+    effectiveTokenId = undefined;
+  }
   const subnameValidationError = validateSubname(subname);
   const shouldSimulate =
     !!effectiveTokenId &&
@@ -140,8 +130,12 @@ export function SubnameClaimCard() {
     !subnameValidationError &&
     isConnected &&
     (chain?.id === configuredChain.id);
+  let simArguments: [string, bigint] | undefined;
+  if (shouldSimulate && effectiveTokenId !== undefined) {
+    simArguments = [subname, effectiveTokenId];
+  }
   const { data: simOk, error: simError, isLoading: simLoading } = useSimulateLilNounsEnsMapperClaimSubname({
-    args: shouldSimulate ? [subname, effectiveTokenId!] : undefined,
+    args: simArguments,
     chainId,
     query: {
       enabled: shouldSimulate,
@@ -152,12 +146,15 @@ export function SubnameClaimCard() {
   let availabilityNote: string | undefined;
   if (simLoading) availabilityNote = "Checking availability…";
   else if (simError) {
-    const msg = String((simError as Error)?.message || simError);
-    if (msg.includes("AlreadyClaimed")) availabilityNote = "That subname is already claimed. Try another.";
-    else if (msg.includes("InvalidLabel")) availabilityNote = "Invalid subname. Use a–z, 0–9, hyphen; 3–63 chars.";
-    else if (msg.includes("PreexistingENSRecord")) availabilityNote = "This label collides with an existing ENS record.";
-    else if (msg.includes("NotTokenOwner") || msg.includes("NotAuthorised")) availabilityNote = "You must claim with the owner of the selected Lil Noun.";
-    else if (msg.includes("UnregisteredNode")) availabilityNote = "The root ENS node is not registered yet.";
+    let message: string;
+    if (simError instanceof Error) message = simError.message;
+    else if (typeof simError === "string") message = simError;
+    else message = JSON.stringify(simError);
+    if (message.includes("AlreadyClaimed")) availabilityNote = "That subname is already claimed. Try another.";
+    else if (message.includes("InvalidLabel")) availabilityNote = "Invalid subname. Use a–z, 0–9, hyphen; 3–63 chars.";
+    else if (message.includes("PreexistingENSRecord")) availabilityNote = "This label collides with an existing ENS record.";
+    else if (message.includes("NotTokenOwner") || message.includes("NotAuthorised")) availabilityNote = "You must claim with the owner of the selected Lil Noun.";
+    else if (message.includes("UnregisteredNode")) availabilityNote = "The root ENS node is not registered yet.";
     else availabilityNote = "Cannot claim this subname. Please try another or retry.";
   } else if (simOk) availabilityNote = "Available";
 
@@ -272,7 +269,10 @@ export function SubnameClaimCard() {
                 onClick={onSubmit}
                 type="button"
               >
-                {pending ? "Claiming…" : previewName ? `Claim ${previewName}` : "Claim subname"}
+                {(() => {
+                  const label = previewName ? `Claim ${previewName}` : "Claim subname";
+                  return pending ? "Claiming…" : label;
+                })()}
               </Button>
               {availabilityNote && (
                 <p className={`text-sm ${availabilityBlocksCta ? "text-destructive" : "text-green-600"}`}>
@@ -363,7 +363,7 @@ export function SubnameClaimCard() {
   );
 }
 
-function SuccessActions({ name, explorerBase, txHash }: { name: string; explorerBase?: string; txHash?: `0x${string}` }) {
+function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?: string; name: string; txHash?: `0x${string}` }>) {
   const [copied, setCopied] = useState(false);
   const ensHref = name ? `https://app.ens.domains/name/${encodeURIComponent(name)}` : undefined;
   const txHref = explorerBase && txHash ? `${explorerBase}/tx/${txHash}` : undefined;
@@ -373,7 +373,7 @@ function SuccessActions({ name, explorerBase, txHash }: { name: string; explorer
       <p className="text-sm text-green-600">Success! You claimed <span className="font-mono">{name}</span></p>
       {ensHref && (
         <Button asChild size="sm" variant="secondary">
-          <a href={ensHref} target="_blank" rel="noreferrer noopener">View on ENS</a>
+          <a href={ensHref} rel="noreferrer noopener" target="_blank">View on ENS</a>
         </Button>
       )}
       {txHref && (
