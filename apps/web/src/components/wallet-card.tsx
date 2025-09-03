@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@repo/ui/components/card";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { pipe, map } from "remeda";
 
 import { chainId as configuredChainId } from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
@@ -45,8 +46,12 @@ export function WalletCard() {
                 <span className="text-muted-foreground">Address:</span>
                 <span className="font-medium">
                   {account.addresses
-                    ?.map((addr) => shortenAddress(addr))
-                    .join(", ") ?? "Not available"}
+                    ? pipe(
+                        account.addresses,
+                        map((addr) => shortenAddress(addr)),
+                        (xs) => xs.join(", "),
+                      )
+                    : "Not available"}
                 </span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">

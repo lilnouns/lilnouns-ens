@@ -9,6 +9,7 @@ import {
 } from "@repo/ui/components/dropdown-menu";
 import { Wallet } from "lucide-react";
 import { useMemo } from "react";
+import { defaultTo, find } from "remeda";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { chain as configuredChain, chainId as configuredChainId } from "@/config/chain";
 
@@ -25,7 +26,7 @@ export function WalletConnectButton() {
     globalThis.window !== undefined && (globalThis as any).ethereum !== undefined;
 
   const primary = useMemo(
-    () => connectors.find((c) => c.id === "injected") ?? connectors[0],
+    () => defaultTo(find(connectors, (c) => c.id === "injected"), connectors[0]),
     [connectors],
   );
 
