@@ -10,24 +10,20 @@ import { useAccount } from "wagmi";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { chain as configuredChain, chainId } from "@/config/chain";
-import {
-  lilNounsEnsMapperAddress,
-  useReadLilNounsEnsMapperName,
-  useReadLilNounsEnsMapperRootNode,
-  useSimulateLilNounsEnsMapperClaimSubname,
-} from "@/hooks/contracts";
+import { lilNounsEnsMapperAddress, useReadLilNounsEnsMapperName, useReadLilNounsEnsMapperRootNode } from "@/hooks/contracts";
+import { useClaimAvailability } from "@/hooks/use-claim-availability";
 import { useSubnameClaim } from "@/hooks/use-subname-claim";
 import type { OwnedNft } from "@/lib/types";
 import { shortenAddress } from "@/utils/address";
 
-// Build block explorer contract link based on current chain
+/** Build block explorer contract link based on current chain. */
 function getContractHref(): string | undefined {
   const explorer = configuredChain.blockExplorers?.default.url;
   const addr = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
   return explorer && addr ? `${explorer}/address/${addr}` : undefined;
 }
 
-// Resolve ENS root domain name via contract; fallback to lilnouns.eth
+/** Resolve ENS root domain name via contract; fallback to lilnouns.eth. */
 function useRootName(): string {
   const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
   const { data: resolved } = useReadLilNounsEnsMapperName({
@@ -38,7 +34,7 @@ function useRootName(): string {
   return resolved?.trim() ?? "lilnouns.eth";
 }
 
-// Choose which tokenId to use for claim simulation / submission
+/** Choose which tokenId to use for claim simulation/submission. */
 function computeEffectiveTokenId(
   ownedCount: number,
   firstTokenId: bigint | undefined,
@@ -49,29 +45,7 @@ function computeEffectiveTokenId(
   return undefined;
 }
 
-// Derive availability message and whether it should block CTA from simulation result
-function useAvailabilityState(enabled: boolean, subname: string, tokenId: bigint | undefined) {
-  const { data: simOk, error: simError, isLoading: simLoading } = useSimulateLilNounsEnsMapperClaimSubname({
-    args: enabled && tokenId ? [subname, tokenId] : undefined,
-    chainId,
-    query: { enabled: enabled && !!tokenId && !!subname, staleTime: 15_000 },
-  });
-
-  return useMemo(() => {
-    if (simLoading) return { note: "Checking availability…", blocksCta: false } as const;
-    if (simError) {
-      const msg = String((simError as Error)?.message || simError);
-      if (msg.includes("AlreadyClaimed")) return { note: "That subname is already claimed. Try another.", blocksCta: true } as const;
-      if (msg.includes("InvalidLabel")) return { note: "Invalid subname. Use a–z, 0–9, hyphen; 3–63 chars.", blocksCta: true } as const;
-      if (msg.includes("PreexistingENSRecord")) return { note: "This label collides with an existing ENS record.", blocksCta: true } as const;
-      if (msg.includes("NotTokenOwner") || msg.includes("NotAuthorised")) return { note: "You must claim with the owner of the selected Lil Noun.", blocksCta: true } as const;
-      if (msg.includes("UnregisteredNode")) return { note: "The root ENS node is not registered yet.", blocksCta: true } as const;
-      return { note: "Cannot claim this subname. Please try another or retry.", blocksCta: true } as const;
-    }
-    if (simOk) return { note: "Available", blocksCta: false } as const;
-    return { note: undefined, blocksCta: false } as const;
-  }, [simLoading, simError, simOk]);
-}
+// availability hook moved to hooks/use-claim-availability.ts
 
 export function SubnameClaimCard() {
   const { address, chain, isConnected } = useAccount();
@@ -147,12 +121,15 @@ export function SubnameClaimCard() {
   const explorerBase = configuredChain.blockExplorers?.default.url;
   const contractHref = getContractHref();
   const rootName = useRootName();
-  const previewName = subname ? `${subname}.${rootName}` : undefined;
+  const previewName = useMemo(() => (subname ? `${subname}.${rootName}` : undefined), [subname, rootName]);
 
-  const effectiveTokenId = computeEffectiveTokenId(ownedCount, firstTokenId, selectedTokenId);
+  const effectiveTokenId = useMemo(
+    () => computeEffectiveTokenId(ownedCount, firstTokenId, selectedTokenId),
+    [ownedCount, firstTokenId, selectedTokenId],
+  );
   const subnameValidationError = validateSubname(subname);
   const shouldSimulate = !!effectiveTokenId && !!subname && !subnameValidationError && isConnected && (chain?.id === configuredChain.id);
-  const { note: availabilityNote, blocksCta: availabilityBlocksCta } = useAvailabilityState(shouldSimulate, subname, effectiveTokenId);
+  const { note: availabilityNote, blocksCta: availabilityBlocksCta } = useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -433,4 +410,3 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
     </div>
   );
 }
-
