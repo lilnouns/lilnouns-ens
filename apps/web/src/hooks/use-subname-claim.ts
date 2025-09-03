@@ -35,56 +35,67 @@ export interface UseSubnameClaimResult {
   subnameDisabledReason?: string;
   subnameError?: string;
 
-  txSuccess: boolean;
   txHash?: `0x${string}`;
+  txSuccess: boolean;
   // validation + disabled reason
   validateSubname: (value: string) => string | undefined;
   writeErrorMessage?: string;
 };
 
+// ========================= Internal hooks =========================
+
 export function useSubnameClaim(toast?: (options: { description: string; title: string; variant?: "destructive" }) => void): UseSubnameClaimResult {
   const { address, chain, isConnected } = useAccount();
+
+  const ownership = useOwnershipState(address, isConnected);
+  const form = useSubnameForm({
+    balanceError: ownership.balanceError,
+    chainIdCurrent: chain?.id,
+    isConnected: !!isConnected,
+    mustChooseToken: ownership.mustChooseToken,
+    nounsError: ownership.nounsError,
+    ownedCount: ownership.ownedCount,
+  });
+  const tx = useClaimTx({ address, subname: form.subname, toast });
+
+  return {
+    cannotClaim: ownership.cannotClaim,
+    claim: tx.claim,
+    firstTokenId: ownership.firstTokenId,
+    firstTokenLoading: ownership.firstTokenLoading,
+    hasError: tx.hasError,
+    isRegistered: tx.isRegistered,
+    mustChooseToken: ownership.mustChooseToken,
+    nouns: ownership.nouns,
+    nounsError: ownership.nounsError,
+    nounsLoading: ownership.nounsLoading,
+    ownedCount: ownership.ownedCount,
+    pending: tx.pending,
+    setSubname: form.setSubname,
+    setSubnameError: form.setSubnameError,
+    subname: form.subname,
+    subnameDisabledReason: form.subnameDisabledReason,
+    subnameError: form.subnameError,
+    txHash: tx.txHash,
+    txSuccess: tx.txSuccess,
+    validateSubname: form.validateSubname,
+    writeErrorMessage: tx.writeErrorMessage,
+  };
+}
+
+function useClaimTx(parameters: {
+  address?: `0x${string}`;
+  subname: string;
+  toast?: (options: { description: string; title: string; variant?: "destructive" }) => void;
+}) {
+  const { address, subname, toast } = parameters;
   const [isRegistered, setIsRegistered] = useState(false);
-  const [subname, setSubname] = useState("");
-  const [subnameError, setSubnameError] = useState<string | undefined>();
-
-  const { data: balance, isError: balanceError, isLoading: balanceLoading } = useReadLilNounsTokenBalanceOf({
-    args: address ? [address] : undefined,
-    chainId,
-    query: { enabled: isConnected && !!address },
-  });
-  const ownedCount = Number(balance ?? 0n);
-
-  const { data: firstTokenId, isLoading: firstTokenLoading } = useReadLilNounsTokenTokenOfOwnerByIndex({
-    args: address ? [address, 0n] : undefined,
-    chainId,
-    query: { enabled: isConnected && !!address && ownedCount === 1 },
-  });
-
-  const { data: nouns, isError: nounsError, isLoading: nounsLoading } = useQuery<OwnedNft[]>({
-    enabled: isConnected && !!address && ownedCount > 1,
-    queryFn: () => fetchOwnedLilNouns(address),
-    queryKey: ["ownedLilNouns", address],
-  });
-
   const { data: txHash, error: writeError, isPending: isWriting, writeContract } = useWriteLilNounsEnsMapperClaimSubname();
   const { isError: txError, isLoading: txPending, isSuccess: txSuccess } = useWaitForTransactionReceipt({
     chainId,
     hash: txHash,
     query: { enabled: !!txHash },
   });
-
-  const mustChooseToken = isConnected && ownedCount > 1;
-  const cannotClaim = isConnected && ownedCount === 0;
-
-  const validateSubname = useCallback((value: string): string | undefined => {
-    if (value.length < 3) return "Must be at least 3 characters";
-    if (value.length > 63) return "Must be at most 63 characters";
-    if (!/^[a-z0-9-]+$/.test(value)) return "Only lowercase letters, digits, and hyphens";
-    if (!/^[a-z0-9]/.test(value)) return "Must start with a letter or digit";
-    if (!/[a-z0-9]$/.test(value)) return "Must end with a letter or digit";
-    return undefined;
-  }, []);
 
   const claim = useCallback(
     (tokenId: bigint) => {
@@ -98,17 +109,9 @@ export function useSubnameClaim(toast?: (options: { description: string; title: 
     [address, subname, writeContract, toast],
   );
 
-  const subnameDisabledReason = useMemo(() => {
-    if (!isConnected) return "Connect your wallet to proceed";
-    if (chain?.id !== chainId) return `Wrong network. Please switch to ${configuredChain.name}.`;
-    if (balanceError) return "Error loading Lil Nouns";
-    if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
-    if (cannotClaim) return "You do not have a Lil Noun";
-    return;
-  }, [isConnected, chain?.id, balanceError, mustChooseToken, nounsError, cannotClaim]);
-
   const pending = isWriting || txPending;
   const hasError = !!writeError || txError;
+  const writeErrorMessage = writeError ? String(writeError.message ?? writeError) : undefined;
 
   const announced = useRef(false);
   if (txSuccess && !announced.current) {
@@ -121,27 +124,66 @@ export function useSubnameClaim(toast?: (options: { description: string; title: 
     toast?.({ description: "Please check your wallet or try again.", title: "Transaction failed", variant: "destructive" });
   }
 
-  return {
-    cannotClaim,
-    claim,
-    firstTokenId,
-    firstTokenLoading,
-    hasError,
-    isRegistered,
-    mustChooseToken,
-    nouns,
-    nounsError: !!nounsError,
-    nounsLoading,
-    ownedCount,
-    pending,
-    setSubname,
-    setSubnameError,
-    subname,
-    subnameDisabledReason,
-    subnameError,
-    txSuccess,
-    txHash,
-    validateSubname,
-    writeErrorMessage: writeError ? String(writeError.message ?? writeError) : undefined,
-  };
+  return { claim, hasError, isRegistered, pending, txHash, txSuccess, writeErrorMessage } as const;
+}
+
+function useOwnershipState(address?: `0x${string}`  , isConnected?: boolean) {
+  const { data: balance, isError: balanceError } = useReadLilNounsTokenBalanceOf({
+    args: address ? [address] : undefined,
+    chainId,
+    query: { enabled: !!isConnected && !!address },
+  });
+  const ownedCount = Number(balance ?? 0n);
+
+  const { data: firstTokenId, isLoading: firstTokenLoading } = useReadLilNounsTokenTokenOfOwnerByIndex({
+    args: address ? [address, 0n] : undefined,
+    chainId,
+    query: { enabled: !!isConnected && !!address && ownedCount === 1 },
+  });
+
+  const { data: nouns, isError: nounsError, isLoading: nounsLoading } = useQuery<OwnedNft[]>({
+    enabled: !!isConnected && !!address && ownedCount > 1,
+    queryFn: () => fetchOwnedLilNouns(address),
+    queryKey: ["ownedLilNouns", address],
+  });
+
+  const mustChooseToken = !!isConnected && ownedCount > 1;
+  const cannotClaim = !!isConnected && ownedCount === 0;
+
+  return { balanceError, cannotClaim, firstTokenId, firstTokenLoading, mustChooseToken, nouns, nounsError: !!nounsError, nounsLoading, ownedCount } as const;
+}
+
+// ========================= Facade hook (public API unchanged) =========================
+
+function useSubnameForm(parameters: {
+  balanceError: boolean;
+  chainIdCurrent?: number;
+  isConnected: boolean;
+  mustChooseToken: boolean;
+  nounsError: boolean;
+  ownedCount: number;
+}) {
+  const { balanceError, chainIdCurrent, isConnected, mustChooseToken, nounsError, ownedCount } = parameters;
+  const [subname, setSubname] = useState("");
+  const [subnameError, setSubnameError] = useState<string | undefined>();
+
+  const validateSubname = useCallback((value: string): string | undefined => {
+    if (value.length < 3) return "Must be at least 3 characters";
+    if (value.length > 63) return "Must be at most 63 characters";
+    if (!/^[a-z0-9-]+$/.test(value)) return "Only lowercase letters, digits, and hyphens";
+    if (!/^[a-z0-9]/.test(value)) return "Must start with a letter or digit";
+    if (!/[a-z0-9]$/.test(value)) return "Must end with a letter or digit";
+    return undefined;
+  }, []);
+
+  const subnameDisabledReason = useMemo(() => {
+    if (!isConnected) return "Connect your wallet to proceed";
+    if (chainIdCurrent !== chainId) return `Wrong network. Please switch to ${configuredChain.name}.`;
+    if (balanceError) return "Error loading Lil Nouns";
+    if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
+    if (isConnected && ownedCount === 0) return "You do not have a Lil Noun";
+    return;
+  }, [isConnected, chainIdCurrent, balanceError, mustChooseToken, nounsError, ownedCount]);
+
+  return { setSubname, setSubnameError, subname, subnameDisabledReason, subnameError, validateSubname } as const;
 }
