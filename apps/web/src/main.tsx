@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { WagmiProvider } from "wagmi";
 
+import { NetworkGuard } from "@/components/network-guard";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/toast";
 
@@ -23,7 +24,9 @@ createRoot(rootElement).render(
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
-            <App />
+            <NetworkGuard>
+              <App />
+            </NetworkGuard>
           </ToastProvider>
         </QueryClientProvider>
       </WagmiProvider>
