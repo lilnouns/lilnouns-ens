@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   type ReactNode,
@@ -48,13 +49,12 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   // Memoize the context value to prevent unnecessary rerenders
-  const contextValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
-
-  return (
-    <ThemeContext value={contextValue}>
-      {children}
-    </ThemeContext>
+  const contextValue = useMemo(
+    () => ({ theme, toggleTheme }),
+    [theme, toggleTheme],
   );
+
+  return <ThemeContext value={contextValue}>{children}</ThemeContext>;
 }
 
 /**

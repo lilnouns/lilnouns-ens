@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
+import { map, pipe } from "remeda";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { pipe, map } from "remeda";
 
 import { chainId as configuredChainId } from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
