@@ -5,7 +5,7 @@ import { WagmiProvider } from "wagmi";
 
 import { NetworkGuard } from "@/components/network-guard";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ToastProvider } from "@/components/toast";
+import { AppToaster } from "@/components/toaster";
 
 import App from "./app.tsx";
 import { config } from "./wagmi.ts";
@@ -23,11 +23,10 @@ createRoot(rootElement).render(
     <ThemeProvider>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <NetworkGuard>
-              <App />
-            </NetworkGuard>
-          </ToastProvider>
+          <NetworkGuard>
+            <App />
+          </NetworkGuard>
+          <AppToaster />
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
