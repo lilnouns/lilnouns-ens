@@ -93,7 +93,7 @@ contract LilNounsEnsMapperV2Test is Test {
   }
 
   // ============ Success cases ============
-  function testClaimSubdomain_WhenValid_ShouldMapAndEmitEvents() public {
+  function testClaimSubname_WhenValid_ShouldMapAndEmitEvents() public {
     uint256 tokenId = 42;
     string memory label = "noun42";
     _mintTo(alice, tokenId);
@@ -121,7 +121,7 @@ contract LilNounsEnsMapperV2Test is Test {
   }
 
   // Long label edge case
-  function testClaimSubdomain_WhenLongLabel_ShouldSucceed() public {
+  function testClaimSubname_WhenLongLabel_ShouldSucceed() public {
     uint256 tokenId = 7;
     // 200-char label
     bytes memory b = new bytes(200);
@@ -156,7 +156,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname(label, tokenId);
   }
 
-  function testClaimSubdomain_WhenTokenAlreadyClaimedV2_ShouldRevert() public {
+  function testClaimSubname_WhenTokenAlreadyClaimedV2_ShouldRevert() public {
     uint256 tokenId = 2;
     _mintTo(alice, tokenId);
 
@@ -168,7 +168,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname("b", tokenId);
   }
 
-  function testClaimSubdomain_WhenTokenAlreadyClaimedV1_ShouldRevert() public {
+  function testClaimSubname_WhenTokenAlreadyClaimedV1_ShouldRevert() public {
     uint256 tokenId = 3;
     _mintTo(alice, tokenId);
 
@@ -181,7 +181,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname("new", tokenId);
   }
 
-  function testClaimSubdomain_WhenLabelAlreadyTakenByAnotherToken_ShouldRevertWithExistingTokenId() public {
+  function testClaimSubname_WhenLabelAlreadyTakenByAnotherToken_ShouldRevertWithExistingTokenId() public {
     string memory label = "taken";
     uint256 tokenA = 10;
     uint256 tokenB = 11;
@@ -197,7 +197,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname(label, tokenB);
   }
 
-  function testClaimSubdomain_WhenENSSubnodePreexisting_ShouldRevert() public {
+  function testClaimSubname_WhenENSSubnodePreexisting_ShouldRevert() public {
     uint256 tokenId = 1234;
     string memory label = "occupied";
     _mintTo(alice, tokenId);
@@ -212,7 +212,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname(label, tokenId);
   }
 
-  function testClaimSubdomain_WhenEmptyLabel_ShouldRevert() public {
+  function testClaimSubname_WhenEmptyLabel_ShouldRevert() public {
     uint256 tokenId = 5;
     _mintTo(alice, tokenId);
 
@@ -221,7 +221,7 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper.claimSubname("", tokenId);
   }
 
-  function testClaimSubdomain_WhenTokenDoesNotExist_ShouldBubbleERC721Revert() public {
+  function testClaimSubname_WhenTokenDoesNotExist_ShouldBubbleERC721Revert() public {
     // ownerOf() must revert for nonexistent token
     uint256 nonexistentToken = 9999;
     vm.prank(alice);
@@ -230,7 +230,7 @@ contract LilNounsEnsMapperV2Test is Test {
   }
 
   // Attempt re-claim of same label by original owner with different token should still revert by taken label
-  function testClaimSubdomain_WhenSameLabelDifferentTokenSameOwner_ShouldRevertTaken() public {
+  function testClaimSubname_WhenSameLabelDifferentTokenSameOwner_ShouldRevertTaken() public {
     string memory label = "dup";
     uint256 tokenA = 21;
     uint256 tokenB = 22;
