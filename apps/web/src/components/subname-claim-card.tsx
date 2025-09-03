@@ -304,7 +304,7 @@ function computeEffectiveTokenId(
 
 // availability hook moved to hooks/use-claim-availability.ts
 
-/** Build block explorer contract link based on current chain. */
+/** Build block explorer contract link based on the current chain. */
 function getContractHref(): string | undefined {
   const explorer = configuredChain.blockExplorers?.default.url;
   const addr = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
@@ -533,16 +533,18 @@ function SuccessActions({
         </Button>
       )}
       <Button
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(name);
-            setCopied(true);
-            setTimeout(() => {
-              setCopied(false);
-            }, 1500);
-          } catch {
-            /* empty */
-          }
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(name)
+            .then(() => {
+              setCopied(true);
+              setTimeout(() => {
+                setCopied(false);
+              }, 1500);
+            })
+            .catch(() => {
+              /* ignore */
+            });
         }}
         size="sm"
         variant="ghost"
