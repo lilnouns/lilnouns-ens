@@ -1,8 +1,8 @@
 import { memo } from "react";
 
 import { Logo } from "@/components/logo.tsx";
-import { SubdomainClaimCard } from "@/components/subdomain-claim-card";
-import { SubdomainInstructions } from "@/components/subdomain-instructions";
+import { SubnameClaimCard } from "@/components/subname-claim-card";
+import { SubnameInstructions } from "@/components/subname-instructions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 
@@ -41,8 +41,8 @@ function App() {
             wallet address. Free + gas.
           </p>
         </section>
-        <SubdomainClaimCard />
-        <SubdomainInstructions />
+        <SubnameClaimCard />
+        <SubnameInstructions />
       </main>
     </div>
   );

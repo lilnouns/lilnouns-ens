@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
-import { useSubdomainClaim } from "@/hooks/use-subdomain-claim";
+import { useSubnameClaim } from "@/hooks/use-subname-claim";
 import { shortenAddress } from "@/utils/address";
 import { chain as configuredChain, chainId } from "@/config/chain";
 import {
@@ -25,7 +25,7 @@ import {
   useSimulateLilNounsEnsMapperClaimSubname,
 } from "@/hooks/contracts";
 
-export function SubdomainClaimCard() {
+export function SubnameClaimCard() {
   const { address, chain, isConnected } = useAccount();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -42,14 +42,14 @@ export function SubdomainClaimCard() {
     nounsLoading,
     ownedCount,
     pending,
-    setSubdomain,
-    setSubdomainError,
-    subdomain,
-    subdomainDisabledReason,
-    subdomainError,
+    setSubname,
+    setSubnameError,
+    subname,
+    subnameDisabledReason,
+    subnameError,
     txHash,
-    validateSubdomain,
-  } = useSubdomainClaim((options) => {
+    validateSubname,
+  } = useSubnameClaim((options) => {
     const { description, title, variant } = options;
     if (variant === "destructive") {
       toast.error(title, { description });
@@ -59,8 +59,8 @@ export function SubdomainClaimCard() {
   });
 
   const onSubmit = useCallback(() => {
-    const error = validateSubdomain(subdomain);
-    setSubdomainError(error);
+    const error = validateSubname(subname);
+    setSubnameError(error);
     if (error) return;
     if (!isConnected) return;
     if (ownedCount === 0) return;
@@ -90,9 +90,9 @@ export function SubdomainClaimCard() {
       title: "Unable to proceed",
     });
   }, [
-    validateSubdomain,
-    subdomain,
-    setSubdomainError,
+    validateSubname,
+    subname,
+    setSubnameError,
     isConnected,
     ownedCount,
     firstTokenId,
@@ -124,7 +124,7 @@ export function SubdomainClaimCard() {
   });
   const fallbackRoot = "lilnouns.eth";
   const rootName = (resolvedRootName as string | undefined)?.trim() || fallbackRoot;
-  const previewName = subdomain ? `${subdomain}.${rootName}` : undefined;
+  const previewName = subname ? `${subname}.${rootName}` : undefined;
 
   // Pre-check availability via simulate when we know a tokenId
   const effectiveTokenId =
@@ -133,15 +133,15 @@ export function SubdomainClaimCard() {
       : ownedCount > 1 && selectedTokenId
         ? BigInt(selectedTokenId)
         : undefined;
-  const subdomainValidationError = validateSubdomain(subdomain);
+  const subnameValidationError = validateSubname(subname);
   const shouldSimulate =
     !!effectiveTokenId &&
-    !!subdomain &&
-    !subdomainValidationError &&
+    !!subname &&
+    !subnameValidationError &&
     isConnected &&
     (chain?.id === configuredChain.id);
   const { data: simOk, error: simError, isLoading: simLoading } = useSimulateLilNounsEnsMapperClaimSubname({
-    args: shouldSimulate ? [subdomain, effectiveTokenId!] : undefined,
+    args: shouldSimulate ? [subname, effectiveTokenId!] : undefined,
     chainId,
     query: {
       enabled: shouldSimulate,
@@ -213,26 +213,26 @@ export function SubdomainClaimCard() {
           </div>
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
-            <Label className="text-sm" htmlFor="subdomain">
+            <Label className="text-sm" htmlFor="subname">
               Choose a subname
             </Label>
             <div>
               <div className="relative">
                 <Input
-                  aria-invalid={!!subdomainError}
+                  aria-invalid={!!subnameError}
                   aria-label="Subname label"
                   autoComplete="off"
-                  id="subdomain"
+                  id="subname"
                   inputMode="text"
                   onBlur={() => {
-                    setSubdomainError(validateSubdomain(subdomain));
+                    setSubnameError(validateSubname(subname));
                   }}
                   onChange={(event) => {
-                    setSubdomain(event.target.value);
+                    setSubname(event.target.value);
                   }}
                   placeholder="yourname"
                   type="text"
-                  value={subdomain}
+                  value={subname}
                 />
                 <span
                   aria-hidden="true"
@@ -248,14 +248,14 @@ export function SubdomainClaimCard() {
                 <p className="mt-1 text-sm">Preview: <span className="font-mono">{previewName}</span></p>
               )}
             </div>
-            {subdomainError ? (
-              <p className="text-destructive text-sm">{subdomainError}</p>
+            {subnameError ? (
+              <p className="text-destructive text-sm">{subnameError}</p>
             ) : undefined}
 
             <div className="space-y-2 pt-2">
               <Button
                 aria-disabled={
-                  !!subdomainDisabledReason ||
+                  !!subnameDisabledReason ||
                   isLoadingState ||
                   pending ||
                   isRegistered ||
@@ -263,7 +263,7 @@ export function SubdomainClaimCard() {
                 }
                 aria-label={previewName ? `Claim ${previewName}` : "Claim subname"}
                 disabled={
-                  !!subdomainDisabledReason ||
+                  !!subnameDisabledReason ||
                   isLoadingState ||
                   pending ||
                   isRegistered ||
@@ -279,9 +279,9 @@ export function SubdomainClaimCard() {
                   {availabilityNote}
                 </p>
               )}
-              {subdomainDisabledReason && (
+              {subnameDisabledReason && (
                 <p className="text-muted-foreground text-sm" role="note">
-                  {subdomainDisabledReason}
+                  {subnameDisabledReason}
                 </p>
               )}
               {isRegistered && (

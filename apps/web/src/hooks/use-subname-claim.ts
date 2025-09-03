@@ -9,7 +9,7 @@ import { chainId, chain as configuredChain } from "@/config/chain";
 import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
 import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
 
-export interface UseSubdomainClaimResult {
+export interface UseSubnameClaimResult {
   cannotClaim: boolean;
   claim: (tokenId: bigint) => void;
   firstTokenId?: bigint;
@@ -26,27 +26,27 @@ export interface UseSubdomainClaimResult {
   // tx state
   pending: boolean;
 
-  setSubdomain: (v: string) => void;
+  setSubname: (v: string) => void;
   // actions
-  setSubdomainError: (error?: string) => void;
+  setSubnameError: (error?: string) => void;
   // state
-  subdomain: string;
+  subname: string;
 
-  subdomainDisabledReason?: string;
-  subdomainError?: string;
+  subnameDisabledReason?: string;
+  subnameError?: string;
 
   txSuccess: boolean;
   txHash?: `0x${string}`;
   // validation + disabled reason
-  validateSubdomain: (value: string) => string | undefined;
+  validateSubname: (value: string) => string | undefined;
   writeErrorMessage?: string;
 };
 
-export function useSubdomainClaim(toast?: (options: { description: string; title: string; variant?: "destructive" }) => void): UseSubdomainClaimResult {
+export function useSubnameClaim(toast?: (options: { description: string; title: string; variant?: "destructive" }) => void): UseSubnameClaimResult {
   const { address, chain, isConnected } = useAccount();
   const [isRegistered, setIsRegistered] = useState(false);
-  const [subdomain, setSubdomain] = useState("");
-  const [subdomainError, setSubdomainError] = useState<string | undefined>();
+  const [subname, setSubname] = useState("");
+  const [subnameError, setSubnameError] = useState<string | undefined>();
 
   const { data: balance, isError: balanceError, isLoading: balanceLoading } = useReadLilNounsTokenBalanceOf({
     args: address ? [address] : undefined,
@@ -77,7 +77,7 @@ export function useSubdomainClaim(toast?: (options: { description: string; title
   const mustChooseToken = isConnected && ownedCount > 1;
   const cannotClaim = isConnected && ownedCount === 0;
 
-  const validateSubdomain = useCallback((value: string): string | undefined => {
+  const validateSubname = useCallback((value: string): string | undefined => {
     if (value.length < 3) return "Must be at least 3 characters";
     if (value.length > 63) return "Must be at most 63 characters";
     if (!/^[a-z0-9-]+$/.test(value)) return "Only lowercase letters, digits, and hyphens";
@@ -90,15 +90,15 @@ export function useSubdomainClaim(toast?: (options: { description: string; title
     (tokenId: bigint) => {
       if (!address) return;
       try {
-        writeContract({ args: [subdomain, tokenId] });
+        writeContract({ args: [subname, tokenId] });
       } catch {
         toast?.({ description: "Could not submit transaction.", title: "Transaction error", variant: "destructive" });
       }
     },
-    [address, subdomain, writeContract, toast],
+    [address, subname, writeContract, toast],
   );
 
-  const subdomainDisabledReason = useMemo(() => {
+  const subnameDisabledReason = useMemo(() => {
     if (!isConnected) return "Connect your wallet to proceed";
     if (chain?.id !== chainId) return `Wrong network. Please switch to ${configuredChain.name}.`;
     if (balanceError) return "Error loading Lil Nouns";
@@ -134,14 +134,14 @@ export function useSubdomainClaim(toast?: (options: { description: string; title
     nounsLoading,
     ownedCount,
     pending,
-    setSubdomain,
-    setSubdomainError,
-    subdomain,
-    subdomainDisabledReason,
-    subdomainError,
+    setSubname,
+    setSubnameError,
+    subname,
+    subnameDisabledReason,
+    subnameError,
     txSuccess,
     txHash,
-    validateSubdomain,
+    validateSubname,
     writeErrorMessage: writeError ? String(writeError.message ?? writeError) : undefined,
   };
 }
