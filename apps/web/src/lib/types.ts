@@ -1,6 +1,7 @@
-export interface OwnedNft {
-  image: string;
-  name?: string;
-  tokenId: string;
-}
+import type { NonEmptyString } from 'type-fest';
 
+export interface OwnedNft {
+  image: NonEmptyString<string>;
+  name?: NonEmptyString<string>;
+  tokenId: NonEmptyString<string>;
+}
