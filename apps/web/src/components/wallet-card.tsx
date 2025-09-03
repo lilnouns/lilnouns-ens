@@ -9,8 +9,8 @@ import {
   CardTitle,
 } from "@repo/ui/components/card";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { chainId as configuredChainId } from "@/config/chain";
 
+import { chainId as configuredChainId } from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
 
 export function WalletCard() {

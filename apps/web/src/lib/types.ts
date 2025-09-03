@@ -1,6 +1,6 @@
-export type OwnedNft = {
-  tokenId: string;
+export interface OwnedNft {
   image: string;
   name?: string;
-};
+  tokenId: string;
+}
 
