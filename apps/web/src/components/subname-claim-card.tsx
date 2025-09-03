@@ -11,7 +11,6 @@ import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useCallback, useMemo, useState } from "react";
-import { defaultTo } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
@@ -22,6 +21,7 @@ import { chainId, chain as configuredChain } from "@/config/chain";
 import {
   lilNounsEnsMapperAddress,
   useReadLilNounsEnsMapperName,
+  useReadLilNounsEnsMapperRootLabel,
   useReadLilNounsEnsMapperRootNode,
 } from "@/hooks/contracts";
 import { useClaimAvailability } from "@/hooks/use-claim-availability";
@@ -556,10 +556,19 @@ function SuccessActions({
 /** Resolve ENS root domain name via contract; fallback to lilnouns.eth. */
 function useRootName(): string {
   const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
+  const enabled = !!rootNode;
   const { data: resolved } = useReadLilNounsEnsMapperName({
-    args: rootNode ? [rootNode as unknown as `0x${string}`] : undefined,
+    args: enabled ? [rootNode as unknown as `0x${string}`] : undefined,
     chainId,
-    query: { enabled: !!rootNode },
+    query: { enabled },
   });
-  return defaultTo(resolved?.trim(), "lilnouns.eth");
+  const { data: rootLabel } = useReadLilNounsEnsMapperRootLabel({
+    chainId,
+    query: { enabled },
+  });
+  const trimmed = (resolved ?? "").trim();
+  if (trimmed.length > 0) return trimmed;
+  const label = (rootLabel ?? "").trim();
+  if (label.length > 0) return `${label}.eth`;
+  return "lilnouns.eth";
 }
