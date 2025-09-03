@@ -9,15 +9,15 @@ export interface AppConfig {
 }
 
 function resolveSubgraphUrl(selectedChainId: number): string | undefined {
-  const env = import.meta.env as {
+  const environment = import.meta.env as {
     VITE_SUBGRAPH_URL?: string
     VITE_SUBGRAPH_URL_MAINNET?: string
     VITE_SUBGRAPH_URL_SEPOLIA?: string
   }
 
   // Use chain-specific URLs only to ensure data comes from the configured chain.
-  if (selectedChainId === 11155111) return env.VITE_SUBGRAPH_URL_SEPOLIA || undefined
-  if (selectedChainId === 1) return env.VITE_SUBGRAPH_URL_MAINNET || undefined
+  if (selectedChainId === 11_155_111) return environment.VITE_SUBGRAPH_URL_SEPOLIA || undefined
+  if (selectedChainId === 1) return environment.VITE_SUBGRAPH_URL_MAINNET || undefined
 
   // Do not fall back to the generic URL to avoid cross-network mismatches.
   return undefined
