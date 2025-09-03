@@ -1,161 +1,56 @@
-import {
-  useReadLilNounsTokenBalanceOf,
-  useReadLilNounsTokenTokenOfOwnerByIndex,
-} from "@nekofar/lilnouns/contracts";
 import { Button } from "@repo/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/components/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/card";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useAccount, useWaitForTransactionReceipt } from "wagmi";
-
-import type { OwnedNft } from "@/lib/types";
+import { useCallback, useState } from "react";
+import { useAccount } from "wagmi";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useToast } from "@/components/toast";
-import { chainId, chain as configuredChain } from "@/config/chain";
-import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
-import { fetchOwnedLilNouns } from "@/lib/subgraph-client";
+import { useSubdomainClaim } from "@/hooks/use-subdomain-claim";
 import { shortenAddress } from "@/utils/address";
-
-// Address provided via generated hooks; no local constant needed.
 
 export function SubdomainClaimCard() {
   const { toast } = useToast();
   const { address, chain, isConnected } = useAccount();
-  const [isRegistered, setIsRegistered] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTokenId, setSelectedTokenId] = useState<string | undefined>();
-  const [subdomain, setSubdomain] = useState("");
 
-  // On-chain balance via Lil Nouns token
   const {
-    data: balance,
-    isError: balanceError,
-    isLoading: balanceLoading,
-  } = useReadLilNounsTokenBalanceOf({
-    args: address ? [address] : undefined,
-    chainId,
-    query: { enabled: isConnected && !!address },
+    claim,
+    firstTokenId,
+    firstTokenLoading,
+    isRegistered,
+    mustChooseToken,
+    nouns,
+    nounsError,
+    nounsLoading,
+    ownedCount,
+    pending,
+    setSubdomain,
+    setSubdomainError,
+    subdomain,
+    subdomainDisabledReason,
+    subdomainError,
+    validateSubdomain,
+  } = useSubdomainClaim((options) => {
+    toast({ description: options.description, title: options.title, variant: options.variant });
   });
-
-  const ownedCount = Number(balance ?? 0n);
-
-  // Prefetch the first token id for single-token direct claim
-  const { data: firstTokenId, isLoading: firstTokenLoading } =
-    useReadLilNounsTokenTokenOfOwnerByIndex({
-      args: address ? [address, 0n] : undefined,
-      chainId,
-      query: { enabled: isConnected && !!address && ownedCount === 1 },
-    });
-
-  // Only use subgraph when the user has multiple tokens to populate the gallery
-  const {
-    data: nouns,
-    isError: nounsError,
-    isLoading: nounsLoading,
-  } = useQuery<OwnedNft[]>({
-    enabled: isConnected && !!address && ownedCount > 1,
-    queryFn: () => fetchOwnedLilNouns(address),
-    queryKey: ["ownedLilNouns", address],
-  });
-
-  const {
-    data: txHash,
-    error: writeError,
-    isPending: isWriting,
-    writeContract,
-  } = useWriteLilNounsEnsMapperClaimSubname();
-  const {
-    isError: txError,
-    isLoading: txPending,
-    isSuccess: txSuccess,
-  } = useWaitForTransactionReceipt({
-    chainId,
-    hash: txHash,
-    query: { enabled: !!txHash },
-  });
-
-  // const canClaimDirectly = isConnected && ownedCount === 1;
-  const mustChooseToken = isConnected && ownedCount > 1;
-  const cannotClaim = isConnected && ownedCount === 0;
-
-  const validateSubdomain = useCallback((value: string): string | undefined => {
-    if (value.length < 3) return "Must be at least 3 characters";
-    if (value.length > 63) return "Must be at most 63 characters";
-    if (!/^[a-z0-9-]+$/.test(value))
-      return "Only lowercase letters, digits, and hyphens";
-    if (!/^[a-z0-9]/.test(value)) return "Must start with a letter or digit";
-    if (!/[a-z0-9]$/.test(value)) return "Must end with a letter or digit";
-    return undefined;
-  }, []);
-
-  const [subdomainError, setSubdomainError] = useState<string | undefined>();
-
-  const claim = useCallback(
-    (tokenId: bigint) => {
-      if (!address) return;
-      try {
-        // Wagmi config is restricted to the configured chain; write will use it.
-        writeContract({ args: [subdomain, tokenId] });
-      } catch {
-        toast({
-          description: "Could not submit transaction.",
-          title: "Transaction error",
-          variant: "destructive",
-        });
-      }
-    },
-    [address, subdomain, toast, writeContract],
-  );
 
   const onSubmit = useCallback(() => {
     const error = validateSubdomain(subdomain);
     setSubdomainError(error);
-    if (error) {
-      toast({
-        description: error,
-        title: "Invalid subname",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!isConnected) {
-      toast({
-        description: "Please connect your wallet first.",
-        title: "Connect wallet",
-      });
-      return;
-    }
-    if (ownedCount === 0) {
-      toast({
-        description: "You must own at least one Lil Noun to claim.",
-        title: "No Lil Nouns found",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (error) return;
+    if (!isConnected) return;
+    if (ownedCount === 0) return;
     if (ownedCount === 1) {
       if (firstTokenId != undefined) {
-        claim(firstTokenId satisfies bigint);
+        claim(firstTokenId);
       } else if (firstTokenLoading) {
-        toast({
-          description: "Fetching your token ID. Please try again in a moment.",
-          title: "Please wait",
-        });
+        toast({ description: "Fetching your token ID. Please try again in a moment.", title: "Please wait" });
       } else {
-        toast({
-          description: "Could not resolve your token ID. Please try again.",
-          title: "Token not found",
-          variant: "destructive",
-        });
+        toast({ description: "Could not resolve your token ID. Please try again.", title: "Token not found", variant: "destructive" });
       }
       return;
     }
@@ -163,20 +58,8 @@ export function SubdomainClaimCard() {
       setDialogOpen(true);
       return;
     }
-    toast({
-      description: "Unknown state; please try again.",
-      title: "Unable to proceed",
-    });
-  }, [
-    validateSubdomain,
-    subdomain,
-    isConnected,
-    ownedCount,
-    firstTokenId,
-    firstTokenLoading,
-    claim,
-    toast,
-  ]);
+    toast({ description: "Unknown state; please try again.", title: "Unable to proceed" });
+  }, [validateSubdomain, subdomain, setSubdomainError, isConnected, ownedCount, firstTokenId, firstTokenLoading, claim, toast]);
 
   const onTokenSelect = useCallback(
     (tokenId: string) => {
@@ -187,41 +70,7 @@ export function SubdomainClaimCard() {
     [claim],
   );
 
-  const subdomainDisabledReason = useMemo(() => {
-    if (!isConnected) return "Connect your wallet to proceed";
-    if (chain?.id !== chainId)
-      return `Wrong network. Please switch to ${configuredChain.name}.`;
-    if (balanceError) return "Error loading Lil Nouns";
-    if (mustChooseToken && nounsError) return "Error loading Lil Nouns";
-    if (cannotClaim) return "You do not have a Lil Noun";
-    return undefined;
-  }, [
-    isConnected,
-    chain?.id,
-    balanceError,
-    mustChooseToken,
-    nounsError,
-    cannotClaim,
-  ]);
-
-  const pending = isWriting || txPending;
-  const isLoadingState = balanceLoading || (mustChooseToken && nounsLoading);
-  const hasError = !!writeError || txError;
-
-  const announced = useRef(false);
-  if (txSuccess && !announced.current) {
-    announced.current = true;
-    setIsRegistered(true);
-    toast({ description: "Subname claimed successfully!", title: "Success" });
-  }
-  if (hasError && !announced.current) {
-    announced.current = true;
-    toast({
-      description: "Please check your wallet or try again.",
-      title: "Transaction failed",
-      variant: "destructive",
-    });
-  }
+  const isLoadingState = mustChooseToken && nounsLoading;
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -245,22 +94,8 @@ export function SubdomainClaimCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            aria-live="polite"
-            className="text-muted-foreground mb-4 text-sm"
-            role="status"
-          >
-            {isConnected && balanceLoading ? (
-              <Skeleton className="h-4 w-48" />
-            ) : (
-              <>
-                {isConnected &&
-                  !balanceError &&
-                  `Owned Lil Nouns: ${ownedCount.toString()}`}
-                {balanceError &&
-                  "Could not fetch wallet balance. Using fallback if available."}
-              </>
-            )}
+          <div aria-live="polite" className="text-muted-foreground mb-4 text-sm" role="status">
+            {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
             {mustChooseToken && nounsLoading && (
               <div className="mt-2">
                 <Skeleton className="h-3 w-40" />
