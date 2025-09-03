@@ -5,47 +5,18 @@ import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useCallback, useMemo, useState } from "react";
+import { defaultTo } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
+import type { OwnedNft } from "@/lib/types";
+
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
-import { chain as configuredChain, chainId } from "@/config/chain";
+import { chainId, chain as configuredChain } from "@/config/chain";
 import { lilNounsEnsMapperAddress, useReadLilNounsEnsMapperName, useReadLilNounsEnsMapperRootNode } from "@/hooks/contracts";
 import { useClaimAvailability } from "@/hooks/use-claim-availability";
 import { useSubnameClaim } from "@/hooks/use-subname-claim";
-import type { OwnedNft } from "@/lib/types";
 import { shortenAddress } from "@/utils/address";
-
-/** Build block explorer contract link based on current chain. */
-function getContractHref(): string | undefined {
-  const explorer = configuredChain.blockExplorers?.default.url;
-  const addr = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
-  return explorer && addr ? `${explorer}/address/${addr}` : undefined;
-}
-
-/** Resolve ENS root domain name via contract; fallback to lilnouns.eth. */
-function useRootName(): string {
-  const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
-  const { data: resolved } = useReadLilNounsEnsMapperName({
-    args: rootNode ? [rootNode as unknown as `0x${string}`] : undefined,
-    chainId,
-    query: { enabled: !!rootNode },
-  });
-  return resolved?.trim() ?? "lilnouns.eth";
-}
-
-/** Choose which tokenId to use for claim simulation/submission. */
-function computeEffectiveTokenId(
-  ownedCount: number,
-  firstTokenId: bigint | undefined,
-  selectedTokenId: string | undefined,
-): bigint | undefined {
-  if (ownedCount === 1 && firstTokenId != undefined) return firstTokenId;
-  if (ownedCount > 1 && selectedTokenId) return BigInt(selectedTokenId);
-  return undefined;
-}
-
-// availability hook moved to hooks/use-claim-availability.ts
 
 export function SubnameClaimCard() {
   const { address, chain, isConnected } = useAccount();
@@ -129,7 +100,7 @@ export function SubnameClaimCard() {
   );
   const subnameValidationError = validateSubname(subname);
   const shouldSimulate = !!effectiveTokenId && !!subname && !subnameValidationError && isConnected && (chain?.id === configuredChain.id);
-  const { note: availabilityNote, blocksCta: availabilityBlocksCta } = useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
+  const { blocksCta: availabilityBlocksCta, note: availabilityNote } = useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -158,8 +129,8 @@ export function SubnameClaimCard() {
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
             <NameInputWithSuffix
-              onBlurValidate={() => setSubnameError(validateSubname(subname))}
-              onChange={(v) => setSubname(v)}
+              onBlurValidate={() => { setSubnameError(validateSubname(subname)); }}
+              onChange={(v) => { setSubname(v); }}
               previewName={previewName}
               rootName={rootName}
               subname={subname}
@@ -189,8 +160,8 @@ export function SubnameClaimCard() {
             nouns={nouns}
             nounsError={nounsError}
             nounsLoading={nounsLoading}
-            onOpenDialog={() => setDialogOpen(true)}
             onOpenChange={setDialogOpen}
+            onOpenDialog={() => { setDialogOpen(true); }}
             onTokenSelect={onTokenSelect}
             pendingTokenId={selectedTokenId}
             shouldShow={mustChooseToken}
@@ -201,91 +172,32 @@ export function SubnameClaimCard() {
   );
 }
 
-function HeaderDescription({ isConnected, address, chainName, contractHref }: Readonly<{ isConnected: boolean; address?: string; chainName?: string; contractHref?: string }>) {
-  if (!isConnected) return <>Connect your wallet to start.</>;
-  return (
-    <>
-      Connected as <span className="font-mono">{shortenAddress(address ?? "")}</span> on {chainName ?? "Unknown network"}.
-      {contractHref && (
-        <>
-          {" "}•{" "}
-          <a className="underline underline-offset-2" href={contractHref} rel="noreferrer noopener" target="_blank">Contract</a>
-        </>
-      )}
-    </>
-  );
-}
-
-function OwnershipStatus({ isConnected, ownedCount, mustChooseToken, nounsLoading, nounsError }: Readonly<{ isConnected: boolean; ownedCount: number; mustChooseToken: boolean; nounsLoading: boolean; nounsError: boolean }>) {
-  return (
-    <div aria-live="polite" className="text-muted-foreground mb-4 text-sm" role="status">
-      {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
-      {mustChooseToken && nounsLoading && (
-        <div className="mt-2">
-          <Skeleton className="h-3 w-40" />
-        </div>
-      )}
-      {mustChooseToken && nounsError && "Error loading Lil Nouns list."}
-    </div>
-  );
-}
-
-function NameInputWithSuffix({ subname, subnameError, onChange, onBlurValidate, rootName, previewName }: Readonly<{ subname: string; subnameError?: string; onChange: (v: string) => void; onBlurValidate: () => void; rootName: string; previewName?: string }>) {
-  return (
-    <>
-      <Label className="text-sm" htmlFor="subname">Choose a subname</Label>
-      <div>
-        <div className="relative">
-          <Input
-            aria-invalid={!!subnameError}
-            aria-label="Subname label"
-            autoComplete="off"
-            id="subname"
-            inputMode="text"
-            onBlur={onBlurValidate}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="yourname"
-            type="text"
-            value={subname}
-          />
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">.{rootName}</span>
-        </div>
-        <p className="text-muted-foreground mt-1 text-xs">Allowed: a–z, 0–9, hyphen • 3–63 chars • case-insensitive</p>
-        {previewName && (
-          <p className="mt-1 text-sm">Preview: <span className="font-mono">{previewName}</span></p>
-        )}
-      </div>
-      {subnameError ? <p className="text-destructive text-sm">{subnameError}</p> : undefined}
-    </>
-  );
-}
-
 function ClaimSection({
-  isSubmitting,
-  isUnavailable,
-  availabilityNote,
   availabilityBlocksCta,
-  subnameDisabledReason,
-  onSubmit,
-  previewName,
-  isRegistered,
-  explorerBase,
-  txHash,
+  availabilityNote,
   chainName,
   contractHref,
+  explorerBase,
+  isRegistered,
+  isSubmitting,
+  isUnavailable,
+  onSubmit,
+  previewName,
+  subnameDisabledReason,
+  txHash,
 }: Readonly<{
-  isSubmitting: boolean;
-  isUnavailable: boolean;
-  availabilityNote?: string;
   availabilityBlocksCta: boolean;
-  subnameDisabledReason?: string;
-  onSubmit: () => void;
-  previewName?: string;
-  isRegistered: boolean;
-  explorerBase?: string;
-  txHash?: `0x${string}`;
+  availabilityNote?: string;
   chainName?: string;
   contractHref?: string;
+  explorerBase?: string;
+  isRegistered: boolean;
+  isSubmitting: boolean;
+  isUnavailable: boolean;
+  onSubmit: () => void;
+  previewName?: string;
+  subnameDisabledReason?: string;
+  txHash?: `0x${string}`;
 }>) {
   const disabled = isUnavailable || isSubmitting || isRegistered || availabilityBlocksCta;
   const label = previewName ? `Claim ${previewName}` : "Claim subname";
@@ -316,26 +228,61 @@ function ClaimSection({
   );
 }
 
+/** Choose which tokenId to use for claim simulation/submission. */
+function computeEffectiveTokenId(
+  ownedCount: number,
+  firstTokenId: bigint | undefined,
+  selectedTokenId: string | undefined,
+): bigint | undefined {
+  if (ownedCount === 1 && firstTokenId != undefined) return firstTokenId;
+  if (ownedCount > 1 && selectedTokenId) return BigInt(selectedTokenId);
+  return undefined;
+}
+
+// availability hook moved to hooks/use-claim-availability.ts
+
+/** Build block explorer contract link based on current chain. */
+function getContractHref(): string | undefined {
+  const explorer = configuredChain.blockExplorers?.default.url;
+  const addr = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
+  return explorer && addr ? `${explorer}/address/${addr}` : undefined;
+}
+
+function HeaderDescription({ address, chainName, contractHref, isConnected }: Readonly<{ address?: string; chainName?: string; contractHref?: string; isConnected: boolean; }>) {
+  if (!isConnected) return <>Connect your wallet to start.</>;
+  return (
+    <>
+      Connected as <span className="font-mono">{shortenAddress(address ?? "")}</span> on {chainName ?? "Unknown network"}.
+      {contractHref && (
+        <>
+          {" "}•{" "}
+          <a className="underline underline-offset-2" href={contractHref} rel="noreferrer noopener" target="_blank">Contract</a>
+        </>
+      )}
+    </>
+  );
+}
+
 function MultiTokenSection({
-  shouldShow,
-  nounsLoading,
-  nounsError,
-  nouns,
-  onOpenDialog,
-  onOpenChange,
-  onTokenSelect,
   dialogOpen,
+  nouns,
+  nounsError,
+  nounsLoading,
+  onOpenChange,
+  onOpenDialog,
+  onTokenSelect,
   pendingTokenId,
+  shouldShow,
 }: Readonly<{
-  shouldShow: boolean;
-  nounsLoading: boolean;
-  nounsError: boolean;
-  nouns?: OwnedNft[];
-  onOpenDialog: () => void;
-  onOpenChange: (open: boolean) => void;
-  onTokenSelect: (tokenId: string) => void;
   dialogOpen: boolean;
+  nouns?: OwnedNft[];
+  nounsError: boolean;
+  nounsLoading: boolean;
+  onOpenChange: (open: boolean) => void;
+  onOpenDialog: () => void;
+  onTokenSelect: (tokenId: string) => void;
   pendingTokenId?: string;
+  shouldShow: boolean;
 }>) {
   if (!shouldShow) return null;
   return (
@@ -376,6 +323,50 @@ function MultiTokenSection({
   );
 }
 
+function NameInputWithSuffix({ onBlurValidate, onChange, previewName, rootName, subname, subnameError }: Readonly<{ onBlurValidate: () => void; onChange: (v: string) => void; previewName?: string; rootName: string; subname: string; subnameError?: string; }>) {
+  return (
+    <>
+      <Label className="text-sm" htmlFor="subname">Choose a subname</Label>
+      <div>
+        <div className="relative">
+          <Input
+            aria-invalid={!!subnameError}
+            aria-label="Subname label"
+            autoComplete="off"
+            id="subname"
+            inputMode="text"
+            onBlur={onBlurValidate}
+            onChange={(e) => { onChange(e.target.value); }}
+            placeholder="yourname"
+            type="text"
+            value={subname}
+          />
+          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">.{rootName}</span>
+        </div>
+        <p className="text-muted-foreground mt-1 text-xs">Allowed: a–z, 0–9, hyphen • 3–63 chars • case-insensitive</p>
+        {previewName && (
+          <p className="mt-1 text-sm">Preview: <span className="font-mono">{previewName}</span></p>
+        )}
+      </div>
+      {subnameError ? <p className="text-destructive text-sm">{subnameError}</p> : undefined}
+    </>
+  );
+}
+
+function OwnershipStatus({ isConnected, mustChooseToken, nounsError, nounsLoading, ownedCount }: Readonly<{ isConnected: boolean; mustChooseToken: boolean; nounsError: boolean; nounsLoading: boolean; ownedCount: number; }>) {
+  return (
+    <div aria-live="polite" className="text-muted-foreground mb-4 text-sm" role="status">
+      {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
+      {mustChooseToken && nounsLoading && (
+        <div className="mt-2">
+          <Skeleton className="h-3 w-40" />
+        </div>
+      )}
+      {mustChooseToken && nounsError && "Error loading Lil Nouns list."}
+    </div>
+  );
+}
+
 function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?: string; name: string; txHash?: `0x${string}` }>) {
   const [copied, setCopied] = useState(false);
   const ensHref = name ? `https://app.ens.domains/name/${encodeURIComponent(name)}` : undefined;
@@ -399,7 +390,7 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
           try {
             await navigator.clipboard.writeText(name);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            setTimeout(() => { setCopied(false); }, 1500);
           } catch { /* empty */ }
         }}
         size="sm"
@@ -409,4 +400,15 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
       </Button>
     </div>
   );
+}
+
+/** Resolve ENS root domain name via contract; fallback to lilnouns.eth. */
+function useRootName(): string {
+  const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
+  const { data: resolved } = useReadLilNounsEnsMapperName({
+    args: rootNode ? [rootNode as unknown as `0x${string}`] : undefined,
+    chainId,
+    query: { enabled: !!rootNode },
+  });
+  return defaultTo(resolved?.trim(), "lilnouns.eth");
 }
