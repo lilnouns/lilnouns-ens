@@ -12,7 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nekofar/lilnouns": "1.0.0-alpha.13",
+    "@nekofar/lilnouns": "1.0.0-alpha.15",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "5.85.5",
     "class-variance-authority": "0.7.1",
