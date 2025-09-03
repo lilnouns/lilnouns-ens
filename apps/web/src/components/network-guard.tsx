@@ -1,17 +1,26 @@
-import * as React from "react";
 import { Button } from "@repo/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@repo/ui/components/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/dialog";
+import * as React from "react";
 import { useMemo } from "react";
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 
-import { chain as configuredChain, chainId as configuredChainId } from "@/config/chain";
+import {
+  chain as configuredChain,
+  chainId as configuredChainId,
+} from "@/config/chain";
 
-interface NetworkGuardProps {
+interface NetworkGuardProperties {
   children: React.ReactNode;
 }
 
-export function NetworkGuard({ children }: NetworkGuardProps) {
-  const { isConnected, chainId: activeChainId } = useAccount();
+export function NetworkGuard({ children }: Readonly<NetworkGuardProperties>) {
+  const { chainId: activeChainId, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { chains, error, isPending, switchChain } = useSwitchChain();
 
@@ -25,6 +34,13 @@ export function NetworkGuard({ children }: NetworkGuardProps) {
     () => chains.some((c) => c.id === configuredChainId),
     [chains],
   );
+
+  const switchButtonLabel = useMemo(() => {
+    if (!canProgrammaticallySwitch) {
+      return "Open wallet to switch network";
+    }
+    return isPending ? "Switching…" : `Switch to ${configuredChain.name}`;
+  }, [canProgrammaticallySwitch, isPending]);
 
   return (
     <>
@@ -52,11 +68,7 @@ export function NetworkGuard({ children }: NetworkGuardProps) {
                 }
               }}
             >
-              {canProgrammaticallySwitch
-                ? isPending
-                  ? "Switching…"
-                  : `Switch to ${configuredChain.name}`
-                : "Open wallet to switch network"}
+              {switchButtonLabel}
             </Button>
 
             <Button
@@ -73,13 +85,14 @@ export function NetworkGuard({ children }: NetworkGuardProps) {
               <p className="text-destructive text-sm" role="alert">
                 {error.message}
               </p>
-            ) : null}
+            ) : undefined}
           </div>
 
-          <div className="mt-3 text-muted-foreground text-xs">
+          <div className="text-muted-foreground mt-3 text-xs">
             <p>
               If the button doesn’t work, switch networks in your wallet to
-              <span className="font-medium"> {configuredChain.name}</span> and return here.
+              <span className="font-medium"> {configuredChain.name}</span> and
+              return here.
             </p>
           </div>
         </DialogContent>
