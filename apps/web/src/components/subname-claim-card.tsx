@@ -57,10 +57,12 @@ export function SubnameClaimCard() {
       return;
     }
     if (firstTokenLoading) {
-      toast({ description: "Fetching your token ID. Please try again in a moment.", title: "Please wait" });
+      toast("Please wait", {
+        description: "Fetching your token ID. Please try again in a moment.",
+      });
       return;
     }
-    toast({ description: "Could not resolve your token ID. Please try again.", title: "Token not found", variant: "destructive" });
+    toast.error("Token not found", { description: "Could not resolve your token ID. Please try again." });
   }, [claim, firstTokenId, firstTokenLoading]);
 
   const onSubmit = useCallback(() => {
@@ -76,7 +78,7 @@ export function SubnameClaimCard() {
       setDialogOpen(true);
       return;
     }
-    toast({ description: "Unknown state; please try again.", title: "Unable to proceed" });
+    toast("Unable to proceed", { description: "Unknown state; please try again." });
   }, [validateSubname, subname, setSubnameError, isConnected, ownedCount, handleSingleTokenClaim]);
 
   const onTokenSelect = useCallback(
