@@ -1,17 +1,24 @@
 import { Button } from "@repo/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/card";
+import { Input } from "@repo/ui/components/input";
+import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
-import { useToast } from "@/components/toast";
 import { useSubdomainClaim } from "@/hooks/use-subdomain-claim";
 import { shortenAddress } from "@/utils/address";
 
 export function SubdomainClaimCard() {
-  const { toast } = useToast();
   const { address, chain, isConnected } = useAccount();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,7 +42,12 @@ export function SubdomainClaimCard() {
     subdomainError,
     validateSubdomain,
   } = useSubdomainClaim((options) => {
-    toast({ description: options.description, title: options.title, variant: options.variant });
+    const { description, title, variant } = options;
+    if (variant === "destructive") {
+      toast.error(title, { description });
+    } else {
+      toast(title, { description });
+    }
   });
 
   const onSubmit = useCallback(() => {
@@ -48,9 +60,16 @@ export function SubdomainClaimCard() {
       if (firstTokenId != undefined) {
         claim(firstTokenId);
       } else if (firstTokenLoading) {
-        toast({ description: "Fetching your token ID. Please try again in a moment.", title: "Please wait" });
+        toast({
+          description: "Fetching your token ID. Please try again in a moment.",
+          title: "Please wait",
+        });
       } else {
-        toast({ description: "Could not resolve your token ID. Please try again.", title: "Token not found", variant: "destructive" });
+        toast({
+          description: "Could not resolve your token ID. Please try again.",
+          title: "Token not found",
+          variant: "destructive",
+        });
       }
       return;
     }
@@ -58,8 +77,21 @@ export function SubdomainClaimCard() {
       setDialogOpen(true);
       return;
     }
-    toast({ description: "Unknown state; please try again.", title: "Unable to proceed" });
-  }, [validateSubdomain, subdomain, setSubdomainError, isConnected, ownedCount, firstTokenId, firstTokenLoading, claim, toast]);
+    toast({
+      description: "Unknown state; please try again.",
+      title: "Unable to proceed",
+    });
+  }, [
+    validateSubdomain,
+    subdomain,
+    setSubdomainError,
+    isConnected,
+    ownedCount,
+    firstTokenId,
+    firstTokenLoading,
+    claim,
+    toast,
+  ]);
 
   const onTokenSelect = useCallback(
     (tokenId: string) => {
@@ -94,7 +126,11 @@ export function SubdomainClaimCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div aria-live="polite" className="text-muted-foreground mb-4 text-sm" role="status">
+          <div
+            aria-live="polite"
+            className="text-muted-foreground mb-4 text-sm"
+            role="status"
+          >
             {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
             {mustChooseToken && nounsLoading && (
               <div className="mt-2">
@@ -105,13 +141,12 @@ export function SubdomainClaimCard() {
           </div>
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
-            <label className="text-sm font-medium" htmlFor="subdomain">
+            <Label className="text-sm" htmlFor="subdomain">
               Desired subname
-            </label>
-            <input
+            </Label>
+            <Input
               aria-invalid={!!subdomainError}
               autoComplete="off"
-              className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring shadow-xs flex h-9 w-full rounded-md border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
               id="subdomain"
               inputMode="text"
               onBlur={() => {
@@ -131,11 +166,17 @@ export function SubdomainClaimCard() {
             <div className="space-y-2 pt-2">
               <Button
                 aria-disabled={
-                  !!subdomainDisabledReason || isLoadingState || pending || isRegistered
+                  !!subdomainDisabledReason ||
+                  isLoadingState ||
+                  pending ||
+                  isRegistered
                 }
                 aria-label="Claim subname"
                 disabled={
-                  !!subdomainDisabledReason || isLoadingState || pending || isRegistered
+                  !!subdomainDisabledReason ||
+                  isLoadingState ||
+                  pending ||
+                  isRegistered
                 }
                 onClick={onSubmit}
                 type="button"
@@ -172,7 +213,9 @@ export function SubdomainClaimCard() {
                 </div>
               )}
               {nounsError && (
-                <p className="text-destructive text-sm">Error loading your Lil Nouns. Please try again.</p>
+                <p className="text-destructive text-sm">
+                  Error loading your Lil Nouns. Please try again.
+                </p>
               )}
               {nouns && !nounsLoading && !nounsError && (
                 <>
