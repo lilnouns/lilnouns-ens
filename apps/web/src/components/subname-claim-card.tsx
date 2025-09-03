@@ -1,5 +1,11 @@
 import { Button } from "@repo/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/card";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
@@ -13,7 +19,11 @@ import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { chainId, chain as configuredChain } from "@/config/chain";
-import { lilNounsEnsMapperAddress, useReadLilNounsEnsMapperName, useReadLilNounsEnsMapperRootNode } from "@/hooks/contracts";
+import {
+  lilNounsEnsMapperAddress,
+  useReadLilNounsEnsMapperName,
+  useReadLilNounsEnsMapperRootNode,
+} from "@/hooks/contracts";
 import { useClaimAvailability } from "@/hooks/use-claim-availability";
 import { useSubnameClaim } from "@/hooks/use-subname-claim";
 import { shortenAddress } from "@/utils/address";
@@ -62,7 +72,9 @@ export function SubnameClaimCard() {
       });
       return;
     }
-    toast.error("Token not found", { description: "Could not resolve your token ID. Please try again." });
+    toast.error("Token not found", {
+      description: "Could not resolve your token ID. Please try again.",
+    });
   }, [claim, firstTokenId, firstTokenLoading]);
 
   const onSubmit = useCallback(() => {
@@ -78,8 +90,17 @@ export function SubnameClaimCard() {
       setDialogOpen(true);
       return;
     }
-    toast("Unable to proceed", { description: "Unknown state; please try again." });
-  }, [validateSubname, subname, setSubnameError, isConnected, ownedCount, handleSingleTokenClaim]);
+    toast("Unable to proceed", {
+      description: "Unknown state; please try again.",
+    });
+  }, [
+    validateSubname,
+    subname,
+    setSubnameError,
+    isConnected,
+    ownedCount,
+    handleSingleTokenClaim,
+  ]);
 
   const onTokenSelect = useCallback(
     (tokenId: string) => {
@@ -94,15 +115,24 @@ export function SubnameClaimCard() {
   const explorerBase = configuredChain.blockExplorers?.default.url;
   const contractHref = getContractHref();
   const rootName = useRootName();
-  const previewName = useMemo(() => (subname ? `${subname}.${rootName}` : undefined), [subname, rootName]);
+  const previewName = useMemo(
+    () => (subname ? `${subname}.${rootName}` : undefined),
+    [subname, rootName],
+  );
 
   const effectiveTokenId = useMemo(
     () => computeEffectiveTokenId(ownedCount, firstTokenId, selectedTokenId),
     [ownedCount, firstTokenId, selectedTokenId],
   );
   const subnameValidationError = validateSubname(subname);
-  const shouldSimulate = !!effectiveTokenId && !!subname && !subnameValidationError && isConnected && (chain?.id === configuredChain.id);
-  const { blocksCta: availabilityBlocksCta, note: availabilityNote } = useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
+  const shouldSimulate =
+    !!effectiveTokenId &&
+    !!subname &&
+    !subnameValidationError &&
+    isConnected &&
+    chain?.id === configuredChain.id;
+  const { blocksCta: availabilityBlocksCta, note: availabilityNote } =
+    useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -131,8 +161,12 @@ export function SubnameClaimCard() {
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
             <NameInputWithSuffix
-              onBlurValidate={() => { setSubnameError(validateSubname(subname)); }}
-              onChange={(v) => { setSubname(v); }}
+              onBlurValidate={() => {
+                setSubnameError(validateSubname(subname));
+              }}
+              onChange={(v) => {
+                setSubname(v);
+              }}
               previewName={previewName}
               rootName={rootName}
               subname={subname}
@@ -163,7 +197,9 @@ export function SubnameClaimCard() {
             nounsError={nounsError}
             nounsLoading={nounsLoading}
             onOpenChange={setDialogOpen}
-            onOpenDialog={() => { setDialogOpen(true); }}
+            onOpenDialog={() => {
+              setDialogOpen(true);
+            }}
             onTokenSelect={onTokenSelect}
             pendingTokenId={selectedTokenId}
             shouldShow={mustChooseToken}
@@ -201,28 +237,53 @@ function ClaimSection({
   subnameDisabledReason?: string;
   txHash?: `0x${string}`;
 }>) {
-  const disabled = isUnavailable || isSubmitting || isRegistered || availabilityBlocksCta;
+  const disabled =
+    isUnavailable || isSubmitting || isRegistered || availabilityBlocksCta;
   const label = previewName ? `Claim ${previewName}` : "Claim subname";
   return (
     <>
-      <Button aria-disabled={disabled} aria-label={label} disabled={disabled} onClick={onSubmit} type="button">
+      <Button
+        aria-disabled={disabled}
+        aria-label={label}
+        disabled={disabled}
+        onClick={onSubmit}
+        type="button"
+      >
         {isSubmitting ? "Claiming…" : label}
       </Button>
       {availabilityNote && (
-        <p className={`text-sm ${availabilityBlocksCta ? "text-destructive" : "text-green-600"}`}>{availabilityNote}</p>
+        <p
+          className={`text-sm ${availabilityBlocksCta ? "text-destructive" : "text-green-600"}`}
+        >
+          {availabilityNote}
+        </p>
       )}
       {subnameDisabledReason && (
-        <p className="text-muted-foreground text-sm" role="note">{subnameDisabledReason}</p>
+        <p className="text-muted-foreground text-sm" role="note">
+          {subnameDisabledReason}
+        </p>
       )}
       {isRegistered && (
-        <SuccessActions explorerBase={explorerBase} name={previewName ?? ""} txHash={txHash} />
+        <SuccessActions
+          explorerBase={explorerBase}
+          name={previewName ?? ""}
+          txHash={txHash}
+        />
       )}
       <p className="text-muted-foreground mt-3 text-xs">
         Network: {chainName ?? "Unknown"} • Cost: gas only
         {contractHref && (
           <>
-            {" "}•{" "}
-            <a className="underline underline-offset-2" href={contractHref} rel="noreferrer noopener" target="_blank">View contract</a>
+            {" "}
+            •{" "}
+            <a
+              className="underline underline-offset-2"
+              href={contractHref}
+              rel="noreferrer noopener"
+              target="_blank"
+            >
+              View contract
+            </a>
           </>
         )}
       </p>
@@ -250,15 +311,35 @@ function getContractHref(): string | undefined {
   return explorer && addr ? `${explorer}/address/${addr}` : undefined;
 }
 
-function HeaderDescription({ address, chainName, contractHref, isConnected }: Readonly<{ address?: string; chainName?: string; contractHref?: string; isConnected: boolean; }>) {
+function HeaderDescription({
+  address,
+  chainName,
+  contractHref,
+  isConnected,
+}: Readonly<{
+  address?: string;
+  chainName?: string;
+  contractHref?: string;
+  isConnected: boolean;
+}>) {
   if (!isConnected) return <>Connect your wallet to start.</>;
   return (
     <>
-      Connected as <span className="font-mono">{shortenAddress(address ?? "")}</span> on {chainName ?? "Unknown network"}.
+      Connected as{" "}
+      <span className="font-mono">{shortenAddress(address ?? "")}</span> on{" "}
+      {chainName ?? "Unknown network"}.
       {contractHref && (
         <>
-          {" "}•{" "}
-          <a className="underline underline-offset-2" href={contractHref} rel="noreferrer noopener" target="_blank">Contract</a>
+          {" "}
+          •{" "}
+          <a
+            className="underline underline-offset-2"
+            href={contractHref}
+            rel="noreferrer noopener"
+            target="_blank"
+          >
+            Contract
+          </a>
         </>
       )}
     </>
@@ -286,7 +367,7 @@ function MultiTokenSection({
   pendingTokenId?: string;
   shouldShow: boolean;
 }>) {
-  if (!shouldShow) return null;
+  if (!shouldShow) return;
   return (
     <>
       <Separator className="my-6" />
@@ -304,13 +385,19 @@ function MultiTokenSection({
         </div>
       )}
       {nounsError && (
-        <p className="text-destructive text-sm">Error loading your Lil Nouns. Please try again.</p>
+        <p className="text-destructive text-sm">
+          Error loading your Lil Nouns. Please try again.
+        </p>
       )}
       {nouns && !nounsLoading && !nounsError && (
         <>
           <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-            <p className="text-muted-foreground text-sm">You have multiple Lil Nouns. Choose which to use.</p>
-            <Button onClick={onOpenDialog} variant="secondary">Open selector</Button>
+            <p className="text-muted-foreground text-sm">
+              You have multiple Lil Nouns. Choose which to use.
+            </p>
+            <Button onClick={onOpenDialog} variant="secondary">
+              Open selector
+            </Button>
           </div>
           <NftGalleryDialog
             nfts={nouns}
@@ -325,10 +412,26 @@ function MultiTokenSection({
   );
 }
 
-function NameInputWithSuffix({ onBlurValidate, onChange, previewName, rootName, subname, subnameError }: Readonly<{ onBlurValidate: () => void; onChange: (v: string) => void; previewName?: string; rootName: string; subname: string; subnameError?: string; }>) {
+function NameInputWithSuffix({
+  onBlurValidate,
+  onChange,
+  previewName,
+  rootName,
+  subname,
+  subnameError,
+}: Readonly<{
+  onBlurValidate: () => void;
+  onChange: (v: string) => void;
+  previewName?: string;
+  rootName: string;
+  subname: string;
+  subnameError?: string;
+}>) {
   return (
     <>
-      <Label className="text-sm" htmlFor="subname">Choose a subname</Label>
+      <Label className="text-sm" htmlFor="subname">
+        Choose a subname
+      </Label>
       <div>
         <div className="relative">
           <Input
@@ -338,26 +441,55 @@ function NameInputWithSuffix({ onBlurValidate, onChange, previewName, rootName, 
             id="subname"
             inputMode="text"
             onBlur={onBlurValidate}
-            onChange={(e) => { onChange(e.target.value); }}
+            onChange={(event) => {
+              onChange(event.target.value);
+            }}
             placeholder="yourname"
             type="text"
             value={subname}
           />
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">.{rootName}</span>
+          <span
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm"
+          >
+            .{rootName}
+          </span>
         </div>
-        <p className="text-muted-foreground mt-1 text-xs">Allowed: a–z, 0–9, hyphen • 3–63 chars • case-insensitive</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Allowed: a–z, 0–9, hyphen • 3–63 chars • case-insensitive
+        </p>
         {previewName && (
-          <p className="mt-1 text-sm">Preview: <span className="font-mono">{previewName}</span></p>
+          <p className="mt-1 text-sm">
+            Preview: <span className="font-mono">{previewName}</span>
+          </p>
         )}
       </div>
-      {subnameError ? <p className="text-destructive text-sm">{subnameError}</p> : undefined}
+      {subnameError ? (
+        <p className="text-destructive text-sm">{subnameError}</p>
+      ) : undefined}
     </>
   );
 }
 
-function OwnershipStatus({ isConnected, mustChooseToken, nounsError, nounsLoading, ownedCount }: Readonly<{ isConnected: boolean; mustChooseToken: boolean; nounsError: boolean; nounsLoading: boolean; ownedCount: number; }>) {
+function OwnershipStatus({
+  isConnected,
+  mustChooseToken,
+  nounsError,
+  nounsLoading,
+  ownedCount,
+}: Readonly<{
+  isConnected: boolean;
+  mustChooseToken: boolean;
+  nounsError: boolean;
+  nounsLoading: boolean;
+  ownedCount: number;
+}>) {
   return (
-    <div aria-live="polite" className="text-muted-foreground mb-4 text-sm" role="status">
+    <div
+      aria-live="polite"
+      className="text-muted-foreground mb-4 text-sm"
+      role="status"
+    >
       {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
       {mustChooseToken && nounsLoading && (
         <div className="mt-2">
@@ -369,22 +501,35 @@ function OwnershipStatus({ isConnected, mustChooseToken, nounsError, nounsLoadin
   );
 }
 
-function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?: string; name: string; txHash?: `0x${string}` }>) {
+function SuccessActions({
+  explorerBase,
+  name,
+  txHash,
+}: Readonly<{ explorerBase?: string; name: string; txHash?: `0x${string}` }>) {
   const [copied, setCopied] = useState(false);
-  const ensHref = name ? `https://app.ens.domains/name/${encodeURIComponent(name)}` : undefined;
-  const txHref = explorerBase && txHash ? `${explorerBase}/tx/${txHash}` : undefined;
+  const ensHref = name
+    ? `https://app.ens.domains/name/${encodeURIComponent(name)}`
+    : undefined;
+  const txHref =
+    explorerBase && txHash ? `${explorerBase}/tx/${txHash}` : undefined;
 
   return (
     <div className="flex flex-wrap items-center gap-2" role="status">
-      <p className="text-sm text-green-600">Success! You claimed <span className="font-mono">{name}</span></p>
+      <p className="text-sm text-green-600">
+        Success! You claimed <span className="font-mono">{name}</span>
+      </p>
       {ensHref && (
         <Button asChild size="sm" variant="secondary">
-          <a href={ensHref} rel="noreferrer noopener" target="_blank">View on ENS</a>
+          <a href={ensHref} rel="noreferrer noopener" target="_blank">
+            View on ENS
+          </a>
         </Button>
       )}
       {txHref && (
         <Button asChild size="sm" variant="ghost">
-          <a href={txHref} rel="noreferrer noopener" target="_blank">View transaction</a>
+          <a href={txHref} rel="noreferrer noopener" target="_blank">
+            View transaction
+          </a>
         </Button>
       )}
       <Button
@@ -392,8 +537,12 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
           try {
             await navigator.clipboard.writeText(name);
             setCopied(true);
-            setTimeout(() => { setCopied(false); }, 1500);
-          } catch { /* empty */ }
+            setTimeout(() => {
+              setCopied(false);
+            }, 1500);
+          } catch {
+            /* empty */
+          }
         }}
         size="sm"
         variant="ghost"
