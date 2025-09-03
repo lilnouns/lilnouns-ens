@@ -1,14 +1,15 @@
 import type { Query } from "@nekofar/lilnouns/subgraphs";
+import type { NonEmptyString } from 'type-fest';
 import type { Address } from "viem";
 
 import { gql, GraphQLClient } from "graphql-request";
-import { pipe, map } from "remeda";
+import { map, pipe } from "remeda";
 
 import type { OwnedNft } from "@/lib/types.ts";
 
 import { appConfig } from "@/config/app.ts";
 
-const placeholderImageURL = "https://placehold.co/512x512/png?text=Lil+Noun";
+const placeholderImageURL: NonEmptyString<string> = "https://placehold.co/512x512/png?text=Lil+Noun" as NonEmptyString<string>;
 
 export async function fetchOwnedLilNouns(
   address: Address | undefined,
@@ -35,9 +36,9 @@ export async function fetchOwnedLilNouns(
       data.nouns,
       map((t) => ({
         image: /*t.image ??*/ placeholderImageURL,
-        name: /*t.name ??*/ `Lil Noun #${t.id}`,
-        tokenId: t.id,
-      })),
+        name: /*t.name ??*/ (`Lil Noun #${t.id}` as NonEmptyString<string>),
+        tokenId: (t.id as NonEmptyString<string>),
+      } satisfies OwnedNft)),
     );
   } catch {
     return mockOwned(address);
