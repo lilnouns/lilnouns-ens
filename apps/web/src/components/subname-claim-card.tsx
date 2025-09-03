@@ -378,7 +378,7 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
       )}
       {txHref && (
         <Button asChild size="sm" variant="ghost">
-          <a href={txHref} target="_blank" rel="noreferrer noopener">View transaction</a>
+          <a href={txHref} rel="noreferrer noopener" target="_blank">View transaction</a>
         </Button>
       )}
       <Button
@@ -387,7 +387,7 @@ function SuccessActions({ explorerBase, name, txHash }: Readonly<{ explorerBase?
             await navigator.clipboard.writeText(name);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
-          } catch {}
+          } catch { /* empty */ }
         }}
         size="sm"
         variant="ghost"
