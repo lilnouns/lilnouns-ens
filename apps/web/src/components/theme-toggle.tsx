@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { useTheme } from "@/components/theme-provider";
 
-function MoonIcon(properties: React.SVGProps<SVGSVGElement>) {
+function MoonIcon(properties: Readonly<React.SVGProps<SVGSVGElement>>) {
   return (
     <svg
       aria-hidden="true"
@@ -69,4 +69,3 @@ export const ThemeToggle = memo(function ThemeToggle() {
     </Button>
   );
 });
-

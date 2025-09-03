@@ -11,9 +11,16 @@ import { Wallet } from "lucide-react";
 import { useMemo } from "react";
 import { defaultTo, find } from "remeda";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { chain as configuredChain, chainId as configuredChainId } from "@/config/chain";
 
+import {
+  chain as configuredChain,
+  chainId as configuredChainId,
+} from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
+
+interface Eip1193Provider {
+  request: (request: { method: string; params?: unknown }) => Promise<unknown>;
+}
 
 export function WalletConnectButton() {
   const { address, isConnected } = useAccount();
@@ -22,34 +29,42 @@ export function WalletConnectButton() {
   const { connect, connectors, error, isPending, status } = useConnect();
   const { disconnect } = useDisconnect();
 
-  const hasInjected =
-    globalThis.window !== undefined && (globalThis as any).ethereum !== undefined;
+  const ethereum: Eip1193Provider | undefined = (
+    globalThis as unknown as { ethereum?: Eip1193Provider }
+  ).ethereum;
+  const hasInjected = ethereum !== undefined;
 
   const primary = useMemo(
-    () => defaultTo(find(connectors, (c) => c.id === "injected"), connectors[0]),
+    () =>
+      defaultTo(
+        find(connectors, (c) => c.id === "injected"),
+        connectors[0],
+      ),
     [connectors],
   );
 
-  const activeChainName = configuredChain.name ?? "Unknown";
+  const activeChainName = configuredChain.name;
 
   const handleSwitchAccount = async () => {
     try {
-      const eth = (globalThis as any)?.ethereum;
-      if (!eth?.request) return;
+      const eth = ethereum;
+      if (!eth) return;
       // Prompt a wallet UI to manage account permissions if supported
-      await eth
-        .request({
-          method: "wallet_requestPermissions",
-          params: [{ eth_accounts: {} }],
-        })
-        .catch(() => {});
+      await eth.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }],
+      });
       await eth.request({ method: "eth_requestAccounts" });
     } catch (error_) {
       // Optional: integrate app-level toasts if desired
-
       console.error(error_);
     }
   };
+
+  const canConnect =
+    isConnected ||
+    (hasInjected && (Boolean(primary) || connectors.length > 0)) ||
+    status === "pending";
 
   return (
     <DropdownMenu>
@@ -57,11 +72,7 @@ export function WalletConnectButton() {
         <Button
           aria-busy={isPending}
           aria-label="Wallet menu"
-          disabled={
-            !isConnected &&
-            (!hasInjected || (!primary && connectors.length === 0)) &&
-            status !== "pending"
-          }
+          disabled={!canConnect}
           size="icon"
           title={
             isConnected
@@ -81,12 +92,18 @@ export function WalletConnectButton() {
               {shortenAddress(address ?? "")} • {activeChainName}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSwitchAccount}>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleSwitchAccount();
+              }}
+            >
               Switch account…
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => { disconnect(); }}
+              onClick={() => {
+                disconnect();
+              }}
             >
               Disconnect
             </DropdownMenuItem>
@@ -114,19 +131,19 @@ export function WalletConnectButton() {
               );
             })}
             {!hasInjected && (
-              <div className="px-2 py-1 text-sm text-muted-foreground">
+              <div className="text-muted-foreground px-2 py-1 text-sm">
                 No injected wallet detected
               </div>
             )}
             {error ? (
               <div
                 aria-live="polite"
-                className="px-2 py-1 text-sm text-destructive"
+                className="text-destructive px-2 py-1 text-sm"
                 role="alert"
               >
                 {error.message}
               </div>
-            ) : null}
+            ) : undefined}
           </>
         )}
       </DropdownMenuContent>
