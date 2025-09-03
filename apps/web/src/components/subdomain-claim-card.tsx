@@ -17,8 +17,13 @@ import { useAccount } from "wagmi";
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useSubdomainClaim } from "@/hooks/use-subdomain-claim";
 import { shortenAddress } from "@/utils/address";
-import { chain as configuredChain } from "@/config/chain";
-import { lilNounsEnsMapperAddress } from "@/hooks/contracts";
+import { chain as configuredChain, chainId } from "@/config/chain";
+import {
+  lilNounsEnsMapperAddress,
+  useReadLilNounsEnsMapperName,
+  useReadLilNounsEnsMapperRootNode,
+  useSimulateLilNounsEnsMapperClaimSubname,
+} from "@/hooks/contracts";
 
 export function SubdomainClaimCard() {
   const { address, chain, isConnected } = useAccount();
@@ -110,7 +115,53 @@ export function SubdomainClaimCard() {
   const explorerBase = configuredChain.blockExplorers?.default.url;
   const mapperAddress = lilNounsEnsMapperAddress[configuredChain.id as 11155111];
   const contractHref = explorerBase && mapperAddress ? `${explorerBase}/address/${mapperAddress}` : undefined;
-  const previewName = subdomain ? `${subdomain}.lilnouns.eth` : undefined;
+  // Dynamically resolve the root domain (e.g., "lilnouns.eth")
+  const { data: rootNode } = useReadLilNounsEnsMapperRootNode({ chainId });
+  const { data: resolvedRootName } = useReadLilNounsEnsMapperName({
+    args: rootNode ? [rootNode as unknown as `0x${string}`] : undefined,
+    chainId,
+    query: { enabled: !!rootNode },
+  });
+  const fallbackRoot = "lilnouns.eth";
+  const rootName = (resolvedRootName as string | undefined)?.trim() || fallbackRoot;
+  const previewName = subdomain ? `${subdomain}.${rootName}` : undefined;
+
+  // Pre-check availability via simulate when we know a tokenId
+  const effectiveTokenId =
+    ownedCount === 1 && firstTokenId != undefined
+      ? firstTokenId
+      : ownedCount > 1 && selectedTokenId
+        ? BigInt(selectedTokenId)
+        : undefined;
+  const subdomainValidationError = validateSubdomain(subdomain);
+  const shouldSimulate =
+    !!effectiveTokenId &&
+    !!subdomain &&
+    !subdomainValidationError &&
+    isConnected &&
+    (chain?.id === configuredChain.id);
+  const { data: simOk, error: simError, isLoading: simLoading } = useSimulateLilNounsEnsMapperClaimSubname({
+    args: shouldSimulate ? [subdomain, effectiveTokenId!] : undefined,
+    chainId,
+    query: {
+      enabled: shouldSimulate,
+      staleTime: 15_000,
+    },
+  });
+
+  let availabilityNote: string | undefined;
+  if (simLoading) availabilityNote = "Checking availability…";
+  else if (simError) {
+    const msg = String((simError as Error)?.message || simError);
+    if (msg.includes("AlreadyClaimed")) availabilityNote = "That subname is already claimed. Try another.";
+    else if (msg.includes("InvalidLabel")) availabilityNote = "Invalid subname. Use a–z, 0–9, hyphen; 3–63 chars.";
+    else if (msg.includes("PreexistingENSRecord")) availabilityNote = "This label collides with an existing ENS record.";
+    else if (msg.includes("NotTokenOwner") || msg.includes("NotAuthorised")) availabilityNote = "You must claim with the owner of the selected Lil Noun.";
+    else if (msg.includes("UnregisteredNode")) availabilityNote = "The root ENS node is not registered yet.";
+    else availabilityNote = "Cannot claim this subname. Please try another or retry.";
+  } else if (simOk) availabilityNote = "Available";
+
+  const availabilityBlocksCta = !!simError && shouldSimulate;
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -187,7 +238,7 @@ export function SubdomainClaimCard() {
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
                 >
-                  .lilnouns.eth
+                  .{rootName}
                 </span>
               </div>
               <p className="text-muted-foreground mt-1 text-xs">
@@ -207,20 +258,27 @@ export function SubdomainClaimCard() {
                   !!subdomainDisabledReason ||
                   isLoadingState ||
                   pending ||
-                  isRegistered
+                  isRegistered ||
+                  availabilityBlocksCta
                 }
                 aria-label={previewName ? `Claim ${previewName}` : "Claim subname"}
                 disabled={
                   !!subdomainDisabledReason ||
                   isLoadingState ||
                   pending ||
-                  isRegistered
+                  isRegistered ||
+                  availabilityBlocksCta
                 }
                 onClick={onSubmit}
                 type="button"
               >
                 {pending ? "Claiming…" : previewName ? `Claim ${previewName}` : "Claim subname"}
               </Button>
+              {availabilityNote && (
+                <p className={`text-sm ${availabilityBlocksCta ? "text-destructive" : "text-green-600"}`}>
+                  {availabilityNote}
+                </p>
+              )}
               {subdomainDisabledReason && (
                 <p className="text-muted-foreground text-sm" role="note">
                   {subdomainDisabledReason}
