@@ -1,5 +1,5 @@
-import { type Chain, mainnet, sepolia } from "viem/chains";
 import { entries, map, pipe } from "remeda";
+import { type Chain, mainnet, sepolia } from "viem/chains";
 import { z } from "zod";
 
 import { logEnvironmentDefaultChainWarning } from "@/config/print-environment-warning";
@@ -12,10 +12,7 @@ const byId = new Map<number, Chain>(
   ),
 );
 const nameAliases = new Map<string, Chain>(
-  pipe(
-    { ethereum: mainnet, mainnet, sepolia },
-    entries(),
-  ),
+  pipe({ ethereum: mainnet, mainnet, sepolia }, entries()),
 );
 
 function normalizeName(input: string): string {
@@ -55,7 +52,12 @@ export function resolveChainFromEnvironmentVariables(
         `[chain] Unknown VITE_CHAIN_ID="${rawId}". ${issue}. Set VITE_CHAIN_ID or VITE_CHAIN_NAME (mainnet|sepolia).`,
       );
     }
-    return byId.get(parsed.data)!;
+    const found = byId.get(parsed.data);
+    if (!found) {
+      // Should not happen due to schema, but keep type-safe
+      throw new Error(`[chain] Unsupported chain id: ${String(parsed.data)}`);
+    }
+    return found;
   }
 
   if (rawName && rawName.length > 0) {
@@ -67,7 +69,12 @@ export function resolveChainFromEnvironmentVariables(
         `[chain] Unknown VITE_CHAIN_NAME="${rawName}". ${issue}. Set VITE_CHAIN_ID or VITE_CHAIN_NAME (mainnet|sepolia).`,
       );
     }
-    return nameAliases.get(normalizeName(rawName))!;
+    const alias = nameAliases.get(normalizeName(rawName));
+    if (!alias) {
+      // Should not happen due to schema
+      throw new Error(`[chain] Unsupported chain name: ${rawName}`);
+    }
+    return alias;
   }
 
   logEnvironmentDefaultChainWarning();
