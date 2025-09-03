@@ -1,10 +1,10 @@
 import { memo } from "react";
 
+import { Logo } from "@/components/logo.tsx";
 import { SubdomainClaimCard } from "@/components/subdomain-claim-card";
 import { SubdomainInstructions } from "@/components/subdomain-instructions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
-import { Logo } from "@/components/logo.tsx";
 
 /**
  * Main application component
