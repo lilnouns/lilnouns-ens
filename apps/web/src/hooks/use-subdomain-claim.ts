@@ -36,6 +36,7 @@ export interface UseSubdomainClaimResult {
   subdomainError?: string;
 
   txSuccess: boolean;
+  txHash?: `0x${string}`;
   // validation + disabled reason
   validateSubdomain: (value: string) => string | undefined;
   writeErrorMessage?: string;
@@ -139,6 +140,7 @@ export function useSubdomainClaim(toast?: (options: { description: string; title
     subdomainDisabledReason,
     subdomainError,
     txSuccess,
+    txHash,
     validateSubdomain,
     writeErrorMessage: writeError ? String(writeError.message ?? writeError) : undefined,
   };

@@ -11,37 +11,23 @@ function SubdomainInstructionsImpl() {
     <div className="mx-auto mt-4 w-full max-w-2xl sm:mt-6">
       <Card>
         <CardHeader>
-          <CardTitle>How to claim your Lil Nouns subname</CardTitle>
+          <CardTitle>How to claim your lilnouns.eth subname</CardTitle>
           <CardDescription>
-            Follow the steps below to register a subname tied to one of your Lil Nouns NFTs.
+            Register a subname under lilnouns.eth that points to your wallet. Simple, transparent, and on-chain.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ol className="text-muted-foreground list-decimal space-y-3 pl-5 text-sm">
-            <li>
-              Connect your wallet using the button in the header. Make sure you are on the correct network
-              (you will be prompted if a switch is needed).
-            </li>
-            <li>
-              Enter your desired subname in the input field. Use only lowercase letters, numbers, and hyphens.
-              It must start and end with a letter or number.
-            </li>
-            <li>
-              If you own multiple Lil Nouns, you will be asked to choose which token to use for the claim.
-            </li>
-            <li>
-              Click “Claim subname” and confirm the transaction in your wallet. The app will show progress while
-              the transaction is pending.
-            </li>
-            <li>
-              After confirmation, you’ll see a success message. Your new subname is now registered!
-            </li>
+            <li>Connect your wallet (top right). Switch networks if prompted.</li>
+            <li>Choose a subname — you’ll claim <span className="font-mono">yourname.lilnouns.eth</span>.</li>
+            <li>If you own multiple Lil Nouns, pick which token to use.</li>
+            <li>Click “Claim” and confirm in your wallet. We’ll show progress.</li>
+            <li>Done! View it on ENS, see the transaction, or copy your name.</li>
           </ol>
           <Separator className="my-4" />
           <p className="text-muted-foreground text-xs">
-            Tips: If you run into issues, ensure your wallet is connected, you own at least one Lil Noun, and
-            your subname follows the validation rules. You can open the token selector at any time if you
-            have multiple NFTs.
+            Allowed: a–z, 0–9, hyphen • 3–63 chars • must start/end with a letter or number • case-insensitive.
+            You need to own at least one Lil Noun to claim.
           </p>
         </CardContent>
       </Card>

@@ -17,6 +17,8 @@ import { useAccount } from "wagmi";
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { useSubdomainClaim } from "@/hooks/use-subdomain-claim";
 import { shortenAddress } from "@/utils/address";
+import { chain as configuredChain } from "@/config/chain";
+import { lilNounsEnsMapperAddress } from "@/hooks/contracts";
 
 export function SubdomainClaimCard() {
   const { address, chain, isConnected } = useAccount();
@@ -40,6 +42,7 @@ export function SubdomainClaimCard() {
     subdomain,
     subdomainDisabledReason,
     subdomainError,
+    txHash,
     validateSubdomain,
   } = useSubdomainClaim((options) => {
     const { description, title, variant } = options;
@@ -104,12 +107,17 @@ export function SubdomainClaimCard() {
 
   const isLoadingState = mustChooseToken && nounsLoading;
 
+  const explorerBase = configuredChain.blockExplorers?.default.url;
+  const mapperAddress = lilNounsEnsMapperAddress[configuredChain.id as 11155111];
+  const contractHref = explorerBase && mapperAddress ? `${explorerBase}/address/${mapperAddress}` : undefined;
+  const previewName = subdomain ? `${subdomain}.lilnouns.eth` : undefined;
+
   return (
     <div className="mx-auto w-full max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Claim your Lil Nouns subname</span>
+            <span>Claim your lilnouns.eth subname</span>
           </CardTitle>
           <CardDescription>
             {isConnected ? (
@@ -119,6 +127,19 @@ export function SubdomainClaimCard() {
                   {shortenAddress(address ?? "")}
                 </span>{" "}
                 on {chain?.name ?? "Unknown network"}.
+                {contractHref && (
+                  <>
+                    {" "}•{" "}
+                    <a
+                      className="underline underline-offset-2"
+                      href={contractHref}
+                      rel="noreferrer noopener"
+                      target="_blank"
+                    >
+                      Contract
+                    </a>
+                  </>
+                )}
               </>
             ) : (
               "Connect your wallet to start."
@@ -142,23 +163,40 @@ export function SubdomainClaimCard() {
 
           <div aria-busy={pending} aria-live="polite" className="space-y-3">
             <Label className="text-sm" htmlFor="subdomain">
-              Desired subname
+              Choose a subname
             </Label>
-            <Input
-              aria-invalid={!!subdomainError}
-              autoComplete="off"
-              id="subdomain"
-              inputMode="text"
-              onBlur={() => {
-                setSubdomainError(validateSubdomain(subdomain));
-              }}
-              onChange={(event) => {
-                setSubdomain(event.target.value);
-              }}
-              placeholder="e.g. lilnouns"
-              type="text"
-              value={subdomain}
-            />
+            <div>
+              <div className="relative">
+                <Input
+                  aria-invalid={!!subdomainError}
+                  aria-label="Subname label"
+                  autoComplete="off"
+                  id="subdomain"
+                  inputMode="text"
+                  onBlur={() => {
+                    setSubdomainError(validateSubdomain(subdomain));
+                  }}
+                  onChange={(event) => {
+                    setSubdomain(event.target.value);
+                  }}
+                  placeholder="yourname"
+                  type="text"
+                  value={subdomain}
+                />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
+                >
+                  .lilnouns.eth
+                </span>
+              </div>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Allowed: a–z, 0–9, hyphen • 3–63 chars • case-insensitive
+              </p>
+              {previewName && (
+                <p className="mt-1 text-sm">Preview: <span className="font-mono">{previewName}</span></p>
+              )}
+            </div>
             {subdomainError ? (
               <p className="text-destructive text-sm">{subdomainError}</p>
             ) : undefined}
@@ -171,7 +209,7 @@ export function SubdomainClaimCard() {
                   pending ||
                   isRegistered
                 }
-                aria-label="Claim subname"
+                aria-label={previewName ? `Claim ${previewName}` : "Claim subname"}
                 disabled={
                   !!subdomainDisabledReason ||
                   isLoadingState ||
@@ -181,7 +219,7 @@ export function SubdomainClaimCard() {
                 onClick={onSubmit}
                 type="button"
               >
-                {pending ? "Claiming…" : "Claim subname"}
+                {pending ? "Claiming…" : previewName ? `Claim ${previewName}` : "Claim subname"}
               </Button>
               {subdomainDisabledReason && (
                 <p className="text-muted-foreground text-sm" role="note">
@@ -189,10 +227,28 @@ export function SubdomainClaimCard() {
                 </p>
               )}
               {isRegistered && (
-                <p className="text-sm text-green-600" role="status">
-                  Registration complete.
-                </p>
+                <SuccessActions
+                  explorerBase={explorerBase}
+                  name={previewName ?? ""}
+                  txHash={txHash}
+                />
               )}
+              <p className="text-muted-foreground mt-3 text-xs">
+                Network: {chain?.name ?? "Unknown"} • Cost: gas only
+                {contractHref && (
+                  <>
+                    {" "}•{" "}
+                    <a
+                      className="underline underline-offset-2"
+                      href={contractHref}
+                      rel="noreferrer noopener"
+                      target="_blank"
+                    >
+                      View contract
+                    </a>
+                  </>
+                )}
+              </p>
             </div>
           </div>
 
@@ -245,6 +301,41 @@ export function SubdomainClaimCard() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function SuccessActions({ name, explorerBase, txHash }: { name: string; explorerBase?: string; txHash?: `0x${string}` }) {
+  const [copied, setCopied] = useState(false);
+  const ensHref = name ? `https://app.ens.domains/name/${encodeURIComponent(name)}` : undefined;
+  const txHref = explorerBase && txHash ? `${explorerBase}/tx/${txHash}` : undefined;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="status">
+      <p className="text-sm text-green-600">Success! You claimed <span className="font-mono">{name}</span></p>
+      {ensHref && (
+        <Button asChild size="sm" variant="secondary">
+          <a href={ensHref} target="_blank" rel="noreferrer noopener">View on ENS</a>
+        </Button>
+      )}
+      {txHref && (
+        <Button asChild size="sm" variant="ghost">
+          <a href={txHref} target="_blank" rel="noreferrer noopener">View transaction</a>
+        </Button>
+      )}
+      <Button
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(name);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {}
+        }}
+        size="sm"
+        variant="ghost"
+      >
+        {copied ? "Copied" : "Copy name"}
+      </Button>
     </div>
   );
 }
