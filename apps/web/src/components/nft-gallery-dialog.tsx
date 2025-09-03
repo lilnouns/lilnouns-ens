@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/dialog";
+import { map } from "remeda";
 
 import type { OwnedNft } from "@/lib/types";
 
@@ -36,7 +37,7 @@ export function NftGalleryDialog({
         </DialogHeader>
         <div className="max-h-[50vh] overflow-auto">
           <ul className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
-            {nfts.map((nft) => {
+            {map(nfts, (nft) => {
               const isPending = pendingTokenId === nft.tokenId;
               const title = nft.name ?? `#${nft.tokenId}`;
               return (
