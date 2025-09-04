@@ -15,8 +15,7 @@ import {
   DialogTitle,
 } from "@repo/ui/components/dialog";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { times } from "remeda";
-
+import { map, times } from "remeda";
 import { chainId } from "@/config/chain";
 import { useTokenMetadata } from "@/hooks/use-token-metadata";
 
@@ -55,8 +54,8 @@ export function NftGalleryDialog({
         </DialogHeader>
         {isLoading && (
           <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div className="w-full" key={index}>
+            {map(["a", "b", "c", "d", "e", "f"] as const, (key) => (
+              <div className="w-full" key={`placeholder-${key}`}>
                 <Skeleton className="aspect-square w-full rounded-md" />
                 <div className="mt-2 space-y-2">
                   <Skeleton className="h-3 w-3/4" />
@@ -72,29 +71,28 @@ export function NftGalleryDialog({
           </p>
         )}
         {!isLoading && !isError && (
-          <>
-            <div className="max-h-[50vh] overflow-auto">
-              <ul className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
-                {times(Number(ownedCount), (index) => {
-                  return (
-                    <NftGalleryItem
-                      index={BigInt(index)}
-                      key={index}
-                      onSelect={onSelect}
-                      owner={owner}
-                      pendingTokenId={pendingTokenId}
-                    />
-                  );
-                })}
-              </ul>
-            </div>
-          </>
+          <div className="max-h-[50vh] overflow-auto">
+            <ul className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
+              {times(Number(ownedCount), (index) => {
+                return (
+                  <NftGalleryItem
+                    index={BigInt(index)}
+                    key={`${owner}:${String(index)}`}
+                    onSelect={onSelect}
+                    owner={owner}
+                    pendingTokenId={pendingTokenId}
+                  />
+                );
+              })}
+            </ul>
+          </div>
         )}
         <DialogFooter>
           <Button
             onClick={() => {
               onOpenChange(false);
             }}
+            type="button"
             variant="secondary"
           >
             Close
@@ -116,27 +114,30 @@ function NftGalleryItem({
   owner: Address;
   pendingTokenId?: string;
 }>) {
-  const { data: tokenId, status: idStatus } = useReadLilNounsTokenTokenOfOwnerByIndex({
-    args: [owner, index],
-    query: { staleTime: 60_000 },
-  });
+  const { data: tokenId, status: idStatus } =
+    useReadLilNounsTokenTokenOfOwnerByIndex({
+      args: [owner, index],
+      query: { staleTime: 60_000 },
+    });
 
   const { data: tokenUri } = useReadLilNounsTokenTokenUri({
     args: [tokenId],
     query: { staleTime: 60_000 },
   });
 
-  const { data: meta, isLoading: metaLoading } = useTokenMetadata(tokenUri);
+  const { data: metadata, isLoading: metadataLoading } =
+    useTokenMetadata(tokenUri);
 
-  if (idStatus === "pending" || tokenId === undefined) return <TokenRowSkeleton />;
+  if (idStatus === "pending" || tokenId === undefined)
+    return <TokenRowSkeleton />;
 
-  const image = meta?.image ?? meta?.animation_url;
-  const name = meta?.name ?? `Lil Noun ${tokenId.toString()}`;
+  const image = metadata?.image ?? metadata?.animation_url;
+  const name = metadata?.name ?? `Lil Noun ${tokenId.toString()}`;
 
-  const isPending = pendingTokenId === tokenId.toString() || metaLoading;
+  const isPending = pendingTokenId === tokenId.toString() || metadataLoading;
 
   return (
-    <li key={tokenId.toString()}>
+    <li>
       <button
         aria-label={`Select token ${name}`}
         className="focus:ring-ring hover:border-primary group w-full overflow-hidden rounded-md border p-2 text-left outline-none focus:ring-2 focus:ring-offset-1"
@@ -152,10 +153,10 @@ function NftGalleryItem({
           src={image}
         />
         <div className="mt-2 text-sm">
-          <div className="font-medium">
-            {name}
+          <div className="font-medium">{name}</div>
+          <div className="text-muted-foreground">
+            Token #{tokenId.toString()}
           </div>
-          <div className="text-muted-foreground">Token #{tokenId.toString()}</div>
           {isPending && (
             <div className="text-muted-foreground text-xs">Submitting…</div>
           )}
@@ -170,7 +171,7 @@ function TokenRowSkeleton() {
     <div className="flex items-center gap-3 rounded-xl border p-3">
       <Skeleton className="size-16 rounded-lg" />
       <div className="flex-1">
-        <Skeleton className="h-4 w-40 mb-2" />
+        <Skeleton className="mb-2 h-4 w-40" />
         <Skeleton className="h-3 w-[320px]" />
         <div className="mt-2 flex gap-1">
           <Skeleton className="h-5 w-16" />
