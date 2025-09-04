@@ -11,6 +11,8 @@ export interface UseOwnershipStateResult {
   firstTokenId?: bigint;
   firstTokenLoading: boolean;
   mustChooseToken: boolean;
+  ownedCount: number;
+  nounsError: boolean;
 }
 
 export function useOwnershipState(
@@ -41,5 +43,7 @@ export function useOwnershipState(
     firstTokenId,
     firstTokenLoading,
     mustChooseToken,
+    ownedCount,
+    nounsError: false,
   } as const;
 }
