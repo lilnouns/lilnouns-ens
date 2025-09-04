@@ -130,7 +130,20 @@ function NftGalleryItem({
     useTokenMetadata(tokenUri);
 
   if (idStatus === "pending" || tokenId === undefined)
-    return <TokenRowSkeleton />;
+    return (
+      <div className="flex items-center gap-3 rounded-xl border p-3">
+        <Skeleton className="size-16 rounded-lg" />
+        <div className="flex-1">
+          <Skeleton className="mb-2 h-4 w-40" />
+          <Skeleton className="h-3 w-[320px]" />
+          <div className="mt-2 flex gap-1">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-14" />
+          </div>
+        </div>
+      </div>
+    );
 
   const image = metadata?.image ?? metadata?.animation_url;
   const name = metadata?.name ?? `Lil Noun ${tokenId.toString()}`;
@@ -164,22 +177,5 @@ function NftGalleryItem({
         </div>
       </button>
     </li>
-  );
-}
-
-function TokenRowSkeleton() {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border p-3">
-      <Skeleton className="size-16 rounded-lg" />
-      <div className="flex-1">
-        <Skeleton className="mb-2 h-4 w-40" />
-        <Skeleton className="h-3 w-[320px]" />
-        <div className="mt-2 flex gap-1">
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-14" />
-        </div>
-      </div>
-    </div>
   );
 }
