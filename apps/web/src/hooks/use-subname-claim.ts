@@ -15,8 +15,6 @@ export interface UseSubnameClaimResult {
   isRegistered: boolean;
   mustChooseToken: boolean;
 
-  // ownership and selection
-  ownedCount: number;
   // tx state
   pending: boolean;
 
@@ -35,8 +33,6 @@ export interface UseSubnameClaimResult {
   validateSubname: (value: string) => string | undefined;
   writeErrorMessage?: string;
 }
-
-// ========================= Internal hooks =========================
 
 export function useSubnameClaim(
   toast?: (options: {
@@ -66,7 +62,6 @@ export function useSubnameClaim(
     hasError: tx.hasError,
     isRegistered: tx.isRegistered,
     mustChooseToken: ownership.mustChooseToken,
-    ownedCount: ownership.ownedCount,
     pending: tx.pending,
     setSubname: form.setSubname,
     setSubnameError: form.setSubnameError,
