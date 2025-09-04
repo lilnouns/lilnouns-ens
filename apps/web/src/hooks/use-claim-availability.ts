@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { isNonNullish } from "remeda";
 
 import { chainId } from "@/config/chain";
 import { useSimulateLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
@@ -18,9 +19,12 @@ export function useClaimAvailability(
     error: simError,
     isLoading: simLoading,
   } = useSimulateLilNounsEnsMapperClaimSubname({
-    args: enabled && tokenId ? [subname, tokenId] : [undefined],
+    args: enabled && tokenId ? [subname, tokenId] : undefined,
     chainId,
-    query: { enabled: enabled && !!tokenId && !!subname, staleTime: 15_000 },
+    query: {
+      enabled: enabled && isNonNullish(tokenId) && isNonNullish(subname),
+      staleTime: 15_000,
+    },
   });
 
   return useMemo(() => {
