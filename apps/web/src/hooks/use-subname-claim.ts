@@ -1,8 +1,6 @@
 import { isTruthy } from "remeda";
 import { useAccount } from "wagmi";
 
-import type { OwnedNft } from "@/lib/types";
-
 import { useClaimTx } from "@/hooks/subname-claim/use-claim-tx";
 import { useOwnershipState } from "@/hooks/subname-claim/use-ownership-state";
 import { useSubnameForm } from "@/hooks/subname-claim/use-subname-form";
@@ -16,9 +14,7 @@ export interface UseSubnameClaimResult {
   hasError: boolean;
   isRegistered: boolean;
   mustChooseToken: boolean;
-  nouns?: OwnedNft[];
-  nounsError: boolean;
-  nounsLoading: boolean;
+
   // ownership and selection
   ownedCount: number;
   // tx state
@@ -70,9 +66,6 @@ export function useSubnameClaim(
     hasError: tx.hasError,
     isRegistered: tx.isRegistered,
     mustChooseToken: ownership.mustChooseToken,
-    nouns: ownership.nouns,
-    nounsError: ownership.nounsError,
-    nounsLoading: ownership.nounsLoading,
     ownedCount: ownership.ownedCount,
     pending: tx.pending,
     setSubname: form.setSubname,

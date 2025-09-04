@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+
 import { useReadLilNounsTokenBalanceOf } from "@nekofar/lilnouns/contracts";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -15,8 +17,6 @@ import { useCallback, useMemo, useState } from "react";
 import { isBigInt } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
-
-import type { OwnedNft } from "@/lib/types";
 
 import { NftGalleryDialog } from "@/components/nft-gallery-dialog";
 import { chainId, chain as configuredChain } from "@/config/chain";
@@ -48,9 +48,6 @@ export function SubnameClaimCard() {
     firstTokenLoading,
     isRegistered,
     mustChooseToken,
-    nouns,
-    nounsError,
-    nounsLoading,
     pending,
     setSubname,
     setSubnameError,
@@ -118,7 +115,7 @@ export function SubnameClaimCard() {
     [claim],
   );
 
-  const isLoadingState = mustChooseToken && nounsLoading;
+  const isLoadingState = mustChooseToken;
   const explorerBase = configuredChain.blockExplorers?.default.url;
   const contractHref = getContractHref();
   const rootName = useRootName();
@@ -161,8 +158,6 @@ export function SubnameClaimCard() {
           <OwnershipStatus
             isConnected={isConnected}
             mustChooseToken={mustChooseToken}
-            nounsError={nounsError}
-            nounsLoading={nounsLoading}
             ownedCount={ownedCount}
           />
 
@@ -199,10 +194,8 @@ export function SubnameClaimCard() {
           </div>
 
           <MultiTokenSection
+            address={address}
             dialogOpen={dialogOpen}
-            nouns={nouns}
-            nounsError={nounsError}
-            nounsLoading={nounsLoading}
             onOpenChange={setDialogOpen}
             onOpenDialog={() => {
               setDialogOpen(true);
@@ -315,8 +308,11 @@ function computeEffectiveTokenId(
 /** Build block explorer contract link based on the current chain. */
 function getContractHref(): string | undefined {
   const explorer = configuredChain.blockExplorers?.default.url;
-  const addr = lilNounsEnsMapperAddress[configuredChain.id as 11_155_111];
-  return explorer && addr ? `${explorer}/address/${addr}` : undefined;
+  const addr =
+    lilNounsEnsMapperAddress[
+      configuredChain.id as keyof typeof lilNounsEnsMapperAddress
+    ];
+  return explorer ? `${explorer}/address/${addr}` : undefined;
 }
 
 function HeaderDescription({
@@ -355,20 +351,16 @@ function HeaderDescription({
 }
 
 function MultiTokenSection({
+  address,
   dialogOpen,
-  nouns,
-  nounsError,
-  nounsLoading,
   onOpenChange,
   onOpenDialog,
   onTokenSelect,
   pendingTokenId,
   shouldShow,
 }: Readonly<{
+  address?: Address;
   dialogOpen: boolean;
-  nouns?: OwnedNft[];
-  nounsError: boolean;
-  nounsLoading: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenDialog: () => void;
   onTokenSelect: (tokenId: string) => void;
@@ -379,43 +371,21 @@ function MultiTokenSection({
   return (
     <>
       <Separator className="my-6" />
-      {nounsLoading && (
-        <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div className="w-full" key={index}>
-              <Skeleton className="aspect-square w-full rounded-md" />
-              <div className="mt-2 space-y-2">
-                <Skeleton className="h-3 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {nounsError && (
-        <p className="text-destructive text-sm">
-          Error loading your Lil Nouns. Please try again.
+      <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+        <p className="text-muted-foreground text-sm">
+          You have multiple Lil Nouns. Choose which to use.
         </p>
-      )}
-      {nouns && !nounsLoading && !nounsError && (
-        <>
-          <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-            <p className="text-muted-foreground text-sm">
-              You have multiple Lil Nouns. Choose which to use.
-            </p>
-            <Button onClick={onOpenDialog} variant="secondary">
-              Open selector
-            </Button>
-          </div>
-          <NftGalleryDialog
-            nfts={nouns}
-            onOpenChange={onOpenChange}
-            onSelect={onTokenSelect}
-            open={dialogOpen}
-            pendingTokenId={pendingTokenId}
-          />
-        </>
-      )}
+        <Button onClick={onOpenDialog} variant="secondary">
+          Open selector
+        </Button>
+      </div>
+      <NftGalleryDialog
+        owner={address}
+        onOpenChange={onOpenChange}
+        onSelect={onTokenSelect}
+        open={dialogOpen}
+        pendingTokenId={pendingTokenId}
+      />
     </>
   );
 }
@@ -482,14 +452,10 @@ function NameInputWithSuffix({
 function OwnershipStatus({
   isConnected,
   mustChooseToken,
-  nounsError,
-  nounsLoading,
   ownedCount,
 }: Readonly<{
   isConnected: boolean;
   mustChooseToken: boolean;
-  nounsError: boolean;
-  nounsLoading: boolean;
   ownedCount: bigint | undefined;
 }>) {
   return (
@@ -500,12 +466,12 @@ function OwnershipStatus({
     >
       {isConnected &&
         `Owned Lil Nouns: ${ownedCount == undefined ? "—" : ownedCount.toString()}`}
-      {mustChooseToken && nounsLoading && (
+      {mustChooseToken && (
         <div className="mt-2">
           <Skeleton className="h-3 w-40" />
         </div>
       )}
-      {mustChooseToken && nounsError && "Error loading Lil Nouns list."}
+      {mustChooseToken && "Error loading Lil Nouns list."}
     </div>
   );
 }
