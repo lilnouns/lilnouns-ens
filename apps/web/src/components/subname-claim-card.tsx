@@ -14,7 +14,7 @@ import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useCallback, useMemo, useState } from "react";
-import { isBigInt } from "remeda";
+import { isBigInt, isNonNullish, isNullish } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
@@ -464,14 +464,14 @@ function OwnershipStatus({
       className="text-muted-foreground mb-4 text-sm"
       role="status"
     >
-      {isConnected &&
-        `Owned Lil Nouns: ${ownedCount == undefined ? "—" : ownedCount.toString()}`}
-      {mustChooseToken && (
+      {isConnected && isNonNullish(ownedCount) &&
+        `Owned Lil Nouns: ${ownedCount.toString()}`}
+      {mustChooseToken && isNullish(ownedCount) && (
         <div className="mt-2">
           <Skeleton className="h-3 w-40" />
         </div>
       )}
-      {mustChooseToken && "Error loading Lil Nouns list."}
+      {mustChooseToken && isNullish(ownedCount) && "Error loading Lil Nouns list."}
     </div>
   );
 }
