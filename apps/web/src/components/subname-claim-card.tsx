@@ -380,10 +380,10 @@ function MultiTokenSection({
         </Button>
       </div>
       <NftGalleryDialog
-        owner={address}
         onOpenChange={onOpenChange}
         onSelect={onTokenSelect}
         open={dialogOpen}
+        owner={address}
         pendingTokenId={pendingTokenId}
       />
     </>
