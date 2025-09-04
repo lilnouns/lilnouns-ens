@@ -2,6 +2,7 @@ import { memo } from "react";
 
 import { Logo } from "@/components/logo.tsx";
 import { SubnameClaimCard } from "@/components/subname-claim-card";
+import { OwnedSubnamesList } from "@/components/owned-subnames-list";
 import { SubnameInstructions } from "@/components/subname-instructions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
@@ -43,6 +44,7 @@ function App() {
         </section>
         <SubnameClaimCard />
         <SubnameInstructions />
+        <OwnedSubnamesList />
       </main>
     </div>
   );
