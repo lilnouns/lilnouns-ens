@@ -16,6 +16,7 @@ import {
 } from "@repo/ui/components/dialog";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { map, times } from "remeda";
+
 import { chainId } from "@/config/chain";
 import { useTokenMetadata } from "@/hooks/use-token-metadata";
 
@@ -121,7 +122,7 @@ function NftGalleryItem({
     });
 
   const { data: tokenUri } = useReadLilNounsTokenTokenUri({
-    args: [tokenId],
+    args: tokenId ? [tokenId] : undefined,
     query: { staleTime: 60_000 },
   });
 
