@@ -1,5 +1,6 @@
 import { Button } from "@repo/ui/components/button";
 import React from "react";
+import { getEnsNameHref } from "@/utils/links";
 
 export function ClaimSection({
   availabilityBlocksCta,
@@ -84,9 +85,7 @@ function SuccessActions({
   txHash,
 }: Readonly<{ explorerBase?: string; name: string; txHash?: `0x${string}` }>) {
   const [copied, setCopied] = React.useState(false);
-  const ensHref = name
-    ? `https://app.ens.domains/name/${encodeURIComponent(name)}`
-    : undefined;
+  const ensHref = name ? getEnsNameHref(name) : undefined;
   const txHref =
     explorerBase && txHash ? `${explorerBase}/tx/${txHash}` : undefined;
 
@@ -131,4 +130,3 @@ function SuccessActions({
     </div>
   );
 }
-
