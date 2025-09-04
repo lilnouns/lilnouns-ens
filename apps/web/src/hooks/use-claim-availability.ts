@@ -1,8 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { isNonNullish } from "remeda";
+import { usePublicClient } from "wagmi";
 
-import { chainId } from "@/config/chain";
-import { useSimulateLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
+import { chainId, chain as configuredChain } from "@/config/chain";
+import {
+  lilNounsEnsMapperAbi,
+  lilNounsEnsMapperAddress,
+} from "@/hooks/contracts";
 
 /**
  * useClaimAvailability
@@ -14,24 +19,45 @@ export function useClaimAvailability(
   subname: string,
   tokenId: bigint | undefined,
 ): { blocksCta: boolean; note?: string } {
+  const client = usePublicClient({ chainId });
+  const shouldRun =
+    enabled && isNonNullish(tokenId) && isNonNullish(subname) && !!client;
+
   const {
     data: simOk,
     error: simError,
     isLoading: simLoading,
-  } = useSimulateLilNounsEnsMapperClaimSubname({
-    args: enabled && tokenId ? [subname, tokenId] : undefined,
-    chainId,
-    query: {
-      enabled: enabled && isNonNullish(tokenId) && isNonNullish(subname),
-      staleTime: 15_000,
+  } = useQuery({
+    enabled: shouldRun,
+    queryFn: async () => {
+      await client?.simulateContract({
+        abi: lilNounsEnsMapperAbi,
+        address:
+          lilNounsEnsMapperAddress[
+            chainId as keyof typeof lilNounsEnsMapperAddress
+          ],
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        args: [subname, tokenId!],
+        chain: configuredChain,
+        functionName: "claimSubname",
+      });
+      return true as const;
     },
+    queryKey: [
+      "simulate-claimSubname",
+      chainId,
+      subname,
+      String(tokenId ?? ""),
+    ],
+    retry: 0,
+    staleTime: 15_000,
   });
 
   return useMemo(() => {
     if (simLoading)
       return { blocksCta: false, note: "Checking availability…" } as const;
     if (simError) {
-      const message = String((simError as Error)?.message || simError);
+      const message = String(simError.message || simError);
       if (message.includes("AlreadyClaimed"))
         return {
           blocksCta: true,
