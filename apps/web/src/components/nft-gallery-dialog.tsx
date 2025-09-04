@@ -111,20 +111,20 @@ function NftGalleryItem({
   owner,
   pendingTokenId,
 }: Readonly<{
-  index?: bigint;
-  onSelect?: (tokenId: string) => void;
-  owner?: Address;
-  pendingTokenId: string | undefined;
+  index: bigint;
+  onSelect: (tokenId: string) => void;
+  owner: Address;
+  pendingTokenId?: string;
 }>) {
   const { data: tokenId, status: idStatus } = useReadLilNounsTokenTokenOfOwnerByIndex({
     args: [owner, index],
     query: { staleTime: 60_000 },
   })
 
-  const { data: tokenUri, status: uriStatus } = useReadLilNounsTokenTokenUri({
+  const { data: tokenUri } = useReadLilNounsTokenTokenUri({
     args: [tokenId],
     query: { staleTime: 60_000 },
-  })
+  });
 
   const { data: meta, isLoading: metaLoading } = useTokenMetadata(tokenUri)
 
@@ -133,15 +133,15 @@ function NftGalleryItem({
   const image = meta?.image ?? meta?.animation_url
   const name = meta?.name ?? `Lil Noun ${tokenId.toString()}`
 
-  const isPending = pendingTokenId === tokenId || metaLoading;
+  const isPending = pendingTokenId === tokenId.toString() || metaLoading;
 
   return (
-    <li key={tokenId}>
+    <li key={tokenId.toString()}>
       <button
         aria-label={`Select token ${name}`}
         className="focus:ring-ring hover:border-primary group w-full overflow-hidden rounded-md border p-2 text-left outline-none focus:ring-2 focus:ring-offset-1"
         onClick={() => {
-          onSelect(tokenId);
+          onSelect(tokenId.toString());
         }}
         type="button"
       >
