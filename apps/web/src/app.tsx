@@ -47,7 +47,7 @@ function App() {
             wallet address. Free + gas.
           </p>
         </section>
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-2xl">
           <Tabs defaultValue="claim">
             <TabsList className="mb-3 inline-flex min-w-full gap-2 overflow-x-auto sm:gap-3">
               <TabsTrigger
