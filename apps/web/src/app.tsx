@@ -1,8 +1,14 @@
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/tabs";
 import { memo } from "react";
 
 import { Logo } from "@/components/logo.tsx";
-import { SubnameClaimCard } from "@/components/subname-claim-card";
 import { OwnedSubnamesList } from "@/components/owned-subnames-list";
+import { SubnameClaimCard } from "@/components/subname-claim-card";
 import { SubnameInstructions } from "@/components/subname-instructions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
@@ -14,8 +20,7 @@ function App() {
   return (
     <div className="bg-background min-h-screen">
       <header className="border-b">
-        <div
-          className="container mx-auto flex flex-col items-start gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="container mx-auto flex flex-col items-start gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <div className="flex items-center gap-4">
             <a
               aria-label="Lil Nouns home"
@@ -42,9 +47,31 @@ function App() {
             wallet address. Free + gas.
           </p>
         </section>
-        <SubnameClaimCard />
-        <SubnameInstructions />
-        <OwnedSubnamesList />
+        <div className="mx-auto w-full max-w-3xl">
+          <Tabs defaultValue="claim">
+            <TabsList className="mb-3 inline-flex min-w-full gap-2 overflow-x-auto sm:gap-3">
+              <TabsTrigger
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border-primary data-[state=inactive]:hover:bg-muted/50 inline-flex items-center rounded-md border px-3 py-1.5 text-sm shadow-sm"
+                value="claim"
+              >
+                Claim
+              </TabsTrigger>
+              <TabsTrigger
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border-primary data-[state=inactive]:hover:bg-muted/50 inline-flex items-center rounded-md border px-3 py-1.5 text-sm shadow-sm"
+                value="owned"
+              >
+                My Names
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="claim">
+              <SubnameClaimCard />
+              <SubnameInstructions />
+            </TabsContent>
+            <TabsContent value="owned">
+              <OwnedSubnamesList />
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
     </div>
   );
