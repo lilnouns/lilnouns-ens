@@ -14,11 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/dialog";
-import { Skeleton } from "@repo/ui/components/skeleton.tsx";
+import { Skeleton } from "@repo/ui/components/skeleton";
 import { times } from "remeda";
 
-import { chainId } from "@/config/chain.ts";
-import { useTokenMetadata } from '@/hooks/use-token-metadata'
+import { chainId } from "@/config/chain";
+import { useTokenMetadata } from "@/hooks/use-token-metadata";
 
 interface NftGalleryDialogProperties {
   onOpenChange: (open: boolean) => void;
@@ -119,19 +119,19 @@ function NftGalleryItem({
   const { data: tokenId, status: idStatus } = useReadLilNounsTokenTokenOfOwnerByIndex({
     args: [owner, index],
     query: { staleTime: 60_000 },
-  })
+  });
 
   const { data: tokenUri } = useReadLilNounsTokenTokenUri({
     args: [tokenId],
     query: { staleTime: 60_000 },
   });
 
-  const { data: meta, isLoading: metaLoading } = useTokenMetadata(tokenUri)
+  const { data: meta, isLoading: metaLoading } = useTokenMetadata(tokenUri);
 
-  if (idStatus === 'pending' || tokenId === undefined) return <TokenRowSkeleton />
+  if (idStatus === "pending" || tokenId === undefined) return <TokenRowSkeleton />;
 
-  const image = meta?.image ?? meta?.animation_url
-  const name = meta?.name ?? `Lil Noun ${tokenId.toString()}`
+  const image = meta?.image ?? meta?.animation_url;
+  const name = meta?.name ?? `Lil Noun ${tokenId.toString()}`;
 
   const isPending = pendingTokenId === tokenId.toString() || metaLoading;
 
@@ -146,16 +146,16 @@ function NftGalleryItem({
         type="button"
       >
         <img
-          alt={name ?? `Token #${tokenId}`}
+          alt={name}
           className="aspect-square w-full rounded object-cover"
           loading="lazy"
           src={image}
         />
         <div className="mt-2 text-sm">
           <div className="font-medium">
-            {name ?? `Lil Noun #${tokenId}`}
+            {name}
           </div>
-          <div className="text-muted-foreground">Token #{tokenId}</div>
+          <div className="text-muted-foreground">Token #{tokenId.toString()}</div>
           {isPending && (
             <div className="text-muted-foreground text-xs">Submitting…</div>
           )}
@@ -179,5 +179,5 @@ function TokenRowSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
