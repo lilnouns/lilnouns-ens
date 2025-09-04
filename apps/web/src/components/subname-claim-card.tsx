@@ -149,7 +149,6 @@ export function SubnameClaimCard() {
             <HeaderDescription
               address={address}
               chainName={chain?.name}
-              contractHref={contractHref}
               isConnected={isConnected}
             />
           </CardDescription>
@@ -318,12 +317,10 @@ function getContractHref(): string | undefined {
 function HeaderDescription({
   address,
   chainName,
-  contractHref,
   isConnected,
 }: Readonly<{
   address?: string;
   chainName?: string;
-  contractHref?: string;
   isConnected: boolean;
 }>) {
   if (!isConnected) return <>Connect your wallet to start.</>;
@@ -332,20 +329,6 @@ function HeaderDescription({
       Connected as{" "}
       <span className="font-mono">{shortenAddress(address ?? "")}</span> on{" "}
       {chainName ?? "Unknown network"}.
-      {contractHref && (
-        <>
-          {" "}
-          •{" "}
-          <a
-            className="underline underline-offset-2"
-            href={contractHref}
-            rel="noreferrer noopener"
-            target="_blank"
-          >
-            Contract
-          </a>
-        </>
-      )}
     </>
   );
 }
@@ -464,14 +447,17 @@ function OwnershipStatus({
       className="text-muted-foreground mb-4 text-sm"
       role="status"
     >
-      {isConnected && isNonNullish(ownedCount) &&
+      {isConnected &&
+        isNonNullish(ownedCount) &&
         `Owned Lil Nouns: ${ownedCount.toString()}`}
       {mustChooseToken && isNullish(ownedCount) && (
         <div className="mt-2">
           <Skeleton className="h-3 w-40" />
         </div>
       )}
-      {mustChooseToken && isNullish(ownedCount) && "Error loading Lil Nouns list."}
+      {mustChooseToken &&
+        isNullish(ownedCount) &&
+        "Error loading Lil Nouns list."}
     </div>
   );
 }
