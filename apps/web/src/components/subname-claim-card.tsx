@@ -1,13 +1,19 @@
 import { useReadLilNounsTokenBalanceOf } from "@nekofar/lilnouns/contracts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/card";
 import { useCallback, useMemo, useState } from "react";
-import { isBigInt } from "remeda";
+import { isBigInt, isNonNullish, isNullish } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
-import { MultiTokenSection } from "@/components/subname-claim/multi-token-section";
 import { ClaimSection } from "@/components/subname-claim/claim-section";
 import { HeaderDescription } from "@/components/subname-claim/header-description";
+import { MultiTokenSection } from "@/components/subname-claim/multi-token-section";
 import { NameInputWithSuffix } from "@/components/subname-claim/name-input-with-suffix";
 import { OwnershipStatus } from "@/components/subname-claim/ownership-status";
 import { chainId, chain as configuredChain } from "@/config/chain";
@@ -117,9 +123,9 @@ export function SubnameClaimCard() {
   );
   const subnameValidationError = validateSubname(subname);
   const shouldSimulate =
-    !!effectiveTokenId &&
-    !!subname &&
-    !subnameValidationError &&
+    isNonNullish(effectiveTokenId) &&
+    isNonNullish(subname) &&
+    isNullish(subnameValidationError) &&
     isConnected &&
     chain?.id === configuredChain.id;
   const { blocksCta: availabilityBlocksCta, note: availabilityNote } =
