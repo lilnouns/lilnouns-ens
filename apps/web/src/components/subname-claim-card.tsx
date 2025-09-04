@@ -1,3 +1,4 @@
+import { useReadLilNounsTokenBalanceOf } from "@nekofar/lilnouns/contracts";
 import { Button } from "@repo/ui/components/button";
 import {
   Card,
@@ -11,6 +12,7 @@ import { Label } from "@repo/ui/components/label";
 import { Separator } from "@repo/ui/components/separator";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useCallback, useMemo, useState } from "react";
+import { isBigInt } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 
@@ -34,6 +36,12 @@ export function SubnameClaimCard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTokenId, setSelectedTokenId] = useState<string | undefined>();
 
+  const { data: ownedCount } = useReadLilNounsTokenBalanceOf({
+    args: address ? [address] : undefined,
+    chainId,
+    query: { enabled: isConnected && !!address },
+  });
+
   const {
     claim,
     firstTokenId,
@@ -43,7 +51,6 @@ export function SubnameClaimCard() {
     nouns,
     nounsError,
     nounsLoading,
-    ownedCount,
     pending,
     setSubname,
     setSubnameError,
@@ -81,12 +88,12 @@ export function SubnameClaimCard() {
     const error = validateSubname(subname);
     setSubnameError(error);
     if (error || !isConnected) return;
-    if (ownedCount === 0) return;
-    if (ownedCount === 1) {
+    if (ownedCount == 0n) return;
+    if (ownedCount == 1n) {
       handleSingleTokenClaim();
       return;
     }
-    if (ownedCount > 1) {
+    if (isBigInt(ownedCount) && ownedCount > 1) {
       setDialogOpen(true);
       return;
     }
@@ -293,11 +300,12 @@ function ClaimSection({
 
 /** Choose which tokenId to use for claim simulation/submission. */
 function computeEffectiveTokenId(
-  ownedCount: number,
+  ownedCount: bigint | undefined,
   firstTokenId: bigint | undefined,
   selectedTokenId: string | undefined,
 ): bigint | undefined {
-  if (ownedCount === 1 && firstTokenId != undefined) return firstTokenId;
+  if (ownedCount == undefined) return undefined;
+  if (ownedCount == 1n && firstTokenId != undefined) return firstTokenId;
   if (ownedCount > 1 && selectedTokenId) return BigInt(selectedTokenId);
   return undefined;
 }
@@ -482,7 +490,7 @@ function OwnershipStatus({
   mustChooseToken: boolean;
   nounsError: boolean;
   nounsLoading: boolean;
-  ownedCount: number;
+  ownedCount: bigint | undefined;
 }>) {
   return (
     <div
@@ -490,7 +498,8 @@ function OwnershipStatus({
       className="text-muted-foreground mb-4 text-sm"
       role="status"
     >
-      {isConnected && `Owned Lil Nouns: ${ownedCount.toString()}`}
+      {isConnected &&
+        `Owned Lil Nouns: ${ownedCount == undefined ? "—" : ownedCount.toString()}`}
       {mustChooseToken && nounsLoading && (
         <div className="mt-2">
           <Skeleton className="h-3 w-40" />
