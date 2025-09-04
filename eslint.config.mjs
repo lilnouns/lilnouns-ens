@@ -69,6 +69,8 @@ export default tseslint.config(
       // App-specific tool configs we don't type-check via ESLint
       "apps/web/postcss.config.mjs",
       "apps/web/wagmi.config.ts",
+      // Ignore UI package from linting
+      "packages/ui/**",
     ],
   },
 
