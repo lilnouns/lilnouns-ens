@@ -2,13 +2,14 @@ import { defineConfig } from "@wagmi/cli";
 import { etherscan, react } from "@wagmi/cli/plugins";
 import { sepolia } from "wagmi/chains";
 import "dotenv/config";
+import { getEtherscanApiKey } from "./wagmi.env";
 
 export default defineConfig({
   contracts: [],
   out: "src/hooks/contracts.ts",
   plugins: [
     etherscan({
-      apiKey: process.env.ETHERSCAN_API_KEY!,
+      apiKey: getEtherscanApiKey(),
       chainId: sepolia.id,
       contracts: [
         {
