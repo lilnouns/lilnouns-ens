@@ -4,7 +4,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/tabs";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 import { Logo } from "@/components/logo.tsx";
 import { OwnedSubnamesList } from "@/components/owned-subnames-list";
@@ -17,6 +17,7 @@ import { WalletConnectButton } from "@/components/wallet-connect-button";
  * Main application component
  */
 function App() {
+  const [tab, setTab] = useState<"claim" | "owned">("claim");
   return (
     <div className="bg-background min-h-screen">
       <header className="border-b">
@@ -48,7 +49,7 @@ function App() {
           </p>
         </section>
         <div className="mx-auto w-full max-w-2xl">
-          <Tabs defaultValue="claim">
+          <Tabs onValueChange={(v) => { setTab(v as any); }} value={tab}>
             <TabsList className="mb-3 inline-flex min-w-full gap-2 overflow-x-auto sm:gap-3">
               <TabsTrigger
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border-primary data-[state=inactive]:hover:bg-muted/50 inline-flex items-center rounded-md border px-3 py-1.5 text-sm shadow-sm"
@@ -64,7 +65,7 @@ function App() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="claim">
-              <SubnameClaimCard />
+              <SubnameClaimCard onClaimSuccess={() => setTab("owned")} />
               <SubnameInstructions />
             </TabsContent>
             <TabsContent value="owned">

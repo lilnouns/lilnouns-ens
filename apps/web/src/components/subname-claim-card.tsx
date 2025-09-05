@@ -1,4 +1,5 @@
 import { useReadLilNounsTokenBalanceOf } from "@nekofar/lilnouns/contracts";
+import { Button } from "@repo/ui/components/button";
 import {
   Card,
   CardContent,
@@ -6,7 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
-import { useCallback, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/dialog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isBigInt, isNonNullish, isNullish } from "remeda";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
@@ -23,11 +32,13 @@ import { useSubnameClaim } from "@/hooks/use-subname-claim";
 import { getLilNounsEnsMapperContractHref } from "@/utils/links";
 import { computeEffectiveTokenId } from "@/utils/subname-claim";
 
-export function SubnameClaimCard() {
+export function SubnameClaimCard({ onClaimSuccess }: Readonly<{ onClaimSuccess?: () => void }>) {
   const { address, chain, isConnected } = useAccount();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTokenId, setSelectedTokenId] = useState<string | undefined>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [claimTokenIdToConfirm, setClaimTokenIdToConfirm] = useState<bigint | undefined>();
 
   const { data: ownedCount } = useReadLilNounsTokenBalanceOf({
     args: address ? [address] : undefined,
@@ -60,7 +71,8 @@ export function SubnameClaimCard() {
 
   const handleSingleTokenClaim = useCallback(() => {
     if (firstTokenId != undefined) {
-      claim(firstTokenId);
+      setClaimTokenIdToConfirm(firstTokenId);
+      setConfirmOpen(true);
       return;
     }
     if (firstTokenLoading) {
@@ -103,9 +115,10 @@ export function SubnameClaimCard() {
     (tokenId: string) => {
       setSelectedTokenId(tokenId);
       setDialogOpen(false);
-      claim(BigInt(tokenId));
+      setClaimTokenIdToConfirm(BigInt(tokenId));
+      setConfirmOpen(true);
     },
-    [claim],
+    [],
   );
 
   const isLoadingState = mustChooseToken;
@@ -130,6 +143,16 @@ export function SubnameClaimCard() {
     chain?.id === configuredChain.id;
   const { blocksCta: availabilityBlocksCta, note: availabilityNote } =
     useClaimAvailability(shouldSimulate, subname, effectiveTokenId);
+
+  // After successful claim, switch to "My Names" tab
+  const switchedReference = useRef(false);
+  useEffect(() => {
+    if (isRegistered && !switchedReference.current) {
+      switchedReference.current = true;
+      onClaimSuccess?.();
+    }
+    if (!isRegistered) switchedReference.current = false;
+  }, [isRegistered, onClaimSuccess]);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -196,6 +219,34 @@ export function SubnameClaimCard() {
             pendingTokenId={selectedTokenId}
             shouldShow={mustChooseToken}
           />
+
+          {/* Claim confirmation */}
+          <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm claim</DialogTitle>
+                <DialogDescription>
+                  This will claim the chosen subname to your selected Lil Noun. A
+                  transaction is required. Please review before continuing.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button onClick={() => { setConfirmOpen(false); }} variant="secondary">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (claimTokenIdToConfirm != undefined) {
+                      claim(claimTokenIdToConfirm);
+                    }
+                    setConfirmOpen(false);
+                  }}
+                >
+                  Confirm
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>
