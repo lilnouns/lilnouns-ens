@@ -13,9 +13,9 @@ export default defineConfig({
       contracts: [
         {
           address: {
-            [sepolia.id]: "0xe789E1d1D0833bC93d76a258aB90DC06674948a5",
+            [sepolia.id]: "0x3F87314d08CF7ad9815DCBe74A0D54bbdd86d1Dc",
           },
-          name: "Counter",
+          name: "LilNounsEnsMapper",
         },
       ],
       tryFetchProxyImplementation: true,

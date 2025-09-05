@@ -1,8 +1,9 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   type ReactNode,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -48,13 +49,12 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   // Memoize the context value to prevent unnecessary rerenders
-  const contextValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
-
-  return (
-    <ThemeContext value={contextValue}>
-      {children}
-    </ThemeContext>
+  const contextValue = useMemo(
+    () => ({ theme, toggleTheme }),
+    [theme, toggleTheme],
   );
+
+  return <ThemeContext value={contextValue}>{children}</ThemeContext>;
 }
 
 /**
@@ -62,7 +62,7 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
  * @throws Error if used outside ThemeProvider
  */
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = use(ThemeContext);
   if (!context) throw new Error("useTheme must be used inside ThemeProvider");
   return context;
 }

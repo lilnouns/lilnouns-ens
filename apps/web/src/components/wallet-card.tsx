@@ -8,8 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
+import { map, pipe } from "remeda";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 
+import { chainId as configuredChainId } from "@/config/chain";
 import { shortenAddress } from "@/utils/address";
 
 export function WalletCard() {
@@ -36,19 +38,23 @@ export function WalletCard() {
         {account.isConnected ? (
           <div className="space-y-4">
             <div className="grid gap-1">
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Status:</span>
                 <span className="font-medium">{account.status}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Address:</span>
                 <span className="font-medium">
                   {account.addresses
-                    ?.map((addr) => shortenAddress(addr))
-                    .join(", ") ?? "Not available"}
+                    ? pipe(
+                        account.addresses,
+                        map((addr) => shortenAddress(addr)),
+                        (xs) => xs.join(", "),
+                      )
+                    : "Not available"}
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-muted-foreground">Chain ID:</span>
                 <span className="font-medium">{account.chainId}</span>
               </div>
@@ -65,7 +71,8 @@ export function WalletCard() {
                   className="min-w-24 flex-1"
                   key={connector.uid}
                   onClick={() => {
-                    connect({ connector });
+                    // Force connection on the configured chain only
+                    connect({ chainId: configuredChainId, connector });
                   }}
                   variant="outline"
                 >
