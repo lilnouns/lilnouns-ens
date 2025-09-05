@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.22] - 2025-09-05
+
+### 🚀 Features
+
+- *(web)* Add `og.png` and `splash.png` assets
+- *(web)* Add favicon support
+- *(web)* Add `name` attribute to `action` object
+
 ## [1.0.0-alpha.21] - 2025-09-05
 
 ### 🚀 Features
