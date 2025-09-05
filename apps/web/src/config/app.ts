@@ -12,7 +12,6 @@ export interface AppConfig {
 
 function resolveSubgraphUrl(selectedChainId: number): string | undefined {
   const environment = import.meta.env as {
-    VITE_SUBGRAPH_URL?: string;
     VITE_SUBGRAPH_URL_MAINNET?: string;
     VITE_SUBGRAPH_URL_SEPOLIA?: string;
   };
