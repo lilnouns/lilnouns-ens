@@ -23,5 +23,9 @@ export default defineConfig(({ mode }) => {
       // Ensure a single instance of these libs across the workspace (pnpm + Vite)
       dedupe: ["react", "react-dom", "wagmi", "viem", "@tanstack/react-query"],
     },
+    // Run dev server on port 3000
+    server: {
+      port: 3000,
+    },
   };
 });
