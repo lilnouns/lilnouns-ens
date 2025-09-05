@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.20] - 2025-09-05
+
+### 🚀 Features
+
+- *(web)* Initialize `sdk` on app load
+- *(web)* Add `miniAppConnector` to `wagmi` configuration
+
 ## [1.0.0-alpha.19] - 2025-09-05
 
 ### 🐛 Bug Fixes
