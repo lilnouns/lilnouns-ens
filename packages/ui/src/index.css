@@ -10,9 +10,10 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Default to light; override in .dark below */
+  color-scheme: light;
+  color: var(--foreground);
+  background-color: var(--background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -139,6 +140,8 @@
 }
 
 .dark {
+  /* Ensure native controls and UA styles follow dark mode */
+  color-scheme: dark;
   --background: oklch(0.2497 0.0305 234.1628);
   --foreground: oklch(0.9306 0.0197 349.0785);
   --card: oklch(0.2902 0.0299 233.5352);
