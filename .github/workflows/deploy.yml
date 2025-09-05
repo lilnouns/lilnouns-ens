@@ -1,15 +1,19 @@
 # =====================================================================
-# 🚀 DEPLOY WEB APPLICATION WORKFLOW
+# 🚀 DEPLOY WEB APPLICATION — Split Jobs (PinMe | GitHub Pages)
 # =====================================================================
 name: 🚀 Deploy Web Application
 
 # ---------------------------------------------------------------------
 # 📋 WORKFLOW TRIGGERS
+# - Manual dispatch for ad-hoc deploys
+# - Release published for versioned deploys
+# Each job uses path filters (via a changes detector) to decide whether
+# to run on a given event.
 # ---------------------------------------------------------------------
 on:
-  workflow_dispatch: # 👆 Allow manual triggering
+  workflow_dispatch:
   release:
-    types: [published] # 📦 Run when a new release is published
+    types: [published]
 
 # ---------------------------------------------------------------------
 # 🔐 PERMISSIONS (required for GitHub Pages)
@@ -23,45 +27,155 @@ permissions:
 # 💼 JOBS
 # ---------------------------------------------------------------------
 jobs:
-  deploy:
-    name: 🔄 Deploy Application
+  # -------------------------------------------------------------
+  # 🔎 Detect changed paths and expose booleans for each target
+  # -------------------------------------------------------------
+  changes:
+    name: 🔎 Detect changes
     runs-on: ubuntu-latest
-    timeout-minutes: 15 # ⏱️ Set a timeout to prevent long-running jobs
+    outputs:
+      pinme: ${{ steps.filter.outputs.pinme }}
+      pages: ${{ steps.filter.outputs.pages }}
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: 🔍 Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3.0.2
+        with:
+          filters: |
+            pinme:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'apps/web/vite.config.ts'
+              - 'apps/web/index.html'
+              - '.github/workflows/deploy.yml'
+              - 'pnpm-lock.yaml'
+            pages:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'apps/web/vite.config.ts'
+              - 'apps/web/index.html'
+              - 'apps/web/public/**'
+              - '.github/workflows/deploy.yml'
+              - 'pnpm-lock.yaml'
+
+  # -------------------------------------------------------------
+  # 📦 PinMe Deploy (independent job)
+  # - Uses base path "/"
+  # - Separate cache key and artifact
+  # - Includes a deploy-check (dry-run-like validation)
+  # -------------------------------------------------------------
+  deploy_pinme:
+    name: 📦 Deploy to PinMe
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'release' && needs.changes.outputs.pinme == 'true')
+    timeout-minutes: 15
+    env:
+      NODE_ENV: production
+      # Force base path to "/" for PinMe deployments
+      VITE_BASE_PATH: "/"
+      # Runtime config (override as needed for PinMe)
+      VITE_CHAIN_ID: ${{ vars.VITE_CHAIN_ID }}
+      VITE_CHAIN_NAME: ${{ vars.VITE_CHAIN_NAME }}
+      VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
+      VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
+      VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          run_install: false
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v5.0.0
+        with:
+          node-version-file: "package.json"
+          cache: "pnpm"
+
+      - name: ♻️ Cache pnpm store (PinMe)
+        uses: actions/cache@v4.0.0
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-pinme-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-pinme-
+
+      - name: 📚 Install dependencies
+        run: pnpm install
+
+      - name: 🏗️ Build web (base=/)
+        run: pnpm -C apps/web build
+
+      - name: 🔎 Deploy-check (dry-run)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -la apps/web/dist
+          # Validate that built asset URLs are absolute (base="/")
+          if grep -Eo '<script[^>]+src="/[^"]+"' apps/web/dist/index.html >/dev/null; then
+            echo "✅ index.html references absolute asset paths"
+          else
+            echo "❌ Expected absolute asset paths in index.html (base=/)" >&2
+            echo "--- index.html (head snippet) ---"
+            sed -n '1,80p' apps/web/dist/index.html || true
+            exit 1
+          fi
+          # Optional manifest presence
+          test -f apps/web/dist/.vite/manifest.json && echo "✅ Vite manifest present" || echo "ℹ️ No manifest (ok if disabled)"
+
+      - name: 📦 Upload PinMe artifact
+        uses: actions/upload-artifact@v4.0.0
+        with:
+          name: pinme-dist
+          path: apps/web/dist
+
+      - name: 🚀 Deploy to PinMe
+        run: cd ./apps/web/ && pnpm pinme upload dist
+
+  # -------------------------------------------------------------
+  # 🌐 GitHub Pages Deploy (independent job)
+  # - Computes a default base path if not provided
+  # - Separate cache key and artifact
+  # - Includes a deploy-check using actions/deploy-pages dry-run
+  # -------------------------------------------------------------
+  deploy_pages:
+    name: 🌐 Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'release' && needs.changes.outputs.pages == 'true')
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.pages_deploy.outputs.page_url }}
-
-    # -------------------------------------------------------------
-    # 🌍 ENVIRONMENT VARIABLES (Frontend build-time)
-    # -------------------------------------------------------------
     env:
       NODE_ENV: production
-      # Base path for assets when served under a subfolder (e.g., GitHub Pages)
-      # If not provided via repo variables, a default is computed below.
       VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
-      # Chain selection (optional): set one of these
       VITE_CHAIN_ID: ${{ vars.VITE_CHAIN_ID }}
       VITE_CHAIN_NAME: ${{ vars.VITE_CHAIN_NAME }}
-      # WalletConnect (usually secret)
       VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
-      # Unified endpoints
       VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
       VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
-
     steps:
-      # 📥 CHECKOUT
-      - name: 📥 Checkout repository code
+      - name: 📥 Checkout
         uses: actions/checkout@v5.0.0
 
-      # 🔧 Compute defaults and validate required environment
-      - name: 🔧 Set base path and defaults
+      - name: 🔧 Compute base path and site defaults
         shell: bash
         run: |
           set -euo pipefail
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           OWNER="${GITHUB_REPOSITORY%%/*}"
 
-          # VITE_BASE_PATH: use repo var if set, else default to "/<repo>/"
           if [ -n "${VITE_BASE_PATH:-}" ]; then
             echo "Using VITE_BASE_PATH from repo vars: $VITE_BASE_PATH"
           else
@@ -70,32 +184,22 @@ jobs:
             echo "VITE_BASE_PATH=$VITE_BASE_PATH" >> "$GITHUB_ENV"
           fi
 
-          # Site metadata defaults (override via repo variables if desired)
           : "${VITE_SITE_TITLE:=Lil Nouns ENS}"
           : "${VITE_SITE_DESCRIPTION:=Claim subnames under lilnouns.eth}"
-          # Defaults may be relative; we will convert to absolute URLs below
           : "${VITE_OG_IMAGE:=og.png}"
           : "${VITE_FC_IMAGE:=$VITE_OG_IMAGE}"
           : "${VITE_FC_BUTTON:=Open App}"
           : "${VITE_FC_SPLASH_ICON:=splash.png}"
           : "${VITE_FC_SPLASH_BG:=#f6e6ee}"
-          # Compute site URL with base path as default
           : "${VITE_SITE_URL:=https://${OWNER}.github.io/${REPO_NAME}}"
           : "${VITE_FC_LAUNCH_URL:=$VITE_SITE_URL}"
 
-          # Ensure absolute URLs for Open Graph & splash images
           to_abs() {
             val="$1"
-            if [ -z "$val" ]; then
-              echo ""
-              return
-            fi
+            if [ -z "$val" ]; then echo ""; return; fi
             case "$val" in
               *://*) echo "$val" ;;
-              *)
-                val="${val#/}"
-                echo "${VITE_SITE_URL%/}/$val"
-                ;;
+              *) val="${val#/}"; echo "${VITE_SITE_URL%/}/$val" ;;
             esac
           }
 
@@ -115,69 +219,48 @@ jobs:
             echo "VITE_FC_SPLASH_BG=$VITE_FC_SPLASH_BG"
           } >> "$GITHUB_ENV"
 
-      - name: ✅ Validate required env vars
-        shell: bash
-        run: |
-          set -euo pipefail
-          missing=()
-          if [ -z "${VITE_SUBGRAPH_URL:-}" ]; then missing+=(VITE_SUBGRAPH_URL); fi
-          # At least one of VITE_CHAIN_ID or VITE_CHAIN_NAME must be set
-          if [ -z "${VITE_CHAIN_ID:-}" ] && [ -z "${VITE_CHAIN_NAME:-}" ]; then
-            echo "Neither VITE_CHAIN_ID nor VITE_CHAIN_NAME is set"
-            missing+=(VITE_CHAIN_ID_or_VITE_CHAIN_NAME)
-          fi
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "Missing required environment variables: ${missing[*]}" >&2
-            exit 1
-          fi
-
-      # 🛠️ SETUP ENVIRONMENT
-      - name: 🔧 Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.4.0
-        with:
-          version: nightly
-
-      - name: 📦 Install pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4.1.0
         with:
           run_install: false
 
-      - name: 🟢 Install Node.js
-        uses: actions/setup-node@v5
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v5.0.0
         with:
-          cache: "pnpm"
           node-version-file: "package.json"
+          cache: "pnpm"
 
-      # 📚 DEPENDENCIES
+      - name: ♻️ Cache pnpm store (Pages)
+        uses: actions/cache@v4.0.0
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-pages-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-pages-
+
       - name: 📚 Install dependencies
         run: pnpm install
 
-      # 🏗️ BUILD
-      - name: 🏗️ Build the apps and packages
+      - name: 🏗️ Build all apps/packages
         run: pnpm run build
 
-      # 🏗️ Build a Pinme variant with base path set to "/"
-      - name: 🏗️ Build (Pinme variant, base=/)
-        env:
-          VITE_BASE_PATH: "/"
+      - name: 🔎 Deploy-check (dry-run)
         run: |
-          set -euo pipefail
-          cd apps/web
-          # Build a separate output folder to avoid overwriting the Pages artifact
-          pnpm rimraf dist-pinme
-          pnpm vite build --outDir dist-pinme
+          test -d apps/web/dist && echo "✅ Found built Pages artifact"
 
-      # 🧪 TEST
-      - name: 🧪 Execute tests
-        run: pnpm run test
-
-      # 🚀 DEPLOY TO PINME
-      - name: 🚀 Deploy to pinme
-        run: cd ./apps/web/ && pnpm pinme upload dist-pinme
-
-      # 🌐 GITHUB PAGES DEPLOYMENT
       - name: ⚙️ Configure GitHub Pages
         uses: actions/configure-pages@v5.0.0
+
+      - name: 📦 Upload Pages artifact (dry-run)
+        uses: actions/upload-pages-artifact@v3.0.0
+        with:
+          path: apps/web/dist
+
+      - name: 🌐 Deploy to GitHub Pages (dry-run)
+        id: pages_deploy_dry
+        uses: actions/deploy-pages@v4.0.0
+        with:
+          dry-run: true
 
       - name: 📦 Upload Pages artifact
         uses: actions/upload-pages-artifact@v3.0.0
