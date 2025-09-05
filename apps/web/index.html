@@ -6,17 +6,42 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+
+    <!-- Open Graph basics -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="%VITE_SITE_TITLE%" />
+    <meta property="og:description" content="%VITE_SITE_DESCRIPTION%" />
+    <meta property="og:url" content="%VITE_SITE_URL%" />
+    <meta property="og:image" content="%VITE_OG_IMAGE%" />
+
+    <!-- Farcaster Mini App -->
+    <meta
+      name="fc:miniapp"
+      content='{
+        "version":"1",
+        "imageUrl":"%VITE_FC_IMAGE%",
+        "button":{
+          "title":"%VITE_FC_BUTTON%",
+          "action":{
+            "type":"launch_miniapp",
+            "url":"%VITE_FC_LAUNCH_URL%",
+            "splashImageUrl":"%VITE_FC_SPLASH_ICON%",
+            "splashBackgroundColor":"%VITE_FC_SPLASH_BG%"
+          }
+        }
+      }'
+    />
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
     <title>Claim a subname under lilnouns.eth</title>
-    <meta
-      name="description"
-      content="Own a Lil Noun? Claim your subname under lilnouns.eth. Simple, transparent, and on-chain. Free + gas."
-    />
+    <meta name="description" content="%VITE_SITE_DESCRIPTION%" />
   </head>
   <body class="bg-background text-foreground min-h-screen antialiased">
     <div id="root"></div>
