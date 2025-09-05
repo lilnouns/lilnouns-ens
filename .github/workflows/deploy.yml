@@ -73,14 +73,35 @@ jobs:
           # Site metadata defaults (override via repo variables if desired)
           : "${VITE_SITE_TITLE:=Lil Nouns ENS}"
           : "${VITE_SITE_DESCRIPTION:=Claim subnames under lilnouns.eth}"
-          : "${VITE_OG_IMAGE:=/og.png}"
+          # Defaults may be relative; we will convert to absolute URLs below
+          : "${VITE_OG_IMAGE:=og.png}"
           : "${VITE_FC_IMAGE:=$VITE_OG_IMAGE}"
           : "${VITE_FC_BUTTON:=Open App}"
-          : "${VITE_FC_SPLASH_ICON:=/splash.png}"
+          : "${VITE_FC_SPLASH_ICON:=splash.png}"
           : "${VITE_FC_SPLASH_BG:=#f6e6ee}"
           # Compute site URL with base path as default
           : "${VITE_SITE_URL:=https://${OWNER}.github.io/${REPO_NAME}}"
           : "${VITE_FC_LAUNCH_URL:=$VITE_SITE_URL}"
+
+          # Ensure absolute URLs for Open Graph & splash images
+          to_abs() {
+            val="$1"
+            if [ -z "$val" ]; then
+              echo ""
+              return
+            fi
+            case "$val" in
+              *://*) echo "$val" ;;
+              *)
+                val="${val#/}"
+                echo "${VITE_SITE_URL%/}/$val"
+                ;;
+            esac
+          }
+
+          VITE_OG_IMAGE="$(to_abs "$VITE_OG_IMAGE")"
+          VITE_FC_IMAGE="$(to_abs "$VITE_FC_IMAGE")"
+          VITE_FC_SPLASH_ICON="$(to_abs "$VITE_FC_SPLASH_ICON")"
 
           {
             echo "VITE_SITE_TITLE=$VITE_SITE_TITLE"
