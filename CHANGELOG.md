@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.21] - 2025-09-05
+
+### 🚀 Features
+
+- *(web)* Add Open Graph and Farcaster meta tags
+- *(web)* Make page title configurable via environment
+- *(web)* Replace `resolveSubgraphUrl` with `getSubgraphUrl`
+- *(web)* Add new optional environment variables
+- *(web)* Add env validation for `ETHERSCAN_API_KEY`
+
+### 💼 Other
+
+- *(web)* Add `VITE_BASE_PATH` environment variable
+
+### 🎨 Styling
+
+- *(web)* Reformat HTML for improved readability
+
 ## [1.0.0-alpha.20] - 2025-09-05
 
 ### 🚀 Features
