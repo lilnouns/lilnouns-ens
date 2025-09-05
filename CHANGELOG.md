@@ -2,6 +2,141 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.16] - 2025-09-05
+
+### 🚀 Features
+
+- *(contracts)* Add network-specific env var handling
+- *(web)* Add subdomain claim functionality with UI updates
+- *(web)* Add `ThemeToggle` for theme switching
+- *(web)* Add Google Fonts integration
+- *(ui)* Add `DropdownMenu` component
+- *(web)* Add `WalletConnectButton` component
+- *(web)* Extend `ImportMetaEnv` with custom env vars
+- *(web)* Add chain resolution with environment variables
+- *(web)* Extend `ImportMetaEnv` with `VITE_SUBGRAPH_URL`
+- *(web)* Add example `.env` with `VITE_SUBGRAPH_URL`
+- *(web)* Dedupe dependencies in Vite config
+- *(web)* Add support for injected wallet detection
+- *(web)* Add chain configuration options and update hooks
+- *(web)* Add chain-specific RPC and subgraph URL support
+- *(web)* Integrate on-chain Lil Nouns balance handling
+- *(ui)* Add `Skeleton` component
+- *(web)* Improve loading states for subdomain claim card
+- *(web)* Add `SubdomainInstructions` component
+- *(web)* Replace header text with logo and link
+- *(web)* Replace inline logo with `Logo` component
+- *(web)* Update `Logo` dimensions for consistency
+- *(web)* Add distinct RPC URL environment variables
+- *(web)* Add `NetworkGuard` component to handle networks
+- *(config)* Add linting for JavaScript and TypeScript files
+- *(config)* Add eslint auto-fix to lint-staged
+- *(web)* Wrap `App` with `NetworkGuard`
+- *(ui)* Add reusable `Dialog` component
+- *(ui)* Add reusable `Input` component
+- *(ui)* Add reusable `Label` component
+- *(web)* Enhance subname claiming UX
+- *(subdomain-claim-card)* Improve subdomain claim logic
+- *(web)* Extract availability logic to separate hook
+- *(web)* Integrate Lil Nouns data fetching
+- *(web)* Enhance type safety and string handling
+- *(web)* Add `OwnedSubnamesList` component to display user subnames
+- *(ui)* Add `Tabs` component with flexible structure
+- *(ui)* Add `Toaster` component for notifications
+- *(web)* Integrate `Tabs` for subname management UI
+- *(web)* Adjust `Tabs` container width for better layout
+- *(web)* Enhance subname management with contextual actions
+- *(web)* Display ENS subnames in NFT gallery dialog
+- *(web)* Replace badge with dropdown for subnames
+- *(web)* Add confirmation dialog for subname actions
+- *(web)* Add tab behavior and claim confirmation dialog
+
+### 🐛 Bug Fixes
+
+- *(contracts)* Resolve `_ROOT_LABEL` naming inconsistency
+- *(web)* Update subdomain placeholder text
+- *(web)* Improve `SubdomainClaimCard` state handling
+- *(web)* Handle undefined `tokenId` in `useReadLilNounsTokenTokenUri`
+
+### 🚜 Refactor
+
+- *(web)* Remove `WalletConnectButton` from claim card
+- *(contracts)* Rename `ROOT_LABEL` to `ENS_ROOT_LABEL`
+- *(web)* Update contract address and rename contract
+- *(web)* Implement `LilNounsEnsMapper` contract hooks
+- *(web)* Remove `CounterCard` component
+- *(web)* Rename `subdomain` to `subname` in UI texts
+- *(web)* Remove `registrarAbi` constant
+- *(web)* Replace `useWriteContract` with generated hook
+- *(web)* Replace `sepolia` with custom `chain` config
+- *(web)* Update `toast`, `theme-toggle`, and `nft-gallery-dialog`
+- *(web)* Replace `useContext` with `use` in `useTheme`
+- *(web)* Update TS target to ES2021
+- *(web)* Update app header title to `Lil Nouns`
+- *(web)* Update `fetchOwnedLilNouns` for graphql-request
+- *(web)* Improve typings and code readability
+- *(web)* Update `fetchOwnedLilNouns` for address handling
+- *(web)* Simplify subdomain claim states
+- *(web)* Enforce chain validation in wallet actions
+- *(web)* Extract `useSubdomainClaim` hook from claim card
+- *(web)* Update `resolveRpcHttpUrl` for clarity
+- *(web)* Improve variable naming and type usage
+- *(config)* Centralize ESLint configuration
+- *(web)* Integrate `Dialog` into `NftGalleryDialog` and `NetworkGuard`
+- *(web)* Replace custom `ToastProvider` with `AppToaster`
+- *(web)* Update `SubdomainClaimCard` to use `Input`, `Label`, and `sonner`
+- *(web)* Improve `NetworkGuard` readability and maintainability
+- *(web)* Rename subdomain to subname across components
+- *(contracts)* Rename `subdomain` to `subname` in tests
+- *(web)* Extract `title` for consistent NFT labeling
+- *(web)* Simplify subname claim logic
+- *(web)* Modularize subname claim logic
+- *(web)* Modularize `useSubnameClaim` logic
+- *(web-utils)* Improve typing in `shortenAddress`
+- *(web)* Reorganize and modularize `subname-claim-card`
+- *(web)* Use `pipe` and `map` for cleaner data processing
+- *(web)* Replace array methods with remeda utilities
+- *(web)* Replace array methods with `remeda` utilities
+- *(web)* Enforce immutability in `appConfig`
+- *(web)* Use `NonEmptyString` for stricter type safety
+- *(web)* Use `fileURLToPath` for resolving paths
+- *(web)* Remove `NonEmptyString` from `OwnedNft` types
+- *(web)* Add type-safe handling for `chain` parsing
+- *(web)* Improve type safety and refactor wallet logic
+- *(web)* Update `toast` API usage for consistency
+- *(web)* Improve readability with consistent formatting
+- *(web)* Enhance `useRootName` fallback logic
+- *(web)* Improve clipboard handling in buttons
+- *(web)* Replace `map` with `remeda` utility
+- *(web)* Use `remeda``s `isTruthy` for truthy checks
+- *(web)* Extract and modularize subname claim logic
+- *(web)* Update `ownedCount` to use `bigint`
+- *(web)* Improve code consistency
+- *(web)* Enhance nft gallery skeletons and item keys
+- *(web)* Inline `TokenRowSkeleton` for cleaner structure
+- *(web)* Reorder `owner` prop in `NftGalleryDialog`
+- *(web)* Improve `ownedCount` nullish checks
+- *(web)* Remove `contractHref` from `HeaderDescription`
+- *(web)* Remove `ownedCount` from `useSubnameClaim`
+- *(web)* Remove unused `useQuery` from `useOwnershipState`
+- *(web)* Remove `subgraph-client` and unused `OwnedNft` type
+- *(web)* Modularize `subname-claim` components
+- *(web)* Enhance `subname` validation with `remeda`
+- *(web)* Use specific hook for subname simulation
+- *(web)* Improve `args` and query validation logic
+- *(web)* Replace custom hook with `useQuery` for claims
+- *(web)* Extract `getEnsNameHref` utility function
+- *(ui)* Update component structure and clean code
+
+### 🎨 Styling
+
+- *(web)* Improve responsive layout and spacing
+- *(ui)* Update theme variables and improve consistency
+- *(ui)* Update font-family declarations
+- *(ui)* Update `data-slot` attribute in `separator`
+- *(web)* Reorder imports for improved readability
+- *(web)* Adjust code style for consistency
+
 ## [1.0.0-alpha.15] - 2025-09-04
 
 ### 📚 Documentation
