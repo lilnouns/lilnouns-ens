@@ -1,0 +1,26 @@
+title = "Lil Nouns ENS – Gitleaks Config"
+
+# Use Gitleaks' built-in detectors. This file mainly defines allow/deny behavior
+# and repository-specific metadata. Keep this file in version control.
+
+[noGit]
+# Keep false so we can use --staged in pre-commit and Gitleaks reads the index.
+noGit = false
+
+[allowlist]
+description = "Repo allowlist for non-secret placeholders"
+# Keep this minimal; prefer fixing sources over broad allowlists.
+paths = [
+  # Ignore compiled and generated artifacts if they ever get staged by mistake
+  # (we still recommend not committing build outputs)
+  "apps/web/dist/.*",
+  "packages/contracts/out/.*",
+  "packages/contracts/artifacts/.*",
+]
+
+# You can add specific regex exceptions below if a persistent false-positive appears.
+# regexes = [
+#   # Example: allow ENS namehash constant used in code or docs
+#   # "^0x524060b540a9ca20b59a94f7b32d64ebdbeedc42dfdc7aac115003633593b492$",
+# ]
+
