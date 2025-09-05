@@ -12,6 +12,14 @@ on:
     types: [published] # 📦 Run when a new release is published
 
 # ---------------------------------------------------------------------
+# 🔐 PERMISSIONS (required for GitHub Pages)
+# ---------------------------------------------------------------------
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# ---------------------------------------------------------------------
 # 💼 JOBS
 # ---------------------------------------------------------------------
 jobs:
@@ -19,6 +27,23 @@ jobs:
     name: 🔄 Deploy Application
     runs-on: ubuntu-latest
     timeout-minutes: 15 # ⏱️ Set a timeout to prevent long-running jobs
+    environment:
+      name: github-pages
+      url: ${{ steps.pages_deploy.outputs.page_url }}
+    
+    # -------------------------------------------------------------
+    # 🌍 ENVIRONMENT VARIABLES (Frontend build-time)
+    # -------------------------------------------------------------
+    env:
+      NODE_ENV: production
+      # Chain selection (optional): set one of these
+      VITE_CHAIN_ID: ${{ vars.VITE_CHAIN_ID }}
+      VITE_CHAIN_NAME: ${{ vars.VITE_CHAIN_NAME }}
+      # WalletConnect (usually secret)
+      VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
+      # Unified endpoints
+      VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
+      VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
 
     steps:
       # 📥 CHECKOUT
@@ -54,6 +79,19 @@ jobs:
       - name: 🧪 Execute tests
         run: pnpm run test
 
-      # 🚀 DEPLOY
+      # 🚀 DEPLOY TO PINME
       - name: 🚀 Deploy to pinme
         run: cd ./apps/web/ && pnpm pinme upload dist
+
+      # 🌐 GITHUB PAGES DEPLOYMENT
+      - name: ⚙️ Configure GitHub Pages
+        uses: actions/configure-pages@v5.0.0
+
+      - name: 📦 Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3.0.0
+        with:
+          path: apps/web/dist
+
+      - name: 🌐 Deploy to GitHub Pages
+        id: pages_deploy
+        uses: actions/deploy-pages@v4.0.0
