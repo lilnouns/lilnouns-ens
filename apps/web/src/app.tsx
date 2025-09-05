@@ -1,10 +1,11 @@
+import { sdk } from "@farcaster/miniapp-sdk";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/tabs";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo.tsx";
 import { OwnedSubnamesList } from "@/components/owned-subnames-list";
@@ -18,6 +19,11 @@ import { WalletConnectButton } from "@/components/wallet-connect-button";
  */
 function App() {
   const [tab, setTab] = useState<"claim" | "owned">("claim");
+
+  useEffect(() => {
+    sdk.actions.ready().catch(() => void 0)
+  }, [])
+
   return (
     <div className="bg-background min-h-screen">
       <header className="border-b">
