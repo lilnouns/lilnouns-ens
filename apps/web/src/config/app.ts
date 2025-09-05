@@ -3,6 +3,7 @@ import type { ReadonlyDeep } from "type-fest";
 import { type Chain } from "viem";
 
 import { chain, chainId } from "@/config/chain";
+import { getSubgraphUrl } from "@/config/runtime-environment";
 
 export interface AppConfig {
   chain: Chain;
@@ -10,17 +11,10 @@ export interface AppConfig {
   subgraphUrl?: string;
 }
 
-function resolveSubgraphUrl(): string | undefined {
-  const environment = import.meta.env as {
-    VITE_SUBGRAPH_URL?: string;
-  };
-  return environment.VITE_SUBGRAPH_URL ?? undefined;
-}
-
 export const baseAppConfig: ReadonlyDeep<AppConfig> = {
   chain,
   chainId,
-  subgraphUrl: resolveSubgraphUrl(),
+  subgraphUrl: getSubgraphUrl(),
 };
 
 // App-level config can extend/override base settings here if needed.
