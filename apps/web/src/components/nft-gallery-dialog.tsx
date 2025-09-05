@@ -5,7 +5,6 @@ import {
   useReadLilNounsTokenTokenOfOwnerByIndex,
   useReadLilNounsTokenTokenUri,
 } from "@nekofar/lilnouns/contracts";
-import { Badge } from "@repo/ui/components/badge";
 import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
@@ -15,7 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/skeleton";
+import { Info } from "lucide-react";
 import { map, times } from "remeda";
 
 import { chainId } from "@/config/chain";
@@ -179,10 +185,27 @@ function NftGalleryItem({
             src={image}
           />
           {hasSubname && (
-            <div className="absolute left-2 top-2">
-              <Badge className="shadow-sm" variant="default">
-                Has subname
-              </Badge>
+            <div className="absolute right-2 top-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    aria-label="View subname"
+                    className="h-7 w-7"
+                    size="icon"
+                    variant="secondary"
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[12rem]">
+                  <DropdownMenuLabel className="text-muted-foreground text-xs">
+                    Subname
+                  </DropdownMenuLabel>
+                  <div className="px-2 py-1.5 text-sm">
+                    <span className="font-mono">{trimmedEns}</span>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
@@ -191,17 +214,12 @@ function NftGalleryItem({
           <div className="text-muted-foreground">
             Token #{tokenId.toString()}
           </div>
-          {hasSubname && (
-            <div className="text-foreground/80 mt-1 text-xs">
-              <span className="text-muted-foreground">Subname:</span>{" "}
-              <span className="font-mono">{trimmedEns}</span>
-            </div>
-          )}
           {isPending && (
             <div className="text-muted-foreground text-xs">Submitting…</div>
           )}
         </div>
       </button>
+      {/* No inline subname UI below; info icon handles it */}
     </li>
   );
 }
