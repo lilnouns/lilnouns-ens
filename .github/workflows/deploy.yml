@@ -41,12 +41,9 @@ jobs:
       VITE_CHAIN_NAME: ${{ vars.VITE_CHAIN_NAME }}
       # WalletConnect (usually secret)
       VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
-      # RPC URLs (keep secret if they embed keys)
-      VITE_RPC_HTTP_URL_MAINNET: ${{ secrets.VITE_RPC_HTTP_URL_MAINNET }}
-      VITE_RPC_HTTP_URL_SEPOLIA: ${{ secrets.VITE_RPC_HTTP_URL_SEPOLIA }}
-      # Subgraph URLs (typically non-secret)
-      VITE_SUBGRAPH_URL_MAINNET: ${{ vars.VITE_SUBGRAPH_URL_MAINNET }}
-      VITE_SUBGRAPH_URL_SEPOLIA: ${{ vars.VITE_SUBGRAPH_URL_SEPOLIA }}
+      # Unified endpoints
+      VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
+      VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
 
     steps:
       # 📥 CHECKOUT
