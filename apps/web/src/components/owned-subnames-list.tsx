@@ -1,10 +1,22 @@
 import type { Address } from "viem";
 
-import { ExternalLink } from "lucide-react";
+import {
+  useReadLilNounsTokenBalanceOf,
+  useReadLilNounsTokenTokenOfOwnerByIndex,
+} from "@nekofar/lilnouns/contracts";
 import { Button } from "@repo/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/dialog";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { memo, useEffect, useRef } from "react";
+import { ExternalLink } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
 import { map, times } from "remeda";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 
@@ -17,10 +29,6 @@ import {
   useWriteLilNounsEnsMapperReleaseLegacySubname,
   useWriteLilNounsEnsMapperRelinquishSubname,
 } from "@/hooks/contracts";
-import {
-  useReadLilNounsTokenBalanceOf,
-  useReadLilNounsTokenTokenOfOwnerByIndex,
-} from "@nekofar/lilnouns/contracts";
 import { getEnsNameHref } from "@/utils/links";
 
 export const OwnedSubnamesList = memo(function OwnedSubnamesList() {
@@ -44,13 +52,13 @@ function OwnedSubnameItem({
     useReadLilNounsEnsMapperEnsNameOf({
       args: tokenId ? [tokenId] : undefined,
       chainId,
-      query: { enabled: tokenId != null, staleTime: 60_000 },
+      query: { enabled: tokenId != undefined, staleTime: 60_000 },
     });
 
   const { data: node, refetch: refetchNode } = useReadLilNounsEnsMapperEnsNodeOf({
     args: tokenId ? [tokenId] : undefined,
     chainId,
-    query: { enabled: tokenId != null, staleTime: 60_000 },
+    query: { enabled: tokenId != undefined, staleTime: 60_000 },
   });
 
   const {
@@ -60,7 +68,7 @@ function OwnedSubnameItem({
   } = useReadLilNounsEnsMapperIsLegacyNode({
     args: node ? [node] : undefined,
     chainId,
-    query: { enabled: node != null, staleTime: 60_000 },
+    query: { enabled: node != undefined, staleTime: 60_000 },
   });
 
   const {
@@ -98,6 +106,7 @@ function OwnedSubnameItem({
   });
 
   const refreshed = useRef(false);
+  const [confirmAction, setConfirmAction] = useState<"migrate" | "release" | null>(null);
   useEffect(() => {
     if ((migrateSuccess || releaseSuccess || relinquishSuccess) && !refreshed.current) {
       refreshed.current = true;
@@ -154,16 +163,10 @@ function OwnedSubnameItem({
           {/* Migrate: only when legacy */}
           {isLegacy && !isLegacyLoading && (
             <Button
+              disabled={isMigrating || isReleasing || isRelinquishing}
+              onClick={() => { setConfirmAction("migrate"); }}
               size="sm"
               variant="secondary"
-              disabled={isMigrating || isReleasing || isRelinquishing}
-              onClick={() => {
-                try {
-                  writeMigrate({ args: [tokenId] });
-                } catch {
-                  // no-op; rely on wallet error UI
-                }
-              }}
             >
               {isMigrating ? "Migrating…" : "Migrate"}
             </Button>
@@ -171,17 +174,7 @@ function OwnedSubnameItem({
           {/* Release: for legacy use releaseLegacy; otherwise relinquish */}
           <Button
             disabled={isMigrating || isReleasing || isRelinquishing || isLegacyLoading}
-            onClick={() => {
-              try {
-                if (isLegacy) {
-                  writeRelease({ args: [tokenId] });
-                } else {
-                  writeRelinquish({ args: [tokenId] });
-                }
-              } catch {
-                // no-op; rely on wallet error UI
-              }
-            }}
+            onClick={() => { setConfirmAction("release"); }}
             size="sm"
             variant="outline"
           >
@@ -193,6 +186,48 @@ function OwnedSubnameItem({
         <span className="font-mono">{trimmed}</span>
         <ExternalLink aria-hidden className="ml-1 inline h-3 w-3 align-[-1px] opacity-70" />
       </a>
+
+      {/* Confirmation Dialog */}
+      <Dialog onOpenChange={(o) => !o && setConfirmAction(null)} open={confirmAction !== null}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction === "migrate" ? "Confirm migration" : "Confirm release"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction === "migrate"
+                ? "This migrates your legacy subname to the new contract. Your name stays the same; a transaction is required."
+                : (isLegacy
+                  ? "This releases your legacy subname mapping. You can migrate later if desired. A transaction is required."
+                  : "This releases the subname from your token. You can reclaim later if available. A transaction is required.")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => { setConfirmAction(null); }} variant="secondary">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                try {
+                  if (confirmAction === "migrate") {
+                    writeMigrate({ args: [tokenId] });
+                  } else if (confirmAction === "release") {
+                    if (isLegacy) {
+                      writeRelease({ args: [tokenId] });
+                    } else {
+                      writeRelinquish({ args: [tokenId] });
+                    }
+                  }
+                } finally {
+                  setConfirmAction(null);
+                }
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </li>
   );
 }
