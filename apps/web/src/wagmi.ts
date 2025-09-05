@@ -2,23 +2,19 @@ import { createConfig, http } from "wagmi";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 
 import { chain } from "@/config/chain";
+import { getRpcHttpUrl, getWcProjectId } from "@/config/runtime-environment.ts";
 
-function resolveRpcHttpUrl(): string | undefined {
-  const environment = import.meta.env as {
-    VITE_RPC_HTTP_URL?: string;
-  };
-  return environment.VITE_RPC_HTTP_URL ?? undefined;
-}
-
-const rpcHttpUrl = resolveRpcHttpUrl();
+const rpcHttpUrl = getRpcHttpUrl();
+const wcProjectId = getWcProjectId();
+const baseConnectors = [injected(), coinbaseWallet()];
+const connectors =
+  wcProjectId && wcProjectId.length > 0
+    ? [...baseConnectors, walletConnect({ projectId: wcProjectId })]
+    : baseConnectors;
 
 export const config = createConfig({
   chains: [chain],
-  connectors: [
-    injected(),
-    coinbaseWallet(),
-    walletConnect({ projectId: import.meta.env.VITE_WC_PROJECT_ID ?? "" }),
-  ],
+  connectors,
   transports: {
     // If no RPC URL is provided, viem will use defaults.
     [chain.id]: http(
