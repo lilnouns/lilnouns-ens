@@ -18,7 +18,7 @@ onlyBuiltDependencies:
   - utf-8-validate
 
 overrides:
-  base-x: '>=3.0.11'
+  base-x: '4.0.1'
   brace-expansion: '>=2.0.2'
   cookie: '>=0.7.0'
   debug: '>=3.2.7'
