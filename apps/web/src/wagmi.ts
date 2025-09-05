@@ -1,3 +1,4 @@
+import { farcasterMiniApp as miniAppConnector } from "@farcaster/miniapp-wagmi-connector";
 import { createConfig, http } from "wagmi";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 
@@ -6,7 +7,7 @@ import { getRpcHttpUrl, getWcProjectId } from "@/config/runtime-environment.ts";
 
 const rpcHttpUrl = getRpcHttpUrl();
 const wcProjectId = getWcProjectId();
-const baseConnectors = [injected(), coinbaseWallet()];
+const baseConnectors = [injected(), coinbaseWallet(), miniAppConnector()];
 const connectors =
   wcProjectId && wcProjectId.length > 0
     ? [...baseConnectors, walletConnect({ projectId: wcProjectId })]
