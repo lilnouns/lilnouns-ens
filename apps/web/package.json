@@ -2,6 +2,7 @@
   "name": "@repo/web",
   "version": "0.0.0",
   "private": true,
+  "description": "Vite + React dApp for interacting with Lil Nouns ENS contracts.",
   "type": "module",
   "scripts": {
     "prebuild": "is-ci && exit 0 || (pnpm clean && pnpm wagmi generate)",
