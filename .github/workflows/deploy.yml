@@ -156,13 +156,24 @@ jobs:
       - name: 🏗️ Build the apps and packages
         run: pnpm run build
 
+      # 🏗️ Build a Pinme variant with base path set to "/"
+      - name: 🏗️ Build (Pinme variant, base=/)
+        env:
+          VITE_BASE_PATH: "/"
+        run: |
+          set -euo pipefail
+          cd apps/web
+          # Build a separate output folder to avoid overwriting the Pages artifact
+          pnpm rimraf dist-pinme
+          pnpm vite build --outDir dist-pinme
+
       # 🧪 TEST
       - name: 🧪 Execute tests
         run: pnpm run test
 
       # 🚀 DEPLOY TO PINME
       - name: 🚀 Deploy to pinme
-        run: cd ./apps/web/ && pnpm pinme upload dist
+        run: cd ./apps/web/ && pnpm pinme upload dist-pinme
 
       # 🌐 GITHUB PAGES DEPLOYMENT
       - name: ⚙️ Configure GitHub Pages
