@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.18] - 2025-09-05
+
+### 🚜 Refactor
+
+- *(web)* Remove unused environment variables
+- *(web)* Unify environment variables
+- *(web)* Centralize runtime environment configuration
+- *(web)* Simplify environment variable examples
+
 ## [1.0.0-alpha.17] - 2025-09-05
 
 ### 📚 Documentation
