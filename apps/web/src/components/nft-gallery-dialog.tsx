@@ -5,6 +5,7 @@ import {
   useReadLilNounsTokenTokenOfOwnerByIndex,
   useReadLilNounsTokenTokenUri,
 } from "@nekofar/lilnouns/contracts";
+import { Badge } from "@repo/ui/components/badge";
 import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import { Skeleton } from "@repo/ui/components/skeleton";
 import { map, times } from "remeda";
 
 import { chainId } from "@/config/chain";
+import { useReadLilNounsEnsMapperEnsNameOf } from "@/hooks/contracts";
 import { useTokenMetadata } from "@/hooks/use-token-metadata";
 
 interface NftGalleryDialogProperties {
@@ -129,6 +131,13 @@ function NftGalleryItem({
   const { data: metadata, isLoading: metadataLoading } =
     useTokenMetadata(tokenUri);
 
+  const { data: ensName, isLoading: ensNameLoading } =
+    useReadLilNounsEnsMapperEnsNameOf({
+      args: tokenId ? [tokenId] : undefined,
+      chainId,
+      query: { enabled: tokenId != undefined, staleTime: 60_000 },
+    });
+
   if (idStatus === "pending" || tokenId === undefined)
     return (
       <div className="flex items-center gap-3 rounded-xl border p-3">
@@ -149,28 +158,45 @@ function NftGalleryItem({
   const name = metadata?.name ?? `Lil Noun ${tokenId.toString()}`;
 
   const isPending = pendingTokenId === tokenId.toString() || metadataLoading;
+  const trimmedEns = (ensName ?? "").trim();
+  const hasSubname = !ensNameLoading && trimmedEns.length > 0;
 
   return (
     <li>
       <button
         aria-label={`Select token ${name}`}
-        className="focus:ring-ring hover:border-primary group w-full overflow-hidden rounded-md border p-2 text-left outline-none focus:ring-2 focus:ring-offset-1"
+        className={`focus:ring-ring group w-full overflow-hidden rounded-md border p-2 text-left outline-none focus:ring-2 focus:ring-offset-1 ${hasSubname ? "border-primary/60" : "hover:border-primary"}`}
         onClick={() => {
           onSelect(tokenId.toString());
         }}
         type="button"
       >
-        <img
-          alt={name}
-          className="aspect-square w-full rounded object-cover"
-          loading="lazy"
-          src={image}
-        />
+        <div className="relative">
+          <img
+            alt={name}
+            className="aspect-square w-full rounded object-cover"
+            loading="lazy"
+            src={image}
+          />
+          {hasSubname && (
+            <div className="absolute left-2 top-2">
+              <Badge className="shadow-sm" variant="default">
+                Has subname
+              </Badge>
+            </div>
+          )}
+        </div>
         <div className="mt-2 text-sm">
           <div className="font-medium">{name}</div>
           <div className="text-muted-foreground">
             Token #{tokenId.toString()}
           </div>
+          {hasSubname && (
+            <div className="text-foreground/80 mt-1 text-xs">
+              <span className="text-muted-foreground">Subname:</span>{" "}
+              <span className="font-mono">{trimmedEns}</span>
+            </div>
+          )}
           {isPending && (
             <div className="text-muted-foreground text-xs">Submitting…</div>
           )}
