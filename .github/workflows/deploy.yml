@@ -30,12 +30,15 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.pages_deploy.outputs.page_url }}
-    
+
     # -------------------------------------------------------------
     # 🌍 ENVIRONMENT VARIABLES (Frontend build-time)
     # -------------------------------------------------------------
     env:
       NODE_ENV: production
+      # Base path for assets when served under a subfolder (e.g., GitHub Pages)
+      # If not provided via repo variables, a default is computed below.
+      VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
       # Chain selection (optional): set one of these
       VITE_CHAIN_ID: ${{ vars.VITE_CHAIN_ID }}
       VITE_CHAIN_NAME: ${{ vars.VITE_CHAIN_NAME }}
@@ -49,6 +52,63 @@ jobs:
       # 📥 CHECKOUT
       - name: 📥 Checkout repository code
         uses: actions/checkout@v5.0.0
+
+      # 🔧 Compute defaults and validate required environment
+      - name: 🔧 Set base path and defaults
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+
+          # VITE_BASE_PATH: use repo var if set, else default to "/<repo>/"
+          if [ -n "${VITE_BASE_PATH:-}" ]; then
+            echo "Using VITE_BASE_PATH from repo vars: $VITE_BASE_PATH"
+          else
+            VITE_BASE_PATH="/${REPO_NAME}/"
+            echo "VITE_BASE_PATH not provided; defaulting to $VITE_BASE_PATH"
+            echo "VITE_BASE_PATH=$VITE_BASE_PATH" >> "$GITHUB_ENV"
+          fi
+
+          # Site metadata defaults (override via repo variables if desired)
+          : "${VITE_SITE_TITLE:=Lil Nouns ENS}"
+          : "${VITE_SITE_DESCRIPTION:=Claim subnames under lilnouns.eth}"
+          : "${VITE_OG_IMAGE:=/og.png}"
+          : "${VITE_FC_IMAGE:=$VITE_OG_IMAGE}"
+          : "${VITE_FC_BUTTON:=Open App}"
+          : "${VITE_FC_SPLASH_ICON:=/splash.png}"
+          : "${VITE_FC_SPLASH_BG:=#f6e6ee}"
+          # Compute site URL with base path as default
+          : "${VITE_SITE_URL:=https://${OWNER}.github.io/${REPO_NAME}}"
+          : "${VITE_FC_LAUNCH_URL:=$VITE_SITE_URL}"
+
+          {
+            echo "VITE_SITE_TITLE=$VITE_SITE_TITLE"
+            echo "VITE_SITE_DESCRIPTION=$VITE_SITE_DESCRIPTION"
+            echo "VITE_SITE_URL=$VITE_SITE_URL"
+            echo "VITE_OG_IMAGE=$VITE_OG_IMAGE"
+            echo "VITE_FC_IMAGE=$VITE_FC_IMAGE"
+            echo "VITE_FC_BUTTON=$VITE_FC_BUTTON"
+            echo "VITE_FC_LAUNCH_URL=$VITE_FC_LAUNCH_URL"
+            echo "VITE_FC_SPLASH_ICON=$VITE_FC_SPLASH_ICON"
+            echo "VITE_FC_SPLASH_BG=$VITE_FC_SPLASH_BG"
+          } >> "$GITHUB_ENV"
+
+      - name: ✅ Validate required env vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          if [ -z "${VITE_SUBGRAPH_URL:-}" ]; then missing+=(VITE_SUBGRAPH_URL); fi
+          # At least one of VITE_CHAIN_ID or VITE_CHAIN_NAME must be set
+          if [ -z "${VITE_CHAIN_ID:-}" ] && [ -z "${VITE_CHAIN_NAME:-}" ]; then
+            echo "Neither VITE_CHAIN_ID nor VITE_CHAIN_NAME is set"
+            missing+=(VITE_CHAIN_ID_or_VITE_CHAIN_NAME)
+          fi
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required environment variables: ${missing[*]}" >&2
+            exit 1
+          fi
 
       # 🛠️ SETUP ENVIRONMENT
       - name: 🔧 Install Foundry
