@@ -1,7 +1,7 @@
 {
   "name": "@repo/contracts",
   "private": true,
-  "description": "A template for create smart contracts using Foundry and Hardhat.",
+  "description": "Smart contracts for Lil Nouns ENS, built with Foundry and Hardhat.",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "Milad Nekofar <milad@nekofar.com>",

@@ -1,8 +1,8 @@
 {
   "name": "lilnouns-ens",
-  "version": "1.0.0-alpha.16",
+  "version": "1.0.0-alpha.17",
   "private": true,
-  "description": "A template for create dApps using Vite",
+  "description": "Monorepo for Lil Nouns ENS: web dApp, contracts, and shared UI.",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "Milad Nekofar <milad@nekofar.com>",

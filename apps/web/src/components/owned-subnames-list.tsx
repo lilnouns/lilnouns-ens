@@ -242,7 +242,7 @@ function OwnedSubnamesInner({ owner }: Readonly<{ owner: Address }>) {
   const count = Number(balance ?? 0n);
 
   return (
-    <div className="mx-auto mt-6 w-full max-w-2xl sm:mt-8">
+    <div className="mx-auto w-full max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Your claimed subnames</CardTitle>

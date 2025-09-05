@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.17] - 2025-09-05
+
+### 📚 Documentation
+
+- *(root)* Add project README file
+
+### 🎨 Styling
+
+- *(web)* Remove redundant margin in subnames list
+
 ## [1.0.0-alpha.16] - 2025-09-05
 
 ### 🚀 Features
