@@ -140,6 +140,33 @@ jobs:
       - name: 🚀 Deploy to PinMe
         run: cd ./apps/web/ && pnpm pinme upload dist
 
+      - name: 📝 Write deployment summary (PinMe)
+        shell: bash
+        run: |
+          BRANCH="${GITHUB_REF_NAME:-N/A}"
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          PR_NUMBER="${{ github.event.pull_request.number || '' }}"
+          [ -z "$PR_NUMBER" ] && PR_NUMBER="N/A"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            ENVIRONMENT="production"
+          else
+            ENVIRONMENT="staging"
+          fi
+
+          PINME_URL="Not available"
+
+          {
+            echo "### Deployment Summary — PinMe"
+            echo "- App: apps/web"
+            echo "- Environment: $ENVIRONMENT"
+            echo "- Production URL: $PINME_URL"
+            echo "- Preview/PR URL: Not available"
+            echo "- Branch: $BRANCH"
+            echo "- Commit: $SHORT_SHA"
+            echo "- PR: $PR_NUMBER"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # -------------------------------------------------------------
   # 🌐 GitHub Pages Deploy (independent job)
   # - Computes a default base path if not provided
@@ -270,3 +297,34 @@ jobs:
       - name: 🌐 Deploy to GitHub Pages
         id: pages_deploy
         uses: actions/deploy-pages@v4.0.0
+
+      - name: 📝 Write deployment summary (GitHub Pages)
+        shell: bash
+        run: |
+          BRANCH="${GITHUB_REF_NAME:-N/A}"
+          SHORT_SHA="${GITHUB_SHA:-unknown}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          PR_NUMBER="${{ github.event.pull_request.number || '' }}"
+          [ -z "$PR_NUMBER" ] && PR_NUMBER="N/A"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            ENVIRONMENT="production"
+          else
+            ENVIRONMENT="staging"
+          fi
+
+          PROD_URL="${{ steps.pages_deploy.outputs.page_url || '' }}"
+          [ -z "$PROD_URL" ] && PROD_URL="Not available"
+          SITE_URL="${VITE_SITE_URL:-}"
+          [ -z "$SITE_URL" ] && SITE_URL="Not available"
+
+          {
+            echo "### Deployment Summary — GitHub Pages"
+            echo "- App: apps/web"
+            echo "- Environment: $ENVIRONMENT"
+            echo "- Production URL (from deploy): $PROD_URL"
+            echo "- Production URL (computed): $SITE_URL"
+            echo "- Preview/PR URL: Not available"
+            echo "- Branch: $BRANCH"
+            echo "- Commit: $SHORT_SHA"
+            echo "- PR: $PR_NUMBER"
+          } >> "$GITHUB_STEP_SUMMARY"
