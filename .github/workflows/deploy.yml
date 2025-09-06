@@ -308,7 +308,7 @@ jobs:
         uses: actions/configure-pages@v5.0.0
 
       - name: 📦 Upload Pages artifact (dry-run)
-        uses: actions/upload-pages-artifact@v3.0.0
+        uses: actions/upload-pages-artifact@v4.0.0
         with:
           path: apps/web/dist
 
@@ -319,7 +319,7 @@ jobs:
           dry-run: true
 
       - name: 📦 Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3.0.0
+        uses: actions/upload-pages-artifact@v4.0.0
         with:
           path: apps/web/dist
 
