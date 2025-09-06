@@ -130,7 +130,7 @@ jobs:
           cache: "pnpm"
 
       - name: ♻️ Cache pnpm store (PinMe)
-        uses: actions/cache@v4.0.0
+        uses: actions/cache@v4.2.4
         with:
           path: ~/.pnpm-store
           key: pnpm-store-${{ runner.os }}-pinme-${{ hashFiles('pnpm-lock.yaml') }}
@@ -287,7 +287,7 @@ jobs:
           cache: "pnpm"
 
       - name: ♻️ Cache pnpm store (Pages)
-        uses: actions/cache@v4.0.0
+        uses: actions/cache@v4.2.4
         with:
           path: ~/.pnpm-store
           key: pnpm-store-${{ runner.os }}-pages-${{ hashFiles('pnpm-lock.yaml') }}
