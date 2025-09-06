@@ -39,11 +39,40 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: 🧮 Compute compare range (release)
+        id: cmp
+        if: ${{ github.event_name == 'release' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          CUR_TAG="${{ github.event.release.tag_name }}"
+          REF="$CUR_TAG"
+
+          # Find previous tag; if none, compare to repo root commit
+          PREV_TAG="$(git describe --tags --abbrev=0 "${CUR_TAG}^" 2>/dev/null || true)"
+          if [ -n "$PREV_TAG" ]; then
+            BASE="$PREV_TAG"
+          else
+            BASE="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
 
       - name: 🔍 Paths filter
         id: filter
         uses: dorny/paths-filter@v3.0.2
         with:
+          # For release events, compare previous tag -> current tag.
+          # For other events, these resolve to empty and action uses its defaults.
+          base: ${{ steps.cmp.outputs.base }}
+          ref: ${{ steps.cmp.outputs.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
             pinme:
               - 'apps/web/**'
