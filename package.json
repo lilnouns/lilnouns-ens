@@ -1,6 +1,6 @@
 {
   "name": "lilnouns-ens",
-  "version": "1.0.0-alpha.25",
+  "version": "1.0.0-alpha.26",
   "private": true,
   "description": "Monorepo for Lil Nouns ENS: web dApp, contracts, and shared UI.",
   "keywords": [],
