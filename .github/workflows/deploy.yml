@@ -314,7 +314,7 @@ jobs:
 
       - name: 🌐 Deploy to GitHub Pages (dry-run)
         id: pages_deploy_dry
-        uses: actions/deploy-pages@v4.0.0
+        uses: actions/deploy-pages@v4.0.5
         with:
           dry-run: true
 
@@ -325,7 +325,7 @@ jobs:
 
       - name: 🌐 Deploy to GitHub Pages
         id: pages_deploy
-        uses: actions/deploy-pages@v4.0.0
+        uses: actions/deploy-pages@v4.0.5
 
       - name: 📝 Write deployment summary (GitHub Pages)
         shell: bash
