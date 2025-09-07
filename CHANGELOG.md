@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.27] - 2025-09-07
+
+### 🚜 Refactor
+
+- *(contracts)* Replace `Ownable2StepUpgradeable`
+
+### 🧪 Testing
+
+- *(contracts)* Add proxy and ownership tests
+
 ## [1.0.0-alpha.26] - 2025-09-06
 
 ### 🐛 Bug Fixes
