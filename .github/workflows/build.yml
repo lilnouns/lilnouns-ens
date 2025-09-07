@@ -79,6 +79,13 @@ jobs:
         with:
           version: nightly
 
+      - name: ✅ Ensure Forge on PATH
+        shell: bash
+        run: |
+          echo "$HOME/.foundry/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.foundry/bin:$PATH"
+          forge --version
+
       - name: 📦 Install pnpm
         uses: pnpm/action-setup@v4.1.0
         with:

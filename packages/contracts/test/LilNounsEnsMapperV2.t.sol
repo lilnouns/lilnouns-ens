@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { LilNounsEnsMapperV2 } from "../src/LilNounsEnsMapperV2.sol";
 import { LilNounsEnsErrors } from "../src/libraries/LilNounsEnsErrors.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import { MockENS } from "./mocks/MockENS.sol";
 import { MockLegacy } from "./mocks/MockLegacy.sol";
@@ -30,6 +31,7 @@ contract LilNounsEnsMapperV2Test is Test {
   // Events mirrors
   event SubnameClaimed(address indexed registrar, uint256 indexed tokenId, bytes32 indexed node, string label);
   event AddrChanged(bytes32 indexed node, address a);
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   function setUp() public {
     // Deploy minimal dependencies
@@ -43,6 +45,128 @@ contract LilNounsEnsMapperV2Test is Test {
     mapper = new LilNounsEnsMapperV2();
     vm.prank(owner);
     mapper.initialize(owner, address(legacy), address(ens), rootNode, ROOT_LABEL);
+  }
+
+  // ============ OwnableUpgradeable / Proxy initialization ============
+
+  function _deployProxy(address initialOwner_) internal returns (LilNounsEnsMapperV2 proxyInstance) {
+    // Deploy implementation
+    LilNounsEnsMapperV2 impl = new LilNounsEnsMapperV2();
+
+    // Prepare initializer data
+    bytes memory initData = abi.encodeCall(
+      LilNounsEnsMapperV2.initialize,
+      (initialOwner_, address(legacy), address(ens), rootNode, ROOT_LABEL)
+    );
+
+    // Deploy ERC1967 proxy and point to implementation
+    ERC1967Proxy proxy = new ERC1967Proxy(address(impl), initData);
+
+    // Cast proxy address to contract interface
+    proxyInstance = LilNounsEnsMapperV2(address(proxy));
+  }
+
+  function testProxyInitialization_SetsOwnerAndState() public {
+    LilNounsEnsMapperV2 proxied = _deployProxy(owner);
+    assertEq(proxied.owner(), owner, "owner not initialized via proxy");
+
+    // Basic state checks
+    assertEq(address(proxied.ens()), address(ens), "ENS registry mismatch");
+    assertEq(address(proxied.nft()), address(nft), "NFT address mismatch (from legacy.nft)");
+    assertEq(proxied.rootNode(), rootNode, "rootNode mismatch");
+    assertEq(proxied.rootLabel(), ROOT_LABEL, "rootLabel mismatch");
+
+    // Re-initialization guard (InvalidInitialization)
+    vm.expectRevert(abi.encodeWithSignature("InvalidInitialization()"));
+    proxied.initialize(owner, address(legacy), address(ens), rootNode, ROOT_LABEL);
+  }
+
+  function testOnlyOwner_GuardsAdminMethods() public {
+    // Prepare a legacy mapping to enable a successful owner-only call
+    uint256 tokenId = 9090;
+    string memory label = "adminonly";
+    bytes32 node = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, node, label);
+    _mintTo(alice, tokenId);
+
+    // Non-owner cannot call migrate
+    vm.prank(alice);
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", alice));
+    mapper.migrateLegacySubname(tokenId);
+
+    // Owner can call migrate
+    vm.prank(owner);
+    mapper.migrateLegacySubname(tokenId);
+  }
+
+  function testOwnership_TransferEmitsEventAndUpdatesOwner() public {
+    address newOwner = makeAddr("newOwner");
+
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit OwnershipTransferred(owner, newOwner);
+    mapper.transferOwnership(newOwner);
+
+    assertEq(mapper.owner(), newOwner, "owner not updated");
+
+    // Previous owner loses privileges
+    uint256 tokenId = 8080;
+    string memory label = "onlyownerlost";
+    bytes32 node = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, node, label);
+    _mintTo(alice, tokenId);
+
+    vm.prank(owner);
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", owner));
+    mapper.migrateLegacySubname(tokenId);
+  }
+
+  function testOwnership_TransferRejectsZeroAddressAndUnauthorized() public {
+    // Unauthorized caller
+    address attacker = makeAddr("attacker");
+    vm.prank(attacker);
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", attacker));
+    mapper.transferOwnership(makeAddr("who"));
+
+    // Zero address new owner
+    vm.prank(owner);
+    vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
+    mapper.transferOwnership(address(0));
+  }
+
+  function testOwnership_RenounceEmitsEventAndRevokesOwner() public {
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit OwnershipTransferred(owner, address(0));
+    mapper.renounceOwnership();
+
+    assertEq(mapper.owner(), address(0), "owner should be zero after renounce");
+
+    // Any owner-only function now reverts
+    uint256 tokenId = 6060;
+    string memory label = "renounced";
+    bytes32 node = _nodeFor(label);
+    legacy.setLegacyMapping(tokenId, node, label);
+    _mintTo(alice, tokenId);
+
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(this)));
+    mapper.migrateLegacySubname(tokenId);
+  }
+
+  function testInitialize_ReinitializeReverts() public {
+    // Contract already initialized in setUp(); re-initialize should revert
+    vm.expectRevert(abi.encodeWithSignature("InvalidInitialization()"));
+    mapper.initialize(owner, address(legacy), address(ens), rootNode, ROOT_LABEL);
+  }
+
+  function testFuzz_TransferOwnership_UpdatesOwnerAndEmitsEvent(address nextOwner) public {
+    vm.assume(nextOwner != address(0) && nextOwner != owner);
+
+    vm.prank(owner);
+    vm.expectEmit(address(mapper));
+    emit OwnershipTransferred(owner, nextOwner);
+    mapper.transferOwnership(nextOwner);
+    assertEq(mapper.owner(), nextOwner);
   }
 
   // Utility: ENS namehash

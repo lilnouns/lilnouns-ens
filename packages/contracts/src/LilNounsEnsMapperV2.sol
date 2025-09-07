@@ -13,7 +13,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @notice Local imports
@@ -31,7 +31,7 @@ import { LilNounsEnsErrors } from "./libraries/LilNounsEnsErrors.sol";
 contract LilNounsEnsMapperV2 is
   Initializable,
   UUPSUpgradeable,
-  Ownable2StepUpgradeable,
+  OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
   IAddrResolver,
   ITextResolver,
@@ -92,9 +92,8 @@ contract LilNounsEnsMapperV2 is
     if (legacyAddr == address(0)) revert LilNounsEnsErrors.InvalidLegacyAddress();
     if (ensRegistry == address(0)) revert LilNounsEnsErrors.InvalidENSRegistry();
 
-    // Initialize Ownable with explicit owner, then 2-step ownership extension.
+    // Initialize Ownable with explicit owner.
     __Ownable_init(initialOwner);
-    __Ownable2Step_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
 
