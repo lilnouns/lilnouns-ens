@@ -118,6 +118,18 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v5.0.0
 
+      - name: 🔧 Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1.4.0
+        with:
+          version: nightly
+
+      - name: ✅ Ensure Forge on PATH
+        shell: bash
+        run: |
+          echo "$HOME/.foundry/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.foundry/bin:$PATH"
+          forge --version
+
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4.1.0
         with:
@@ -274,6 +286,18 @@ jobs:
             echo "VITE_FC_SPLASH_ICON=$VITE_FC_SPLASH_ICON"
             echo "VITE_FC_SPLASH_BG=$VITE_FC_SPLASH_BG"
           } >> "$GITHUB_ENV"
+
+      - name: 🔧 Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1.4.0
+        with:
+          version: nightly
+
+      - name: ✅ Ensure Forge on PATH
+        shell: bash
+        run: |
+          echo "$HOME/.foundry/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.foundry/bin:$PATH"
+          forge --version
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4.1.0
