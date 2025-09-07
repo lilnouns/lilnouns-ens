@@ -15,8 +15,8 @@ export default defineConfig({
       contracts: [
         {
           address: {
-            [sepolia.id]: "0x20779e57c32ae340cb8671e5eafc9eb26e753d22",
-            [mainnet.id]: "0x5d8e3a1991ac7d97fd813fc6367ec5c5e399a36f",
+            [sepolia.id]: "0x20779E57C32AE340cb8671E5EafC9eB26e753D22",
+            [mainnet.id]: "0x5D8E3A1991AC7d97fd813FC6367ec5c5E399A36f",
           },
           name: "LilNounsEnsMapper",
         },
