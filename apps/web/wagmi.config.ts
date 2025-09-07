@@ -3,6 +3,7 @@ import { etherscan, react } from "@wagmi/cli/plugins";
 import { sepolia } from "wagmi/chains";
 import "dotenv/config";
 import { getEtherscanApiKey } from "./wagmi.env";
+import { mainnet } from "viem/chains";
 
 export default defineConfig({
   contracts: [],
@@ -14,7 +15,8 @@ export default defineConfig({
       contracts: [
         {
           address: {
-            [sepolia.id]: "0x3F87314d08CF7ad9815DCBe74A0D54bbdd86d1Dc",
+            [sepolia.id]: "0x6882B3C8c6E05A78d871c1525DdBe5361d9F3a93",
+            [mainnet.id]: "0x39447E7177E87C11731192f955F3A5C0aA657b59",
           },
           name: "LilNounsEnsMapper",
         },
