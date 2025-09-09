@@ -130,8 +130,8 @@ importers:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
       remeda:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 2.31.0
+        version: 2.31.0
       sonner:
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -6549,8 +6549,8 @@ packages:
     resolution: {integrity: sha512-cnE+y8bz4NhMjISKbgeVJtqNbtf5QpjZP+Bslo+UqkIt9QPnX9q095eiRRASJG1/tz6dlNr6Z5NsBiWYokp6EQ==}
     hasBin: true
 
-  remeda@2.30.0:
-    resolution: {integrity: sha512-TcRpI1ecqnMer3jHhFtMerGvHFCDlCHljUp0/9A4HxHOh5bSY3kP1l8nQDFMnWYJKl3MSarDNY1tb0Bs/bCmvw==}
+  remeda@2.31.0:
+    resolution: {integrity: sha512-oj9kcVz06s85FHkaPlCcHKX0oCiQaQI4kenaTtkmikxnVGXB2t8dj0MiBJv4f+wREfN+6FI5PNmBju/WOeq1uA==}
 
   repeat-string@1.6.1:
     resolution: {integrity: sha512-PV0dzCYDNfRi1jCDbJzpW7jNNDRuCOG/jI5ctQcGKt/clZD+YcPS3yIlWuTJMmESC8aevCFmWJy5wjAFgNqN6w==}
@@ -16256,7 +16256,7 @@ snapshots:
     dependencies:
       jsesc: 3.0.2
 
-  remeda@2.30.0:
+  remeda@2.31.0:
     dependencies:
       type-fest: 4.41.0
 
