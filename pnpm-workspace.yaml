@@ -6,17 +6,6 @@ enablePrePostScripts: true
 
 engineStrict: true
 
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - bufferutil
-  - core-js-pure
-  - esbuild
-  - keccak
-  - msw
-  - secp256k1
-  - unrs-resolver
-  - utf-8-validate
-
 overrides:
   base-x: '4.0.1'
   brace-expansion: '>=2.0.2'
