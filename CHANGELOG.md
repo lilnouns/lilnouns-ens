@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-alpha.29] - 2025-09-10
+
+### 💼 Other
+
+- *(pnpm)* Remove `onlyBuiltDependencies` from `pnpm-workspace.yaml`
+
 ## [1.0.0-alpha.28] - 2025-09-07
 
 ### 🐛 Bug Fixes
