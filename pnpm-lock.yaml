@@ -130,8 +130,8 @@ importers:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
       remeda:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 2.31.1
+        version: 2.31.1
       sonner:
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -228,7 +228,7 @@ importers:
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
       forge-std:
         specifier: foundry-rs/forge-std
-        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/c2cf7017d27c1d20e74ace4dacb6c5ce4bbbe899
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/551a2d30d7fecba7092ab45a587b5268149a48fb
       solidity-stringutils:
         specifier: Arachnid/solidity-stringutils
         version: https://codeload.github.com/Arachnid/solidity-stringutils/tar.gz/4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461
@@ -4583,8 +4583,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/c2cf7017d27c1d20e74ace4dacb6c5ce4bbbe899:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/c2cf7017d27c1d20e74ace4dacb6c5ce4bbbe899}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/551a2d30d7fecba7092ab45a587b5268149a48fb:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/551a2d30d7fecba7092ab45a587b5268149a48fb}
     version: 1.10.0
 
   form-data-encoder@2.1.4:
@@ -6549,8 +6549,8 @@ packages:
     resolution: {integrity: sha512-cnE+y8bz4NhMjISKbgeVJtqNbtf5QpjZP+Bslo+UqkIt9QPnX9q095eiRRASJG1/tz6dlNr6Z5NsBiWYokp6EQ==}
     hasBin: true
 
-  remeda@2.30.0:
-    resolution: {integrity: sha512-TcRpI1ecqnMer3jHhFtMerGvHFCDlCHljUp0/9A4HxHOh5bSY3kP1l8nQDFMnWYJKl3MSarDNY1tb0Bs/bCmvw==}
+  remeda@2.31.1:
+    resolution: {integrity: sha512-FRZefcuXbmCoYt8hAITAzW4t8i/RERaGk/+GtRN90eV3NHxsnRKCDIOJVrwrQ6zz77TG/Xyi9mGRfiJWT7DK1g==}
 
   repeat-string@1.6.1:
     resolution: {integrity: sha512-PV0dzCYDNfRi1jCDbJzpW7jNNDRuCOG/jI5ctQcGKt/clZD+YcPS3yIlWuTJMmESC8aevCFmWJy5wjAFgNqN6w==}
@@ -14146,7 +14146,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/c2cf7017d27c1d20e74ace4dacb6c5ce4bbbe899: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/551a2d30d7fecba7092ab45a587b5268149a48fb: {}
 
   form-data-encoder@2.1.4: {}
 
@@ -16256,7 +16256,7 @@ snapshots:
     dependencies:
       jsesc: 3.0.2
 
-  remeda@2.30.0:
+  remeda@2.31.1:
     dependencies:
       type-fest: 4.41.0
 
