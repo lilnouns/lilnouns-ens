@@ -5,7 +5,7 @@
   "description": "Vite + React dApp for interacting with Lil Nouns ENS contracts.",
   "type": "module",
   "scripts": {
-    "prebuild": "is-ci && exit 0 || (pnpm clean && pnpm wagmi generate)",
+    "prebuild": "pnpm clean",
     "build": "tsc -b && vite build",
     "clean": "rimraf dist",
     "dev": "vite",
