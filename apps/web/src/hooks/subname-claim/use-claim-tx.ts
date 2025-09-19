@@ -1,8 +1,8 @@
+import { useWriteLilNounsEnsMapperClaimSubname } from "@nekofar/lilnouns/contracts";
 import { useCallback, useRef, useState } from "react";
 import { useWaitForTransactionReceipt } from "wagmi";
 
 import { chainId } from "@/config/chain";
-import { useWriteLilNounsEnsMapperClaimSubname } from "@/hooks/contracts";
 
 export interface UseClaimTxParameters {
   address?: `0x${string}`;

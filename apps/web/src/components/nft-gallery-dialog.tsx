@@ -25,7 +25,7 @@ import { Info } from "lucide-react";
 import { map, times } from "remeda";
 
 import { chainId } from "@/config/chain";
-import { useReadLilNounsEnsMapperEnsNameOf } from "@/hooks/contracts";
+import { useReadLilNounsEnsMapperEnsNameOf } from "@nekofar/lilnouns/contracts";
 import { useTokenMetadata } from "@/hooks/use-token-metadata";
 
 interface NftGalleryDialogProperties {

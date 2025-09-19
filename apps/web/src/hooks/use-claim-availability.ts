@@ -7,7 +7,7 @@ import { chainId, chain as configuredChain } from "@/config/chain";
 import {
   lilNounsEnsMapperAbi,
   lilNounsEnsMapperAddress,
-} from "@/hooks/contracts";
+} from "@nekofar/lilnouns/contracts";
 
 /**
  * useClaimAvailability

@@ -1,9 +1,10 @@
-import { chainId } from "@/config/chain";
 import {
   useReadLilNounsEnsMapperName,
   useReadLilNounsEnsMapperRootLabel,
   useReadLilNounsEnsMapperRootNode,
-} from "@/hooks/contracts";
+} from "@nekofar/lilnouns/contracts";
+
+import { chainId } from "@/config/chain";
 
 /**
  * Resolve ENS root domain name via contract; fallback to lilnouns.eth.
