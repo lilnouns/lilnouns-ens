@@ -28,7 +28,7 @@ import {
   useWriteLilNounsEnsMapperMigrateLegacySubname,
   useWriteLilNounsEnsMapperReleaseLegacySubname,
   useWriteLilNounsEnsMapperRelinquishSubname,
-} from "@/hooks/contracts";
+} from "@nekofar/lilnouns/contracts";
 import { getEnsNameHref } from "@/utils/links";
 
 export const OwnedSubnamesList = memo(function OwnedSubnamesList() {

@@ -1,5 +1,5 @@
 import { chain as configuredChain } from "@/config/chain";
-import { lilNounsEnsMapperAddress } from "@/hooks/contracts";
+import { lilNounsEnsMapperAddress } from "@nekofar/lilnouns/contracts";
 import type { Chain } from "viem";
 
 /** Build block explorer contract link for the LilNounsEnsMapper. */
