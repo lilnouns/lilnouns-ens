@@ -28,7 +28,7 @@
     "tailwind-merge": "3.3.1",
     "viem": "2.37.6",
     "wagmi": "2.17.1",
-    "zod": "4.1.9"
+    "zod": "4.1.11"
   },
   "devDependencies": {
     "@farcaster/miniapp-wagmi-connector": "1.0.0",
