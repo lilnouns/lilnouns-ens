@@ -24,7 +24,7 @@ interface Eip1193Provider {
 
 export function WalletConnectButton() {
   const { address, isConnected } = useAccount();
-  // Keep list if needed for future; not used currently
+  // Keep the list if needed for the future; not used currently
   // const chains = useChains();
   const { connect, connectors, error, isPending, status } = useConnect();
   const { disconnect } = useDisconnect();
