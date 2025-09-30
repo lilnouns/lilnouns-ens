@@ -141,14 +141,6 @@ jobs:
           node-version-file: "package.json"
           cache: "pnpm"
 
-      - name: ♻️ Cache pnpm store (PinMe)
-        uses: actions/cache@v4.3.0
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-pinme-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-pinme-
-
       - name: 📚 Install dependencies
         run: pnpm install
 
@@ -179,7 +171,26 @@ jobs:
           path: apps/web/dist
 
       - name: 🚀 Deploy to PinMe
-        run: cd ./apps/web/ && pnpm pinme upload dist
+        id: pinme_deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd ./apps/web/
+          # Run deploy and capture output
+          pnpm pinme upload dist | tee pinme_output.log
+          # Extract URL: prefer the line after 'URL:'; fallback to first http(s) URL
+          url="$(sed -n '/^URL:/{n;p;q}' pinme_output.log | tr -d '\r' | xargs || true)"
+          if [ -z "${url:-}" ]; then
+            url="$(grep -Eo 'https?://[^[:space:]]+' pinme_output.log | head -n1 | tr -d '\r' | xargs || true)"
+          fi
+          if [ -n "${url:-}" ]; then
+            echo "Detected PinMe URL: $url"
+            # Export for subsequent steps and as step output
+            echo "PINME_URL=$url" >> "$GITHUB_ENV"
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          else
+            echo "Warning: Could not detect PinMe URL from output" >&2
+          fi
 
       - name: 📝 Write deployment summary (PinMe)
         shell: bash
@@ -195,7 +206,9 @@ jobs:
             ENVIRONMENT="staging"
           fi
 
-          PINME_URL="Not available"
+          # Prefer env var exported via GITHUB_ENV; fallback to step output
+          PINME_URL="${PINME_URL:-${{ steps.pinme_deploy.outputs.url || '' }}}"
+          [ -z "$PINME_URL" ] && PINME_URL="Not available"
 
           {
             echo "### Deployment Summary — PinMe"
@@ -309,14 +322,6 @@ jobs:
         with:
           node-version-file: "package.json"
           cache: "pnpm"
-
-      - name: ♻️ Cache pnpm store (Pages)
-        uses: actions/cache@v4.3.0
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-pages-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-pages-
 
       - name: 📚 Install dependencies
         run: pnpm install
