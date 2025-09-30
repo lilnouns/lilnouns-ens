@@ -141,14 +141,6 @@ jobs:
           node-version-file: "package.json"
           cache: "pnpm"
 
-      - name: ♻️ Cache pnpm store (PinMe)
-        uses: actions/cache@v4.3.0
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-pinme-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-pinme-
-
       - name: 📚 Install dependencies
         run: pnpm install
 
@@ -309,14 +301,6 @@ jobs:
         with:
           node-version-file: "package.json"
           cache: "pnpm"
-
-      - name: ♻️ Cache pnpm store (Pages)
-        uses: actions/cache@v4.3.0
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-pages-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-pages-
 
       - name: 📚 Install dependencies
         run: pnpm install
