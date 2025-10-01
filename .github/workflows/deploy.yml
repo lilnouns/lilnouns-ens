@@ -286,12 +286,19 @@ jobs:
           # Prefer env var exported via GITHUB_ENV; fallback to step output
           PINME_URL="${PINME_URL:-${{ steps.pinme_deploy.outputs.url || '' }}}"
           [ -z "$PINME_URL" ] && PINME_URL="Not available"
+          # Use site URL if set
+          SITE_URL="${VITE_SITE_URL:-}"
+          if [ -n "$SITE_URL" ]; then
+            PROD_URL="$SITE_URL"
+          else
+            PROD_URL="Not available"
+          fi
 
           {
             echo "### Deployment Summary — PinMe"
             echo "- App: apps/web"
             echo "- Environment: $ENVIRONMENT"
-            echo "- Production URL: Not available"
+            echo "- Production URL: $PROD_URL"
             echo "- Preview/PR URL: $PINME_URL"
             echo "- Branch: $BRANCH"
             echo "- Commit: $SHORT_SHA"
