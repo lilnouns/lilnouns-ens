@@ -114,9 +114,86 @@ jobs:
       VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
       VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
       VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
+      # Site metadata (defaults computed later if unset)
+      VITE_SITE_TITLE: ${{ vars.VITE_SITE_TITLE }}
+      VITE_SITE_DESCRIPTION: ${{ vars.VITE_SITE_DESCRIPTION }}
+      VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+      VITE_OG_IMAGE: ${{ vars.VITE_OG_IMAGE }}
+      VITE_FC_IMAGE: ${{ vars.VITE_FC_IMAGE }}
+      VITE_FC_BUTTON: ${{ vars.VITE_FC_BUTTON }}
+      VITE_FC_LAUNCH_URL: ${{ vars.VITE_FC_LAUNCH_URL }}
+      VITE_FC_SPLASH_ICON: ${{ vars.VITE_FC_SPLASH_ICON }}
+      VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v5.0.0
+
+      - &compute_site_defaults
+        name: 🔧 Compute site defaults
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GITHUB_ENV:-}" ]]; then
+            echo "GITHUB_ENV is not defined" >&2
+            exit 1
+          fi
+
+          REPO="${GITHUB_REPOSITORY:-}"
+          if [[ -z "$REPO" ]]; then
+            echo "GITHUB_REPOSITORY is not defined" >&2
+            exit 1
+          fi
+
+          REPO_NAME="${REPO#*/}"
+          OWNER="${REPO%%/*}"
+
+          if [[ -z "${VITE_BASE_PATH:-}" ]]; then
+            VITE_BASE_PATH="/${REPO_NAME}/"
+            echo "VITE_BASE_PATH not provided; defaulting to ${VITE_BASE_PATH}"
+          fi
+
+          : "${VITE_SITE_TITLE:=Lil Nouns ENS}"
+          : "${VITE_SITE_DESCRIPTION:=Claim subnames under lilnouns.eth}"
+          : "${VITE_SITE_URL:=https://${OWNER}.github.io/${REPO_NAME}}"
+          : "${VITE_OG_IMAGE:=og.png}"
+          : "${VITE_FC_IMAGE:=$VITE_OG_IMAGE}"
+          : "${VITE_FC_BUTTON:=Open App}"
+          : "${VITE_FC_LAUNCH_URL:=$VITE_SITE_URL}"
+          : "${VITE_FC_SPLASH_ICON:=splash.png}"
+          : "${VITE_FC_SPLASH_BG:=#f6e6ee}"
+
+          make_absolute() {
+            local value="$1"
+            if [[ -z "$value" ]]; then
+              echo ""
+              return
+            fi
+
+            if [[ "$value" == *"://"* ]]; then
+              echo "$value"
+            else
+              value="${value#/}"
+              echo "${VITE_SITE_URL%/}/$value"
+            fi
+          }
+
+          VITE_OG_IMAGE="$(make_absolute "$VITE_OG_IMAGE")"
+          VITE_FC_IMAGE="$(make_absolute "$VITE_FC_IMAGE")"
+          VITE_FC_SPLASH_ICON="$(make_absolute "$VITE_FC_SPLASH_ICON")"
+
+          {
+            printf 'VITE_BASE_PATH=%s\n' "$VITE_BASE_PATH"
+            printf 'VITE_SITE_TITLE=%s\n' "$VITE_SITE_TITLE"
+            printf 'VITE_SITE_DESCRIPTION=%s\n' "$VITE_SITE_DESCRIPTION"
+            printf 'VITE_SITE_URL=%s\n' "$VITE_SITE_URL"
+            printf 'VITE_OG_IMAGE=%s\n' "$VITE_OG_IMAGE"
+            printf 'VITE_FC_IMAGE=%s\n' "$VITE_FC_IMAGE"
+            printf 'VITE_FC_BUTTON=%s\n' "$VITE_FC_BUTTON"
+            printf 'VITE_FC_LAUNCH_URL=%s\n' "$VITE_FC_LAUNCH_URL"
+            printf 'VITE_FC_SPLASH_ICON=%s\n' "$VITE_FC_SPLASH_ICON"
+            printf 'VITE_FC_SPLASH_BG=%s\n' "$VITE_FC_SPLASH_BG"
+          } >> "$GITHUB_ENV"
 
       - name: 🔧 Install Foundry
         uses: foundry-rs/foundry-toolchain@v1.4.0
@@ -214,8 +291,8 @@ jobs:
             echo "### Deployment Summary — PinMe"
             echo "- App: apps/web"
             echo "- Environment: $ENVIRONMENT"
-            echo "- Production URL: $PINME_URL"
-            echo "- Preview/PR URL: Not available"
+            echo "- Production URL: Not available"
+            echo "- Preview/PR URL: $PINME_URL"
             echo "- Branch: $BRANCH"
             echo "- Commit: $SHORT_SHA"
             echo "- PR: $PR_NUMBER"
@@ -246,59 +323,21 @@ jobs:
       VITE_WC_PROJECT_ID: ${{ secrets.VITE_WC_PROJECT_ID }}
       VITE_RPC_HTTP_URL: ${{ secrets.VITE_RPC_HTTP_URL }}
       VITE_SUBGRAPH_URL: ${{ vars.VITE_SUBGRAPH_URL }}
+      # Site metadata (defaults computed later if unset)
+      VITE_SITE_TITLE: ${{ vars.VITE_SITE_TITLE }}
+      VITE_SITE_DESCRIPTION: ${{ vars.VITE_SITE_DESCRIPTION }}
+      VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+      VITE_OG_IMAGE: ${{ vars.VITE_OG_IMAGE }}
+      VITE_FC_IMAGE: ${{ vars.VITE_FC_IMAGE }}
+      VITE_FC_BUTTON: ${{ vars.VITE_FC_BUTTON }}
+      VITE_FC_LAUNCH_URL: ${{ vars.VITE_FC_LAUNCH_URL }}
+      VITE_FC_SPLASH_ICON: ${{ vars.VITE_FC_SPLASH_ICON }}
+      VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v5.0.0
 
-      - name: 🔧 Compute base path and site defaults
-        shell: bash
-        run: |
-          set -euo pipefail
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"
-          OWNER="${GITHUB_REPOSITORY%%/*}"
-
-          if [ -n "${VITE_BASE_PATH:-}" ]; then
-            echo "Using VITE_BASE_PATH from repo vars: $VITE_BASE_PATH"
-          else
-            VITE_BASE_PATH="/${REPO_NAME}/"
-            echo "VITE_BASE_PATH not provided; defaulting to $VITE_BASE_PATH"
-            echo "VITE_BASE_PATH=$VITE_BASE_PATH" >> "$GITHUB_ENV"
-          fi
-
-          : "${VITE_SITE_TITLE:=Lil Nouns ENS}"
-          : "${VITE_SITE_DESCRIPTION:=Claim subnames under lilnouns.eth}"
-          : "${VITE_OG_IMAGE:=og.png}"
-          : "${VITE_FC_IMAGE:=$VITE_OG_IMAGE}"
-          : "${VITE_FC_BUTTON:=Open App}"
-          : "${VITE_FC_SPLASH_ICON:=splash.png}"
-          : "${VITE_FC_SPLASH_BG:=#f6e6ee}"
-          : "${VITE_SITE_URL:=https://${OWNER}.github.io/${REPO_NAME}}"
-          : "${VITE_FC_LAUNCH_URL:=$VITE_SITE_URL}"
-
-          to_abs() {
-            val="$1"
-            if [ -z "$val" ]; then echo ""; return; fi
-            case "$val" in
-              *://*) echo "$val" ;;
-              *) val="${val#/}"; echo "${VITE_SITE_URL%/}/$val" ;;
-            esac
-          }
-
-          VITE_OG_IMAGE="$(to_abs "$VITE_OG_IMAGE")"
-          VITE_FC_IMAGE="$(to_abs "$VITE_FC_IMAGE")"
-          VITE_FC_SPLASH_ICON="$(to_abs "$VITE_FC_SPLASH_ICON")"
-
-          {
-            echo "VITE_SITE_TITLE=$VITE_SITE_TITLE"
-            echo "VITE_SITE_DESCRIPTION=$VITE_SITE_DESCRIPTION"
-            echo "VITE_SITE_URL=$VITE_SITE_URL"
-            echo "VITE_OG_IMAGE=$VITE_OG_IMAGE"
-            echo "VITE_FC_IMAGE=$VITE_FC_IMAGE"
-            echo "VITE_FC_BUTTON=$VITE_FC_BUTTON"
-            echo "VITE_FC_LAUNCH_URL=$VITE_FC_LAUNCH_URL"
-            echo "VITE_FC_SPLASH_ICON=$VITE_FC_SPLASH_ICON"
-            echo "VITE_FC_SPLASH_BG=$VITE_FC_SPLASH_BG"
-          } >> "$GITHUB_ENV"
+      - *compute_site_defaults
 
       - name: 🔧 Install Foundry
         uses: foundry-rs/foundry-toolchain@v1.4.0
