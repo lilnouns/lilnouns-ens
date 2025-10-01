@@ -1,6 +1,6 @@
 {
   "name": "lilnouns-ens",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "private": true,
   "type": "module",
   "description": "Monorepo for Lil Nouns ENS: web dApp, contracts, and shared UI.",
@@ -39,7 +39,7 @@
     "prettier-plugin-tailwindcss": "0.6.14",
     "prettier-plugin-toml": "2.0.6",
     "turbo": "2.5.8",
-    "typescript": "5.9.2",
+    "typescript": "5.9.3",
     "typescript-eslint": "8.45.0"
   },
   "packageManager": "pnpm@10.15.1",
