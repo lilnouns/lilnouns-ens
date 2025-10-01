@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0-alpha.0] - 2025-10-01
+
+### 🚀 Features
+
+- *(web)* Add new icon to public assets
+
 ## [1.0.0-beta.3] - 2025-10-01
 
 ### 🐛 Bug Fixes
