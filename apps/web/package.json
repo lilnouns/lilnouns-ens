@@ -31,7 +31,7 @@
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@farcaster/miniapp-wagmi-connector": "1.0.0",
+    "@farcaster/miniapp-wagmi-connector": "1.1.0",
     "@tailwindcss/vite": "4.1.14",
     "@types/node": "24.7.1",
     "@types/react": "19.2.2",
