@@ -188,8 +188,8 @@ importers:
         specifier: 1.4.0
         version: 1.4.0
       type-fest:
-        specifier: 5.0.1
-        version: 5.0.1
+        specifier: 5.1.0
+        version: 5.1.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -228,7 +228,7 @@ importers:
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
       forge-std:
         specifier: foundry-rs/forge-std
-        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/0051db19c2edc30e6b7147c6d029dc71aa621874
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4
       solidity-stringutils:
         specifier: Arachnid/solidity-stringutils
         version: https://codeload.github.com/Arachnid/solidity-stringutils/tar.gz/4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461
@@ -4705,8 +4705,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/0051db19c2edc30e6b7147c6d029dc71aa621874:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/0051db19c2edc30e6b7147c6d029dc71aa621874}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4}
     version: 1.11.0
 
   form-data-encoder@2.1.4:
@@ -7508,8 +7508,8 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-  type-fest@5.0.1:
-    resolution: {integrity: sha512-9MpwAI52m8H6ssA542UxSLnSiSD2dsC3/L85g6hVubLSXd82wdI80eZwTWhdOfN67NlA+D+oipAs1MlcTcu3KA==}
+  type-fest@5.1.0:
+    resolution: {integrity: sha512-wQ531tuWvB6oK+pchHIu5lHe5f5wpSCqB8Kf4dWQRbOYc9HTge7JL0G4Qd44bh6QuJCccIzL3bugb8GI0MwHrg==}
     engines: {node: '>=20'}
 
   type-is@2.0.1:
@@ -14502,7 +14502,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/0051db19c2edc30e6b7147c6d029dc71aa621874: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4: {}
 
   form-data-encoder@2.1.4: {}
 
@@ -17623,7 +17623,7 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-  type-fest@5.0.1:
+  type-fest@5.1.0:
     dependencies:
       tagged-tag: 1.0.0
 
