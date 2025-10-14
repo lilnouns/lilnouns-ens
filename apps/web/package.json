@@ -16,7 +16,7 @@
     "@farcaster/miniapp-sdk": "0.2.0",
     "@nekofar/lilnouns": "1.0.0-alpha.27",
     "@repo/ui": "workspace:*",
-    "@tanstack/react-query": "5.90.2",
+    "@tanstack/react-query": "5.90.3",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "graphql-request": "7.2.0",
