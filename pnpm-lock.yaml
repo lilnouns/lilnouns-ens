@@ -82,8 +82,8 @@ importers:
         specifier: 2.1.0
         version: 2.1.0(prettier@3.6.2)
       prettier-plugin-tailwindcss:
-        specifier: 0.6.14
-        version: 0.6.14(prettier@3.6.2)
+        specifier: 0.7.0
+        version: 0.7.0(prettier@3.6.2)
       prettier-plugin-toml:
         specifier: 2.0.6
         version: 2.0.6(prettier@3.6.2)
@@ -228,7 +228,7 @@ importers:
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
       forge-std:
         specifier: foundry-rs/forge-std
-        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/b8f065fda83b8cd94a6b2fec8fcd911dc3b444fd
       solidity-stringutils:
         specifier: Arachnid/solidity-stringutils
         version: https://codeload.github.com/Arachnid/solidity-stringutils/tar.gz/4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461
@@ -4742,8 +4742,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/b8f065fda83b8cd94a6b2fec8fcd911dc3b444fd:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/b8f065fda83b8cd94a6b2fec8fcd911dc3b444fd}
     version: 1.11.0
 
   form-data-encoder@2.1.4:
@@ -6439,9 +6439,9 @@ packages:
     peerDependencies:
       prettier: '>=3.0.0'
 
-  prettier-plugin-tailwindcss@0.6.14:
-    resolution: {integrity: sha512-pi2e/+ZygeIqntN+vC573BcW5Cve8zUB0SSAGxqpB4f96boZF4M3phPVoOFCeypwkpRYdi7+jQ5YJJUwrkGUAg==}
-    engines: {node: '>=14.21.3'}
+  prettier-plugin-tailwindcss@0.7.0:
+    resolution: {integrity: sha512-zpRZhkfwq1cNmbKhmKzXKuKFdkgXZXlf6p+KttD75v6pGz1FxmcKMc4RKdw97GYBKBbout4113HSLaBJAomFDw==}
+    engines: {node: '>=20.19'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
       '@prettier/plugin-hermes': '*'
@@ -6453,14 +6453,12 @@ packages:
       prettier: ^3.0
       prettier-plugin-astro: '*'
       prettier-plugin-css-order: '*'
-      prettier-plugin-import-sort: '*'
       prettier-plugin-jsdoc: '*'
       prettier-plugin-marko: '*'
       prettier-plugin-multiline-arrays: '*'
       prettier-plugin-organize-attributes: '*'
       prettier-plugin-organize-imports: '*'
       prettier-plugin-sort-imports: '*'
-      prettier-plugin-style-order: '*'
       prettier-plugin-svelte: '*'
     peerDependenciesMeta:
       '@ianvs/prettier-plugin-sort-imports':
@@ -6481,8 +6479,6 @@ packages:
         optional: true
       prettier-plugin-css-order:
         optional: true
-      prettier-plugin-import-sort:
-        optional: true
       prettier-plugin-jsdoc:
         optional: true
       prettier-plugin-marko:
@@ -6494,8 +6490,6 @@ packages:
       prettier-plugin-organize-imports:
         optional: true
       prettier-plugin-sort-imports:
-        optional: true
-      prettier-plugin-style-order:
         optional: true
       prettier-plugin-svelte:
         optional: true
@@ -14591,7 +14585,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/d8da7c44f7294848b72a8c8fcc36fd2f40f827b4: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/b8f065fda83b8cd94a6b2fec8fcd911dc3b444fd: {}
 
   form-data-encoder@2.1.4: {}
 
@@ -16455,7 +16449,7 @@ snapshots:
       prettier: 3.6.2
       semver: 7.7.2
 
-  prettier-plugin-tailwindcss@0.6.14(prettier@3.6.2):
+  prettier-plugin-tailwindcss@0.7.0(prettier@3.6.2):
     dependencies:
       prettier: 3.6.2
 
