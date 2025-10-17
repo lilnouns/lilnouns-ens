@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@farcaster/miniapp-sdk": "0.2.0",
+    "@farcaster/miniapp-sdk": "0.2.1",
     "@nekofar/lilnouns": "1.0.0-alpha.31",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "5.90.5",
