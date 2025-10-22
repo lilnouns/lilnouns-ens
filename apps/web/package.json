@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@farcaster/miniapp-wagmi-connector": "1.1.0",
-    "@tailwindcss/vite": "4.1.14",
+    "@tailwindcss/vite": "4.1.15",
     "@types/node": "24.9.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
