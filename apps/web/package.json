@@ -37,7 +37,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vitejs/plugin-react": "5.1.0",
-    "@wagmi/cli": "2.7.1",
+    "@wagmi/cli": "2.8.0",
     "dotenv": "17.2.3",
     "is-ci": "4.1.0",
     "pinme": "1.1.5",
