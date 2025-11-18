@@ -26,8 +26,8 @@
     "remeda": "2.32.0",
     "sonner": "2.0.7",
     "tailwind-merge": "3.4.0",
-    "viem": "2.39.0",
-    "wagmi": "2.19.3",
+    "viem": "2.39.2",
+    "wagmi": "2.19.4",
     "zod": "4.1.12"
   },
   "devDependencies": {
