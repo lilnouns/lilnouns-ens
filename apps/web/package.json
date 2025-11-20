@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "0.2.1",
-    "@nekofar/lilnouns": "1.0.0-alpha.40",
+    "@nekofar/lilnouns": "1.0.0-alpha.43",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "5.90.10",
     "class-variance-authority": "0.7.1",
