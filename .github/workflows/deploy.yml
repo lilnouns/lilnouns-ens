@@ -38,7 +38,7 @@ jobs:
       pages: ${{ steps.filter.outputs.pages }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.0
         with:
           fetch-depth: 0
 
@@ -126,7 +126,7 @@ jobs:
       VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.0
 
       - &compute_site_defaults
         name: 🔧 Compute site defaults
@@ -342,7 +342,7 @@ jobs:
       VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.0
 
       - *compute_site_defaults
 
