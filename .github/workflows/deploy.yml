@@ -38,7 +38,7 @@ jobs:
       pages: ${{ steps.filter.outputs.pages }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
 
@@ -126,7 +126,7 @@ jobs:
       VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
 
       - &compute_site_defaults
         name: 🔧 Compute site defaults
@@ -213,7 +213,7 @@ jobs:
           run_install: false
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@v6.1.0
         with:
           node-version-file: "package.json"
           cache: "pnpm"
@@ -342,7 +342,7 @@ jobs:
       VITE_FC_SPLASH_BG: ${{ vars.VITE_FC_SPLASH_BG }}
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
 
       - *compute_site_defaults
 
@@ -364,7 +364,7 @@ jobs:
           run_install: false
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v6.0.0
+        uses: actions/setup-node@v6.1.0
         with:
           node-version-file: "package.json"
           cache: "pnpm"
