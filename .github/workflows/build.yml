@@ -127,7 +127,7 @@ jobs:
           fetch-depth: 0 # Fetches all history for all branches and tags
 
       - name: 📝 Generate changelog
-        uses: orhun/git-cliff-action@v4.6.0
+        uses: orhun/git-cliff-action@v4.7.0
         id: git-cliff
         with:
           config: cliff.toml # Configuration file for git-cliff
