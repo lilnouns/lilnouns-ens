@@ -27,7 +27,7 @@ jobs:
     steps:
       # 📥 CHECKOUT CODE
       - name: 📥 Checkout Repository Code
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
 
       # 🔀 EXECUTE GIT FLOW
       - name: 🔀 Execute Git Flow Action
