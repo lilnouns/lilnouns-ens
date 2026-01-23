@@ -196,7 +196,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: 🔧 Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.6.0
+        uses: foundry-rs/foundry-toolchain@v1.7.0
         with:
           version: nightly
 
@@ -347,7 +347,7 @@ jobs:
       - *compute_site_defaults
 
       - name: 🔧 Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.6.0
+        uses: foundry-rs/foundry-toolchain@v1.7.0
         with:
           version: nightly
 
