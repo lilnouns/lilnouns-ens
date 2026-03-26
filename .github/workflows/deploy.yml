@@ -380,7 +380,7 @@ jobs:
           test -d apps/web/dist && echo "✅ Found built Pages artifact"
 
       - name: ⚙️ Configure GitHub Pages
-        uses: actions/configure-pages@v5.0.0
+        uses: actions/configure-pages@v6.0.0
 
       - name: 📦 Upload Pages artifact (dry-run)
         uses: actions/upload-pages-artifact@v4.0.0
