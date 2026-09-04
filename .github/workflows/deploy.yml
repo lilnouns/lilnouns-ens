@@ -389,13 +389,13 @@ jobs:
 
       - name: 🌐 Deploy to GitHub Pages (dry-run)
         id: pages_deploy_dry
-        uses: actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@v5.0.1
         with:
           dry-run: true
 
       - name: 🌐 Deploy to GitHub Pages
         id: pages_deploy
-        uses: actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@v5.0.1
 
       - name: 📝 Write deployment summary (GitHub Pages)
         shell: bash
